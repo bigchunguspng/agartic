@@ -2,8 +2,13 @@ html, body {
     margin: 0;
     height: 100%;
     overflow: hidden;
-    background: #1e1e1e;
-    font-family: sans-serif;
+    background: #efefef;
+    font-family: "Iosevka Charon Mono", monospace, sans-serif;
+}
+button {
+    all: unset;
+    box-sizing: border-box;
+    cursor: pointer;
 }
 #viewport {
     width: 100vw;
@@ -11,25 +16,97 @@ html, body {
     overflow: hidden;
     position: relative;
     cursor: grab;
-}
-#viewport.dragging {
-    cursor: grabbing;
-}
-#canvas-wrapper {
-    width: 1280px;
-    height: 720px;
-    position: absolute;
-    left: 0;
-    top: 0;
-    transform-origin: 0 0;
-    background: white;
-    background-image: url("bg.png");
-    background-size: cover;
-    box-shadow: 0 0 20px rgba(0,0,0,.35);
-}
-canvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+    background-image: url("../img/bg.png");
+    background-repeat: repeat;
+    background-size: 256px 128px;
+    background-position: 10px 10px;
+    image-rendering: pixelated;
+    &.dragging {
+        cursor: grabbing;
+    }
+    & #canvas-wrapper {
+        width: 1280px;
+        height: 720px;
+        position: absolute;
+        left: 0;
+        top: 0;
+        transform-origin: 0 0;
+        background: white;
+        box-shadow: 0 3px 0 rgba(0, 0, 0, .25), 0 0 5px rgba(0, 0, 0, .25);
+        & canvas {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+        }
+    }
+    & .panel {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        margin: 5px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        color: #333;
+        text-wrap: nowrap;
+        border-radius: 2px;
+        text-shadow: 0 0 5px rgba(0,0,0,0.15);
+        box-shadow: 0 2px 0 #666;
+        &#panel-b {
+            bottom: 0;
+        }
+        & > * {
+            width: 100%;
+            height: 100%;
+            background-image: url("../img/bg-light.png");
+            background-repeat: repeat;
+            background-size: 64px 64px;
+        }
+        & button {
+            height: 100%;
+            padding: 0 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            &:nth-last-child(n+2) {
+                border-right: 1px solid #666;
+            }
+            &:nth-child(1){
+                border-radius: 3px 0 0 3px;
+            }
+            &:nth-last-child(1){
+                border-radius: 0 3px 3px 0;
+            }
+            &:hover {
+                background-image: url("../img/bg-dark.png");
+                background-repeat: repeat;
+                background-size: 64px 64px;
+                transform: translateY(1px);
+                & kbd {
+                    color: #ffe;
+                }
+            }
+        }
+        & img {
+            width: 24px;
+            height: 24px;
+        }
+        & kbd {
+            min-width: 8px;
+            text-align: center;
+            background-image: url("../img/bg-gray.png");
+            background-repeat: repeat;
+            padding-inline: 3px;
+            margin-right: 5px;
+            border: 1px solid #444;
+            border-top: 1px solid #ddd;
+            border-left: 1px solid #888;
+            color: #ddd;
+            border-radius: 3px;
+            box-shadow: 0 2px 0 #333;
+            font-size: 18px;
+            font-family: "Jersey 10", monospace, sans-serif;
+        }
+    }
 }

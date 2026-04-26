@@ -5,6 +5,9 @@
     <meta charset="UTF-8"/>
     <meta content="width=device-width, initial-scale=1.0"/>
     <link rel="icon" type="image/png" sizes="16x16" href="icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Iosevka+Charon+Mono:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&family=Jersey+10&display=swap">
     <link rel="stylesheet" href="css/site.css"/>
 </head>
 <body>
@@ -14,6 +17,35 @@
         <canvas id="canvas-draw"></canvas>
         <canvas id="canvas-over"></canvas>
     </div>
+    <div id="panel-a" class="panel">
+        <div>color picker, text params, brush params, ...</div>
+    </div>
+    <div id="panel-b" class="panel">
+        <button id="zoom1Button"><kbd>C-1</kbd><img src="img/icons/zoom-original.png" alt="delete"></button>
+        <button id="zoom2Button"><kbd>C-2</kbd><img src="img/icons/zoom-fit-best.png" alt="delete"></button>
+        <button id="undoButton"><kbd>C-z</kbd>undo ←</button>
+        <button id="redoButton"><kbd>C-Z</kbd>redo →</button>
+        <button id="infoButton"><kbd>`</kbd>info</button>
+        <button id="pickButton"><kbd>c</kbd>color</button>
+        <button id="fillButton"><kbd>f</kbd>fill</button>
+        <button id="dragButton"><kbd>x</kbd>move</button>
+        <button id="drawButton"><kbd>d</kbd>draw</button>
+        <button id="rectButton"><kbd>r</kbd>rect</button>
+        <button id="freeButton"><kbd>q</kbd>laso</button>
+        <button id="copyButton"><kbd>C-c</kbd><img src="img/icons/edit-copy.png" alt="copy"></button>
+        <button id="pastButton"><kbd>C-v</kbd><img src="img/icons/edit-paste.png" alt="paste"></button>
+        <button id="saveButton"><kbd>C-s</kbd><img src="img/icons/media-floppy.png" alt="save"></button>
+        <button id="deleButton"><kbd>C-d</kbd><img src="img/icons/user-trash-full.png" alt="delete"></button>
+    </div>
+<!--    <button id="copyButton">Copy image</button>-->
+    <span id="thicknessText"></span>
+
+    <!--<div id="placeImageYN" class="ok-cancel-buttons">
+        <button id="okButton" class="ok">OK</button>
+        <button id="cancelButton" class="cancel">CANCEL</button>
+    </div>-->
+
+    <div id="cursorCircle"></div>
 </div>
 
 <script src="js/site.js"></script>
