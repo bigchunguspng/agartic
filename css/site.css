@@ -17,12 +17,27 @@ button {
     position: relative;
     cursor: grab;
     background-image: url("../img/bg.png");
+    background-color: #beae9e;
     background-repeat: repeat;
     background-size: 256px 128px;
     background-position: 10px 10px;
     image-rendering: pixelated;
     &.dragging {
         cursor: grabbing;
+    }
+    & .tips {
+        position: absolute;
+        margin: 40px;
+        color: #7c7367;
+        text-shadow: 0 0 3px #eadbc8;
+        transform: rotate(-15deg);
+        & kbd {
+            font-family: "Jersey 10", monospace, sans-serif;
+            padding-inline: 3px;
+            border: 1px solid #93897c;
+            box-shadow: 0 2px 0 #776c60;
+            border-radius: 3px;
+        }
     }
     & #canvas-wrapper {
         width: 1280px;
@@ -41,10 +56,12 @@ button {
         }
     }
     & .panel {
+        user-select: none;
+        -webkit-user-select: none;
         position: absolute;
         left: 50%;
         transform: translateX(-50%);
-        margin: 5px;
+        margin-block: 5px;
         height: 36px;
         display: flex;
         align-items: center;
@@ -60,12 +77,14 @@ button {
             width: 100%;
             height: 100%;
             background-image: url("../img/bg-light.png");
+            background-color: #e5e6ea;
             background-repeat: repeat;
             background-size: 64px 64px;
+            border-top: 1px solid white;
         }
         & button {
             height: 100%;
-            padding: 0 12px;
+            padding: 0 6px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -87,6 +106,10 @@ button {
                     color: #ffe;
                 }
             }
+            &:focus {
+                outline: 1px dashed #babcc2;
+                outline-offset: -3px;
+            }
         }
         & img {
             width: 24px;
@@ -96,6 +119,7 @@ button {
             min-width: 8px;
             text-align: center;
             background-image: url("../img/bg-gray.png");
+            background-color: #63636b;
             background-repeat: repeat;
             padding-inline: 3px;
             margin-right: 5px;

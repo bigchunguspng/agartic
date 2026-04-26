@@ -13,37 +13,56 @@
 <body>
 
 <div id="viewport">
+    <div class="tips 1">
+        <p>Scroll holding <kbd>Ctrl</kbd> to zoom</p>
+        <p>Scroll holding <kbd>Ctrl</kbd> and <kbd>Shift</kbd> to zoom faster</p>
+        <p>Hold <kbd>Shift</kbd> to scroll ←horizontally→</p>
+    </div>
+
     <div id="canvas-wrapper">
         <canvas id="canvas-draw"></canvas>
         <canvas id="canvas-over"></canvas>
     </div>
+
     <div id="panel-a" class="panel">
         <div>color picker, text params, brush params, ...</div>
     </div>
-    <div id="panel-b" class="panel">
-        <button id="zoom1Button"><kbd>C-1</kbd><img src="img/icons/zoom-original.png" alt="delete"></button>
-        <button id="zoom2Button"><kbd>C-2</kbd><img src="img/icons/zoom-fit-best.png" alt="delete"></button>
-        <button id="undoButton"><kbd>C-z</kbd>undo ←</button>
-        <button id="redoButton"><kbd>C-Z</kbd>redo →</button>
-        <button id="infoButton"><kbd>`</kbd>info</button>
-        <button id="pickButton"><kbd>c</kbd>color</button>
-        <button id="fillButton"><kbd>f</kbd>fill</button>
-        <button id="dragButton"><kbd>x</kbd>move</button>
-        <button id="drawButton"><kbd>d</kbd>draw</button>
-        <button id="rectButton"><kbd>r</kbd>rect</button>
-        <button id="freeButton"><kbd>q</kbd>laso</button>
-        <button id="copyButton"><kbd>C-c</kbd><img src="img/icons/edit-copy.png" alt="copy"></button>
-        <button id="pastButton"><kbd>C-v</kbd><img src="img/icons/edit-paste.png" alt="paste"></button>
-        <button id="saveButton"><kbd>C-s</kbd><img src="img/icons/media-floppy.png" alt="save"></button>
-        <button id="deleButton"><kbd>C-d</kbd><img src="img/icons/user-trash-full.png" alt="delete"></button>
-    </div>
-<!--    <button id="copyButton">Copy image</button>-->
-    <span id="thicknessText"></span>
 
-    <!--<div id="placeImageYN" class="ok-cancel-buttons">
-        <button id="okButton" class="ok">OK</button>
-        <button id="cancelButton" class="cancel">CANCEL</button>
-    </div>-->
+    <div id="panel-b" class="panel">
+        <button id="button_zoom_1"> <kbd>C-1</kbd>
+            <img src="img/icons/zoom-original.png">
+        </button>
+        <button id="button_zoom_2"> <kbd>C-2</kbd>
+            <img src="img/icons/zoom-fit-best.png">
+        </button>
+        <button id="button_zoom_out">
+            <img src="img/icons/zoom-out.png">
+        </button>
+        <button id="button_zoom_in">
+            <img src="img/icons/zoom-in.png">
+        </button>
+        <button id="button_undo">   <kbd>C-z</kbd>  undo ←  </button>
+        <button id="button_redo">   <kbd>C-Z</kbd>  redo →  </button>
+        <button id="button_info">   <kbd>`</kbd>    info    </button>
+        <button id="tool_pick">     <kbd>c</kbd>    color   </button>
+        <button id="button_fill">   <kbd>f</kbd>    fill    </button>
+        <button id="tool_drag">     <kbd>x</kbd>    move    </button>
+        <button id="tool_draw">     <kbd>d</kbd>    draw    </button>
+        <button id="tool_rect">     <kbd>r</kbd>    rect    </button>
+        <button id="tool_laso">     <kbd>q</kbd>    laso    </button>
+        <button id="button_copy">   <kbd>C-c</kbd>
+            <img src="img/icons/edit-copy.png">
+        </button>
+        <button id="button_paste">  <kbd>C-v</kbd>
+            <img src="img/icons/edit-paste.png">
+        </button>
+        <button id="button_save">   <kbd>C-s</kbd>
+            <img src="img/icons/media-floppy.png">
+        </button>
+        <button id="button_delete"> <kbd>C-d</kbd>
+            <img src="img/icons/user-trash-full.png">
+        </button>
+    </div>
 
     <div id="cursorCircle"></div>
 </div>

@@ -3,7 +3,12 @@
 const vp = document.getElementById("viewport");
 const cw = document.getElementById("canvas-wrapper");
 
-// region CANVAS ZOOM / DRAG
+button_zoom_in  = document.getElementById("button_zoom_in");
+button_zoom_out = document.getElementById("button_zoom_out");
+button_zoom_1   = document.getElementById("button_zoom_1");
+button_zoom_2   = document.getElementById("button_zoom_2");
+
+// region CANVAS ZOOM
 
 let cw_true_w = 1280;
 let cw_true_h = 720;
@@ -32,53 +37,19 @@ function cw_resize_fit_screen() {
     cw_y = (vh - cw_true_h * cw_scale) / 2;
     cw_transform();
 }
-function cw_zoom(e, out) {
+function cw_zoom(e, out, centered) {
     let factor = e.shiftKey ? CW_ZOOM_FACTOR_SHIFT : CW_ZOOM_FACTOR_DEFAULT;
     if (out) factor = 1 / factor;
-    const cw_true_x = (mouse.x - cw_x) / cw_scale;
-    const cw_true_y = (mouse.y - cw_y) / cw_scale;
+    const x = centered ? window.w / 2 : mouse.x;
+    const y = centered ? window.h / 2 : mouse.y;
+    const cw_true_x = (x - cw_x) / cw_scale;
+    const cw_true_y = (y - cw_y) / cw_scale;
     cw_scale = Math.max(MIN_CW_SCALE, Math.min(MAX_CW_SCALE, cw_scale * factor));
-    cw_x = mouse.x - cw_true_x * cw_scale;
-    cw_y = mouse.y - cw_true_y * cw_scale;
+    cw_x = x - cw_true_x * cw_scale;
+    cw_y = y - cw_true_y * cw_scale;
     cw_transform();
 }
 
-let   cw_dragging = false;
-const cw_dragging_from = {
-    mouse_x: 0,
-    mouse_y: 0,
-    cw_x: 0,
-    cw_y: 0,
-};
-function cw_drag_start() {
-    if (!cw_dragging){
-        cw_dragging = true;
-        vp.classList.add('dragging');
-        cw_dragging_from.mouse_x = mouse.x;
-        cw_dragging_from.mouse_y = mouse.y;
-        cw_dragging_from.cw_x = cw_x;
-        cw_dragging_from.cw_y = cw_y;
-    }
-}
-function cw_drag() {
-    if (cw_dragging) {
-        cw_x = cw_dragging_from.cw_x + (mouse.x - cw_dragging_from.mouse_x);
-        cw_y = cw_dragging_from.cw_y + (mouse.y - cw_dragging_from.mouse_y);
-        cw_transform();
-    }
-}
-function cw_drag_stop() {
-    if (cw_dragging) {
-        cw_dragging = false;
-        vp.classList.remove("dragging");
-    }
-}
-
-function SETUP_CW_DRAG() {
-    vp    .addEventListener('mousedown',  e => e.button === 0 && cw_drag_start());
-    window.addEventListener('mousemove', () => cw_drag());
-    window.addEventListener('mouseup',   () => cw_drag_stop());
-}
 function SETUP_CW_ZOOM() {
     vp.addEventListener("wheel", e => {
         e.preventDefault();
@@ -104,12 +75,60 @@ function SETUP_CW_ZOOM() {
         }
     });
     window.addEventListener("resize", () => {
+        // keep canvase position relative to center
         cw_x -= (window.w - window.innerWidth)  / 2;
         cw_y -= (window.h - window.innerHeight) / 2;
         cw_transform();
     });
+    button_zoom_1   .addEventListener("click", _ => cw_resize_true_scale());
+    button_zoom_2   .addEventListener("click", _ => cw_resize_fit_screen());
+    button_zoom_in  .addEventListener("click", e => cw_zoom(e, false, true));
+    button_zoom_out .addEventListener("click", e => cw_zoom(e, true, true));
 }
 // endregion
+
+// region CANVAS DRAG
+
+let   cw_dragging = false;
+const cw_dragging_from = {
+    mouse_x: 0,
+    mouse_y: 0,
+    cw_x: 0,
+    cw_y: 0,
+};
+
+function cw_drag_start() {
+    if (!cw_dragging) {
+        cw_dragging = true;
+        vp.classList.add('dragging');
+        cw_dragging_from.mouse_x = mouse.x;
+        cw_dragging_from.mouse_y = mouse.y;
+        cw_dragging_from.cw_x = cw_x;
+        cw_dragging_from.cw_y = cw_y;
+    }
+}
+function cw_drag() {
+    if (cw_dragging) {
+        cw_x = cw_dragging_from.cw_x + (mouse.x - cw_dragging_from.mouse_x);
+        cw_y = cw_dragging_from.cw_y + (mouse.y - cw_dragging_from.mouse_y);
+        cw_transform();
+    }
+}
+function cw_drag_stop() {
+    if (cw_dragging) {
+        cw_dragging = false;
+        vp.classList.remove("dragging");
+    }
+}
+
+function SETUP_CW_DRAG() {
+    vp    .addEventListener('mousedown', e => e.button === 0 && cw_drag_start());
+    window.addEventListener('mousemove', _ => cw_drag());
+    window.addEventListener('mouseup',   _ => cw_drag_stop());
+}
+// endregion
+
+// region HACKS
 
 const mouse = { x: 0, y: 0 };
 
@@ -131,6 +150,7 @@ function SETUP_HOOKS_POST() {
         window.h = window.innerHeight;
     });
 }
+// endregion
 
 // region INIT
 SETUP_HOOKS_PRE();
