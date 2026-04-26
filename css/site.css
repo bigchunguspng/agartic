@@ -30,13 +30,20 @@ button {
         margin: 40px;
         color: #7c7367;
         text-shadow: 0 0 3px #eadbc8;
-        transform: rotate(-15deg);
         & kbd {
             font-family: "Jersey 10", monospace, sans-serif;
             padding-inline: 3px;
             border: 1px solid #93897c;
             box-shadow: 0 2px 0 #776c60;
             border-radius: 3px;
+        }
+        &.a {
+            transform: rotate(-15deg);
+        }
+        &.b {
+            left: 600px;
+            bottom: 25px;
+            transform: rotate(-5deg);
         }
     }
     & #canvas-wrapper {
