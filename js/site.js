@@ -29,8 +29,8 @@ const panel_aux_items = Array.from(panel_aux.children);
 let tool_active;
 
 function tool_activate(tool) {
-    tools.forEach(x => x.classList.remove("on"));
-    tool.classList.add('on');
+    tools.forEach(x => x.classList.remove("active"));
+    tool.classList.add('active');
     tool_active = tool;
     panel_aux_items.forEach(x => x.classList.toggle('hide', !x.classList.contains(tool.id)));
     if (tool_active !== tool_drag) cw_drag_stop();
