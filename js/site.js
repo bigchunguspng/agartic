@@ -1,12 +1,55 @@
-// ELEMENTS
+// region ELEMENTS
 
 const vp = document.getElementById("viewport");
 const cw = document.getElementById("canvas-wrapper");
+const canvasA = document.getElementById('canvas-draw');
+const canvasB = document.getElementById('canvas-over');
 
-button_zoom_in  = document.getElementById("button_zoom_in");
-button_zoom_out = document.getElementById("button_zoom_out");
-button_zoom_1   = document.getElementById("button_zoom_1");
-button_zoom_2   = document.getElementById("button_zoom_2");
+const button_zoom_in  = document.getElementById("button_zoom_in");
+const button_zoom_out = document.getElementById("button_zoom_out");
+const button_zoom_1   = document.getElementById("button_zoom_1");
+const button_zoom_2   = document.getElementById("button_zoom_2");
+
+const tool_pick = document.getElementById("tool_pick");
+const tool_drag = document.getElementById("tool_drag");
+const tool_draw = document.getElementById("tool_draw");
+const tool_rect = document.getElementById("tool_rect");
+const tool_laso = document.getElementById("tool_laso");
+
+const panel_main = document.getElementById("panel-main");
+const panel_aux  = document.getElementById("panel-aux");
+
+// endregion
+
+// region TOOLS
+
+const tools = [tool_pick, tool_drag, tool_draw, tool_rect, tool_laso];
+const panel_aux_items = Array.from(panel_aux.children);
+
+let tool_active;
+
+function tool_activate(tool) {
+    tools.forEach(x => x.classList.remove("on"));
+    tool.classList.add('on');
+    tool_active = tool;
+    panel_aux_items.forEach(x => x.classList.toggle('hide', !x.classList.contains(tool.id)));
+    if (tool_active !== tool_drag) cw_drag_stop();
+}
+function SETUP_TOOLS() {
+    tool_activate(tool_draw);
+    panel_main.addEventListener("click", e => {
+        const tool = tools.find(x => x.contains(e.target));
+        if (tool) tool_activate(tool);
+    });
+    window.addEventListener("keydown", e => {
+       if      (e.key === 'c') e.preventDefault() || tool_activate(tool_pick);
+       else if (e.key === 'x') e.preventDefault() || tool_activate(tool_drag);
+       else if (e.key === 'd') e.preventDefault() || tool_activate(tool_draw);
+       else if (e.key === 'r') e.preventDefault() || tool_activate(tool_rect);
+       else if (e.key === 'q') e.preventDefault() || tool_activate(tool_laso);
+    });
+}
+// endregion
 
 // region CANVAS ZOOM
 
@@ -128,6 +171,14 @@ function SETUP_CW_DRAG() {
 }
 // endregion
 
+// region HISTORY
+
+// endregion
+
+// region DRAW
+
+// endregion
+
 // region HACKS
 
 const mouse = { x: 0, y: 0 };
@@ -154,6 +205,7 @@ function SETUP_HOOKS_POST() {
 
 // region INIT
 SETUP_HOOKS_PRE();
+SETUP_TOOLS();
 SETUP_CW_DRAG();
 SETUP_CW_ZOOM();
 SETUP_HOOKS_POST();

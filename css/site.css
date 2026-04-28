@@ -5,6 +5,11 @@ html, body {
     background: #efefef;
     font-family: "Iosevka Charon Mono", monospace, sans-serif;
 }
+::selection {
+    background-color: black;
+    color: gold;
+    text-shadow: none;
+}
 button {
     all: unset;
     box-sizing: border-box;
@@ -77,13 +82,17 @@ button {
         border-radius: 2px;
         text-shadow: 0 0 5px rgba(0,0,0,0.15);
         box-shadow: 0 3px 0 #666;
-        &#panel-a {
+        &#panel-aux {
             & > * {
-                border-radius: 3px;
+                /*border-radius: 3px;*/
                 padding-inline: 10px;
             }
+            & #out_thickness > span {
+                min-width: 24px;
+                text-align: right;
+            }
         }
-        &#panel-b {
+        &#panel-main {
             bottom: 0;
         }
         & > * {
@@ -100,13 +109,9 @@ button {
             max-height: 36px;
             display: flex;
             align-items: center;
-        }
-        & button {
-            height: 100%;
-            padding: 0 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            &.hide {
+                display: none;
+            }
             &:nth-last-child(n+2) {
                 border-right: 1px solid #666;
             }
@@ -115,6 +120,16 @@ button {
             }
             &:nth-last-child(1){
                 border-radius: 0 3px 3px 0;
+            }
+        }
+        & button {
+            height: 100%;
+            padding: 0 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            &[id^="tool"] span {
+                font-style: italic;
             }
             &:hover {
                 background-image:
@@ -130,6 +145,14 @@ button {
             &:focus {
                 outline: 1px dashed #babcc2;
                 outline-offset: -3px;
+            }
+            &.on {
+                &[id^="tool"] span {
+                    font-weight: bold;
+                }
+                & kbd {
+                    color: gold;
+                }
             }
         }
         & img {
