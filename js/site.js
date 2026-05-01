@@ -29,6 +29,9 @@ const butt_paste    = document.getElementById('button_paste');
 const butt_save     = document.getElementById('button_save');
 const butt_delete   = document.getElementById('button_delete');
 
+const butt_bs_less  = document.getElementById('button_thickness_less');
+const butt_bs_more  = document.getElementById('button_thickness_more');
+
 const butt_imgv_ok  = document.getElementById('okButton');
 const butt_imgv_no  = document.getElementById('cancelButton');
 
@@ -408,6 +411,8 @@ function set_thickness(value) {
         brush_cursor_move_and_resize(x, y, r);
     }
 }
+function thickness_less(e) { set_thickness(e.shiftKey ? Math.floor(thickness / 1.5) : thickness - 1); }
+function thickness_more(e) { set_thickness(e.shiftKey ? Math.ceil (thickness * 1.5) : thickness + 1); }
 function brush_cursor_move_and_resize(x, y, r) {
     const difference = (r - thickness) / 2;
     const style  = brush_cursor.style;
@@ -417,6 +422,8 @@ function brush_cursor_move_and_resize(x, y, r) {
     style.top  = `${y + difference}px`;
 }
 function SETUP_DRAWING() {
+    butt_bs_less.onclick = thickness_less;
+    butt_bs_more.onclick = thickness_more;
     canvas_draw.addEventListener('mousedown', e => {
         console.log('canvasA.mousedown SETUP_DRAWING');
         drawing_start();
@@ -431,8 +438,8 @@ function SETUP_DRAWING() {
     });
     document.addEventListener('keydown', e => {
         if (!drawing_enabled || e.ctrlKey || e.altKey) return;
-        if      (e.code === 'KeyW') set_thickness(e.shiftKey ? Math.ceil (thickness * 1.5) : thickness + 1);
-        else if (e.code === 'KeyS') set_thickness(e.shiftKey ? Math.floor(thickness / 1.5) : thickness - 1);
+        if      (e.code === 'KeyW') thickness_more(e);
+        else if (e.code === 'KeyS') thickness_less(e);
     });
 }
 function SETUP_BRUSH_CURSOR() {
