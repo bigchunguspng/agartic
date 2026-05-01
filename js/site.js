@@ -1,39 +1,61 @@
+"use strict";
+
 // region ELEMENTS
 
-const vp = document.getElementById("viewport");
-const cw = document.getElementById("canvas-wrapper");
-const canvasA = document.getElementById('canvas-draw');
-const canvasB = document.getElementById('canvas-over');
+const vp            = document.getElementById("viewport");
+const cw            = document.getElementById("canvas-wrapper");
+const canvas_draw   = document.getElementById('canvas-draw');
+const canvas_over   = document.getElementById('canvas-over');
 
-const button_zoom_in  = document.getElementById("button_zoom_in");
-const button_zoom_out = document.getElementById("button_zoom_out");
-const button_zoom_1   = document.getElementById("button_zoom_1");
-const button_zoom_2   = document.getElementById("button_zoom_2");
+const panel_main    = document.getElementById("panel-main");
+const panel_aux     = document.getElementById("panel-aux");
 
-const tool_pick = document.getElementById("tool_pick");
-const tool_drag = document.getElementById("tool_drag");
-const tool_draw = document.getElementById("tool_draw");
-const tool_rect = document.getElementById("tool_rect");
-const tool_laso = document.getElementById("tool_laso");
+const butt_zoom_1   = document.getElementById("button_zoom_1");
+const butt_zoom_2   = document.getElementById("button_zoom_2");
+const butt_zoom_in  = document.getElementById("button_zoom_in");
+const butt_zoom_out = document.getElementById("button_zoom_out");
 
-const panel_main = document.getElementById("panel-main");
-const panel_aux  = document.getElementById("panel-aux");
+const tool_pick     = document.getElementById("tool_pick");
+const tool_drag     = document.getElementById("tool_drag");
+const tool_draw     = document.getElementById("tool_draw");
+const tool_rect     = document.getElementById("tool_rect");
+const tool_laso     = document.getElementById("tool_laso");
+const tool_imgv     = document.getElementById('tool_imgv');
+
+const butt_undo     = document.getElementById('button_undo');
+const butt_redo     = document.getElementById('button_redo');
+const butt_copy     = document.getElementById('button_copy');
+const butt_paste    = document.getElementById('button_paste');
+const butt_save     = document.getElementById('button_save');
+const butt_delete   = document.getElementById('button_delete');
+
+const butt_imgv_ok  = document.getElementById('okButton');
+const butt_imgv_no  = document.getElementById('cancelButton');
+
+const brush_cursor  = document.getElementById('brush_cursor');
+const out_thickness = document.getElementById('out_thickness');
 
 // endregion
 
 // region TOOLS
 
-const tools = [tool_pick, tool_drag, tool_draw, tool_rect, tool_laso];
+const tools = [tool_pick, tool_drag, tool_draw, tool_rect, tool_laso, tool_imgv];
 const panel_aux_items = Array.from(panel_aux.children);
 
-let tool_active;
+let tool_active, tool_last;
 
 function tool_activate(tool) {
+    if      (tool_active === tool_drag) cw_drag_disable();
+    else if (tool_active === tool_draw) drawing_disable();
+
     tools.forEach(x => x.classList.remove("active"));
     tool.classList.add('active');
+    tool_last = tool_active;
     tool_active = tool;
     panel_aux_items.forEach(x => x.classList.toggle('hide', !x.classList.contains(tool.id)));
-    if (tool_active !== tool_drag) cw_drag_stop();
+
+    if      (tool_active === tool_drag) cw_drag_enable();
+    else if (tool_active === tool_draw) drawing_enable();
 }
 function SETUP_TOOLS() {
     tool_activate(tool_draw);
@@ -42,11 +64,12 @@ function SETUP_TOOLS() {
         if (tool) tool_activate(tool);
     });
     window.addEventListener("keydown", e => {
-       if      (e.key === 'c') e.preventDefault() || tool_activate(tool_pick);
-       else if (e.key === 'x') e.preventDefault() || tool_activate(tool_drag);
-       else if (e.key === 'd') e.preventDefault() || tool_activate(tool_draw);
-       else if (e.key === 'r') e.preventDefault() || tool_activate(tool_rect);
-       else if (e.key === 'q') e.preventDefault() || tool_activate(tool_laso);
+        if (e.ctrlKey || e.altKey || e.shiftKey) return;
+        if      (e.key === 'c') e.preventDefault() || tool_activate(tool_pick);
+        else if (e.key === 'x') e.preventDefault() || tool_activate(tool_drag);
+        else if (e.key === 'd') e.preventDefault() || tool_activate(tool_draw);
+        else if (e.key === 'r') e.preventDefault() || tool_activate(tool_rect);
+        else if (e.key === 'q') e.preventDefault() || tool_activate(tool_laso);
     });
 }
 // endregion
@@ -64,7 +87,7 @@ const CW_ZOOM_FACTOR_DEFAULT = 1.1;
 const CW_ZOOM_FACTOR_SHIFT   = 1.35;
 
 function cw_transform() {
-    cw.style.transform = `translate(${cw_x}px, ${cw_y}px) scale(${cw_scale})`;
+    cw.style.transform = `translate(${Math.floor(cw_x)}px, ${Math.floor(cw_y)}px) scale(${cw_scale})`;
 }
 function cw_resize_true_scale() {
     cw_scale = 1;
@@ -111,7 +134,7 @@ function SETUP_CW_ZOOM() {
                 e.preventDefault();
                 cw_resize_true_scale();
             }
-            if (e.key === '2') {
+            else if (e.key === '2') {
                 e.preventDefault();
                 cw_resize_fit_screen();
             }
@@ -123,16 +146,17 @@ function SETUP_CW_ZOOM() {
         cw_y -= (window.h - window.innerHeight) / 2;
         cw_transform();
     });
-    button_zoom_1   .addEventListener("click", _ => cw_resize_true_scale());
-    button_zoom_2   .addEventListener("click", _ => cw_resize_fit_screen());
-    button_zoom_in  .addEventListener("click", e => cw_zoom(e, false, true));
-    button_zoom_out .addEventListener("click", e => cw_zoom(e, true, true));
+    butt_zoom_1   .addEventListener("click", _ => cw_resize_true_scale());
+    butt_zoom_2   .addEventListener("click", _ => cw_resize_fit_screen());
+    butt_zoom_in  .addEventListener("click", e => cw_zoom(e, false, true));
+    butt_zoom_out .addEventListener("click", e => cw_zoom(e, true, true));
 }
 // endregion
 
 // region CANVAS DRAG
 
-let   cw_dragging = false;
+let   cw_draggable = false;
+let   cw_dragging  = false;
 const cw_dragging_from = {
     mouse_x: 0,
     mouse_y: 0,
@@ -140,8 +164,17 @@ const cw_dragging_from = {
     cw_y: 0,
 };
 
+function cw_drag_enable() {
+    vp.classList.add("draggable");
+    cw_draggable = true;
+}
+function cw_drag_disable() {
+    vp.classList.remove("draggable");
+    cw_draggable = false;
+    cw_drag_stop();
+}
 function cw_drag_start() {
-    if (!cw_dragging) {
+    if (cw_draggable && !cw_dragging) {
         cw_dragging = true;
         vp.classList.add('dragging');
         cw_dragging_from.mouse_x = mouse.x;
@@ -151,7 +184,7 @@ function cw_drag_start() {
     }
 }
 function cw_drag() {
-    if (cw_dragging) {
+    if (cw_draggable && cw_dragging) {
         cw_x = cw_dragging_from.cw_x + (mouse.x - cw_dragging_from.mouse_x);
         cw_y = cw_dragging_from.cw_y + (mouse.y - cw_dragging_from.mouse_y);
         cw_transform();
@@ -173,10 +206,573 @@ function SETUP_CW_DRAG() {
 
 // region HISTORY
 
+let history_past   = [];
+let history_future = [];
+
+function history_load() {
+    console.log('fetchAndDrawHistory');
+    history_past   = JSON.parse(localStorage.getItem('history_past'))   ?? [];
+    history_future = JSON.parse(localStorage.getItem('history_future')) ?? [];
+    history_draw();
+}
+function history_save() {
+    localStorage.setItem('history_past',   JSON.stringify(history_past));
+    localStorage.setItem('history_future', JSON.stringify(history_future));
+}
+function history_draw() {
+    console.log('drawHistory');
+    const i_last_image = history_past.findLastIndex(x => x.type === 1);
+    if   (i_last_image < 0) {
+        cd_clear();
+        history_draw_pen_from(i_last_image + 1);
+    }
+    else // start from the last image to avoid blinking
+        cd_apply_history_img(history_past[i_last_image].data).then(_ => history_draw_pen_from(i_last_image + 1));
+}
+function history_draw_pen_from(offset) {
+    for (let i = offset; i < history_past.length; i++) {
+        const item = history_past[i];
+        cd_apply_history_pen(item.pen, item.path);
+    }
+}
+function history_write(item) {
+    console.log('historyPush');
+    history_past.push(item);
+    history_future = [];
+    history_save();
+}
+function history_undo() {
+    console.log('undo');
+    if (placing_image) return placing_image_exit();
+    if (history_past.length) {
+        history_future.push(history_past.pop());
+        history_draw();
+        history_save();
+    }
+}
+function history_redo() {
+    console.log('redo');
+    if (history_future.length) {
+        history_past.push(history_future.pop());
+        history_draw();
+        history_save();
+    }
+}
+function history_clear() {
+    history_past   = [];
+    history_future = [];
+    cd_clear();
+    history_save();
+}
+function SETUP_HISTORY_SYNC() {
+    window.addEventListener('storage', (e) => {
+        if      (e.key === 'history_past') {
+            history_past   = JSON.parse(e.newValue);
+            history_draw();
+        }
+        else if (e.key === "history_future")
+            history_future = JSON.parse(e.newValue);
+    });
+}
+function SETUP_HISTORY_CTL() {
+    butt_undo.onclick = history_undo;
+    butt_redo.onclick = history_redo;
+    butt_delete.onclick = history_clear;
+    document.addEventListener('keydown', function (e) {
+        console.log('document.keydown');
+        if      (e.ctrlKey && !e.shiftKey && !e.altKey) {
+            if      (e.code === 'KeyY') e.preventDefault() || history_redo();
+            else if (e.code === 'KeyZ') e.preventDefault() || history_undo();
+            else if (e.code === "KeyD") e.preventDefault() || history_clear();
+        }
+        else if (e.ctrlKey &&  e.shiftKey && !e.altKey) {
+            if      (e.code === 'KeyZ') e.preventDefault() || history_redo();
+        }
+    });
+}
 // endregion
 
-// region DRAW
+// region DRAWING
 
+const cd_ctx = canvas_draw.getContext('2d');
+
+let drawing_enabled = false;
+let drawing_now     = false;
+let pen_path = [];
+let pen;
+let color = "black";
+let thickness;
+
+function drawing_enable() {
+    brush_cursor.classList.add('drawing');
+    canvas_draw.classList.add('drawing');
+    drawing_enabled = true;
+}
+function drawing_disable() {
+    brush_cursor.classList.remove('drawing');
+    canvas_draw.classList.remove('drawing');
+    drawing_enabled = false;
+    drawing_stop();
+}
+function drawing_start() {
+    if (drawing_enabled && !drawing_now) {
+        drawing_now = true;
+        pen = { color, size: thickness };
+        pen_path = [];
+        pen_path.push(getCanvasCursorXY());
+    }
+}
+function drawing_draw() {
+    if (drawing_enabled && drawing_now) {
+        const prev = pen_path[pen_path.length - 1];
+        const curr = getCanvasCursorXY();
+        pen_path.push(curr);
+        cd_draw_segment(prev.x, prev.y, curr.x, curr.y, pen);
+    }
+}
+function drawing_stop() {
+    if (drawing_now) {
+        drawing_now = false;
+        if (pen_path.length === 1) {
+            const p = getCanvasCursorXY();
+            cd_draw_dot(p.x, p.y, pen);
+        }
+        history_write({ type: 0, pen, path: pen_path });
+    }
+}
+
+function cd_clear() {
+    console.log('clearCanvas');
+    cd_ctx.fillStyle = "white";
+    cd_ctx.fillRect(0, 0, canvas_draw.width, canvas_draw.height);
+}
+function cd_draw_segment(x1, y1, x2, y2, pen) {
+    console.log('drawCanvas');
+    cd_ctx.globalCompositeOperation  = 'source-over'; // todo experiment with values
+    cd_ctx.lineJoin = cd_ctx.lineCap = 'round';
+    cd_ctx.strokeStyle = pen.color;
+    cd_ctx.lineWidth   = pen.size;
+    cd_ctx.beginPath();
+    cd_ctx.moveTo(x1, y1); // todo optimize?
+    cd_ctx.lineTo(x2, y2);
+    cd_ctx.stroke();
+}
+function cd_draw_dot(x, y, pen) {
+    cd_ctx.fillStyle = pen.color;
+    cd_ctx.beginPath();
+    cd_ctx.arc(x, y, pen.size / 2, 0, 2 * Math.PI);
+    cd_ctx.fill();
+}
+function cd_draw_pasted_image() {
+    console.log('drawPastedImage');
+    const { img, x, y, w, h } = placing_image;
+    cd_ctx.drawImage(img, x, y, w, h);
+    const data = canvas_draw.toDataURL("image/webp", 0.95);
+
+    placing_image_exit();
+    history_write({ type: 1, data });
+}
+function cd_apply_history_pen(pen, path) {
+    console.log('applyPenDrawing');
+    if (path.length > 1) {
+        let prev = path[0];
+        for (let i = 1; i < path.length; i++) {
+            const curr = path[i];
+            cd_draw_segment(prev.x, prev.y, curr.x, curr.y, pen);
+            prev = curr;
+        }
+    }
+    else {
+        const p = path[0];
+        cd_draw_dot(p.x, p.y, pen);
+    }
+}
+function cd_apply_history_img(data) {
+    console.log('drawImage');
+    return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve(image);
+        image.onerror = reject;
+        image.src = data;
+    }).then(img => { cd_ctx.drawImage(img, 0, 0); });
+}
+function set_thickness(value) {
+    console.log('setThickness');
+    thickness = Math.min(Math.max(value, 1), 999);
+    out_thickness.innerText = thickness;
+    const style = brush_cursor.style;
+    if   (style.display !== 'none') {
+        const x = parseFloat(style.left);
+        const y = parseFloat(style.top);
+        const r = parseFloat(style.width);
+        brush_cursor_move_and_resize(x, y, r);
+    }
+}
+function brush_cursor_move_and_resize(x, y, r) {
+    const difference = (r - thickness) / 2;
+    const style  = brush_cursor.style;
+    style.width  = `${thickness}px`;
+    style.height = `${thickness}px`;
+    style.left = `${x + difference}px`;
+    style.top  = `${y + difference}px`;
+}
+function SETUP_DRAWING() {
+    canvas_draw.addEventListener('mousedown', e => {
+        console.log('canvasA.mousedown SETUP_DRAWING');
+        drawing_start();
+    });
+    document.addEventListener('mousemove', e => {
+        console.log('document.mousemove SETUP_DRAWING');
+        drawing_draw();
+    });
+    document.addEventListener('mouseup', e => {
+        console.log('document.mouseup SETUP_DRAWING');
+        drawing_stop();
+    });
+    document.addEventListener('keydown', e => {
+        if (!drawing_enabled || e.ctrlKey || e.altKey) return;
+        if      (e.code === 'KeyW') set_thickness(e.shiftKey ? Math.ceil (thickness * 1.5) : thickness + 1);
+        else if (e.code === 'KeyS') set_thickness(e.shiftKey ? Math.floor(thickness / 1.5) : thickness - 1);
+    });
+}
+function SETUP_BRUSH_CURSOR() {
+    canvas_draw.addEventListener('mouseenter', () => {
+        console.log('canvasA.mouseenter CURSOR');
+        brush_cursor.classList.add('on-canvas');
+        brush_cursor_move_and_resize(mouse.x, mouse.y, 0);
+    });
+    canvas_draw.addEventListener('mouseleave', () => {
+        console.log('canvasA.mouseleave CURSOR');
+        brush_cursor.classList.remove('on-canvas');
+    });
+    canvas_draw.addEventListener('mousemove', e => {
+        console.log('canvasA.mousemove CURSOR');
+        const { x, y } = getCanvasCursorXY();
+        const [r, g, b, a] = cd_ctx.getImageData(x, y, 1, 1).data;
+        brush_cursor_move_and_resize(e.pageX, e.pageY, 0);
+        brush_cursor.style.borderColor = (a > 0 && r + g + b < 480) ? 'white' : 'black';
+        // ^ todo thickness > 10 && take 4 more samples && some are dark and some are light - make gray (add it to move and resize func)
+    });
+}
+// endregion
+
+// region ...
+function cw_setup_size() {
+    canvas_draw.width = 1280;
+    canvas_draw.height = 720;
+    canvas_over.width = 1280;
+    canvas_over.height = 720;
+}
+
+/** Cursor position relative to canvas 0,0. */
+function getCanvasCursorXY() {
+    console.log('getCanvasCursorXY');
+    const rect = canvas_draw.getBoundingClientRect();
+    const x = Math.floor(mouse.x - rect.left);
+    const y = Math.floor(mouse.y - rect.top);
+    console.log(mouse.x, mouse.y, x, y, rect.left, rect.top);
+    return { x, y };
+}
+// todo use this ↓ in keydown / copy / paste handlers
+/** Check if something on page is selected OR text input field is active. */
+function isActiveOrInSelection() {
+    console.log('isActiveOrInSelection');
+    const selection = window.getSelection();
+    if (selection && !selection.isCollapsed) return 1;
+
+    const a = document.activeElement;
+    if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable)) return 1;
+
+    return 0;
+}
+// endregion
+
+// region IMAGE COPY
+function cd_copy_to_clipboard() {
+    console.log('copyCanvasToClipboard');
+    const callback = (blob) => {
+        let item = new ClipboardItem({ 'image/png': blob });
+        navigator.clipboard.write([item]).then(fx_cd_copy);
+    };
+    canvas_draw.toBlob(callback, 'image/png');
+}
+function fx_cd_copy() {
+    canvas_over.classList.add('fx-copied');
+    setTimeout(() => canvas_over.classList.remove('fx-copied'), 500);
+}
+function SETUP_IMAGE_COPY() {
+    butt_copy.onclick = cd_copy_to_clipboard;
+    document.addEventListener('copy', _ => {
+        console.log('document.copy');
+        if (isActiveOrInSelection()) return;
+
+        cd_copy_to_clipboard();
+    });
+}
+// endregion
+
+// region IMAGE PASTE
+function image_paste(e) {
+    console.log('image_paste');
+    const items = Array.from(e.clipboardData?.items);
+    const item  = items.find(i => i.type.startsWith("image"));
+    if   (item) loadPastedImage(item.getAsFile());
+}
+function image_paste_button() {
+    console.log("image_paste_button");
+    navigator.clipboard.read().then(items => {
+        const item  = items.find(i => i.types.some(t => t.startsWith('image')));
+        if   (item) {
+            const type = item.types.find(t => t.startsWith('image'));
+            item.getType(type).then(blob => loadPastedImage(blob));
+        }
+    });
+}
+function loadPastedImage(blob) {
+    if (placing_image) cd_draw_pasted_image();
+
+    const url = URL.createObjectURL(blob);
+    const img = new Image();
+    img.onload = () => {
+        placing_image_start(img);
+        URL.revokeObjectURL(url);
+    };
+    img.src = url;
+}
+function SETUP_IMAGE_PASTE() {
+    butt_paste  .onclick = image_paste_button;
+    butt_imgv_ok.onclick = cd_draw_pasted_image;
+    butt_imgv_no.onclick = placing_image_exit;
+    document.addEventListener('paste', function (e) {
+        console.log('document.paste');
+        if (!isActiveOrInSelection()) image_paste(e);
+    });
+    document.addEventListener('keydown', e => {
+        console.log('document.keydown');
+        if (placing_image && !isActiveOrInSelection()) {
+            if      (e.code === "Enter" ) cd_draw_pasted_image();
+            else if (e.code === "Tab"   ) cd_draw_pasted_image();
+            else if (e.code === "Space" ) cd_draw_pasted_image();
+            else if (e.code === "Escape") placing_image_exit();
+        }
+    });
+}
+// endregion
+
+// region PLACING IMAGE
+
+const  HANDLE_SIZE = 10;
+const MIN_IMG_SIZE = 10;
+
+const co_ctx = canvas_over.getContext('2d');
+
+let placing_image = null;
+
+let dragOffset = { x: 0, y: 0 }; // cursor coords rel. to pasted image 0,0
+let imgv_grabbed_handle = null;
+
+function placing_image_start(img) {
+    console.log('enterImagePlacingMode');
+    placing_image = {
+        img: img,
+        x: 0,
+        y: 0,
+        w:     img.width,
+        h:     img.height,
+        ratio: img.width / img.height,
+        is_dragging: false,
+        is_resizing: false
+    };
+    tool_activate(tool_imgv);
+    placing_image_RENDER();
+    vp.classList.add('img-draggable');
+    canvas_over.classList.add('img-draggable');
+}
+function placing_image_exit() {
+    console.log('exitImagePlacingMode');
+    placing_image = null;
+    tool_activate(tool_last);
+    vp.classList.remove('img-draggable');
+    vp.classList.remove('img-dragging');
+    canvas_over.classList.remove('img-draggable');
+}
+function placing_image_RENDER() {
+    console.log('renderPastedImageOverlay');
+    co_ctx.clearRect(0, 0, canvas_over.width, canvas_over.height);
+    if (placing_image) {
+        const { img, x, y, w, h } = placing_image;
+        co_ctx.drawImage(img, x, y, w, h);
+        co_ctx.fillStyle = 'black';
+        for (const handle of imgv_get_handles()) {
+            let hx = handle.x - HANDLE_SIZE / 2;
+            let hy = handle.y - HANDLE_SIZE / 2;
+            co_ctx.fillRect(hx, hy, HANDLE_SIZE, HANDLE_SIZE);
+        }
+        window.requestAnimationFrame(placing_image_RENDER);
+        // todo ^ request frame only if something changed
+    }
+}
+function imgv_get_cursor_style() {
+    console.log('getImagePlacementModeCursor');
+    const cc = getCanvasCursorXY();
+    const  handle = imgv_get_handle_name_at_cc(cc.x, cc.y);
+    return handle === 'nw' || handle === 'se' ? 'nwse-resize'
+        :  handle === 'ne' || handle === 'sw' ? 'nesw-resize' : '';
+}
+function imgv_get_handle_name_at_cc(cc_x, cc_y) {
+    console.log('getHandleUnderMouse');
+    for (const handle of imgv_get_handles()) {
+        if (cc_x >= handle.x - HANDLE_SIZE &&
+            cc_x <= handle.x + HANDLE_SIZE &&
+            cc_y >= handle.y - HANDLE_SIZE &&
+            cc_y <= handle.y + HANDLE_SIZE) return handle.name;
+    }
+}
+function imgv_get_handles() {
+    console.log('getResizeHandles');
+    const s = placing_image;
+    return [
+        { name: "nw", x: s.x,       y: s.y       },
+        { name: "ne", x: s.x + s.w, y: s.y       },
+        { name: "sw", x: s.x,       y: s.y + s.h },
+        { name: "se", x: s.x + s.w, y: s.y + s.h },
+    ];
+}
+function imgv_interaction_start() {
+    if (placing_image) {
+        const cc = getCanvasCursorXY();
+        const { x, y, w, h } = placing_image;
+        if (imgv_grabbed_handle = imgv_get_handle_name_at_cc(cc.x, cc.y)) {
+            placing_image.is_resizing = true;
+        }
+        else if (
+            cc.x >= x && cc.x <= x + w &&
+            cc.y >= y && cc.y <= y + h
+            // ^ if cursor inside image
+        ) {
+            placing_image.is_dragging = true;
+            // canvas_over.style.cursor = 'grabbing';
+            vp.classList.add('img-dragging');
+            dragOffset.x = cc.x - x;
+            dragOffset.y = cc.y - y;
+        }
+    }
+}
+function imgv_interact(e) { // todo comprehend and clear this mess
+    if (!placing_image) return;
+    const s = placing_image;
+    if (!s.is_dragging && !s.is_resizing) {
+        // change cursor if over handle
+        return canvas_over.style.cursor = imgv_get_cursor_style();
+    }
+    // DRAG / RESIZE IMAGE
+    const cc = getCanvasCursorXY();
+    if (s.is_dragging && s.is_resizing) { // dragging by handle
+        if (!e.ctrlKey) { // ctrl is released
+            // stop drag - continue resizing
+            s.is_dragging = false;
+            vp.classList.remove('img-dragging');
+        }
+    }
+    if      (s.is_dragging) {
+        s.x = cc.x - dragOffset.x;
+        s.y = cc.y - dragOffset.y;
+    }
+    else if (s.is_resizing) {
+        if (e.ctrlKey) {
+            // resizing, ctrl joins - start dragging
+            s.is_dragging = true;
+            vp.classList.add('img-dragging');
+            dragOffset.x = cc.x - s.x;
+            dragOffset.y = cc.y - s.y;
+            return;
+        }
+        // old ?
+        const ox = s.x;
+        const oy = s.y;
+        const ow = s.w;
+        const oh = s.h;
+
+        switch (imgv_grabbed_handle) {
+            case "nw":
+                s.w = ow + (ox - cc.x);
+                s.h = oh + (oy - cc.y);
+                s.x = cc.x;
+                s.y = cc.y;
+                break;
+            case "ne":
+                s.w = cc.x - ox;
+                s.h = oh + (oy - cc.y);
+                s.y = cc.y;
+                break;
+            case "sw":
+                s.w = ow + (ox - cc.x);
+                s.h = cc.y - oy;
+                s.x = cc.x;
+                break;
+            case "se":
+                s.w = cc.x - ox;
+                s.h = cc.y - oy;
+                break;
+        }
+        if (e.shiftKey) {
+            if (imgv_grabbed_handle.endsWith('w')) {
+                let w = oh * s.ratio;
+                s.x += s.w - w
+                s.w = w;
+            }
+            else {
+                s.w = oh * s.ratio;
+            }
+        }
+        s.w = Math.max(s.w, MIN_IMG_SIZE);
+        s.h = Math.max(s.h, MIN_IMG_SIZE);
+    }
+}
+function imgv_interaction_stop() {
+    if (placing_image) {
+        placing_image.is_dragging = false;
+        placing_image.is_resizing = false;
+        vp.classList.remove('img-dragging');
+    }
+    imgv_grabbed_handle = null;
+}
+function SETUP_IMAGE_PLACING() {
+    document.addEventListener("mousedown", imgv_interaction_start);
+    document.addEventListener("mousemove", imgv_interact);
+    document.addEventListener("mouseup",   imgv_interaction_stop);
+}
+// endregion
+
+// region COLOR ------ TODO!!!!!
+let eyeDropping = false;
+let eyeDropColor = 'white';
+
+function SETUP_COLOR_PICKER() {
+    canvas_draw.addEventListener('mousemove', _ => {
+        console.log('canvasA.mousemove');
+        if (eyeDropping) {
+            const { x, y } = getCanvasCursorXY();
+            const [r, g, b] = cd_ctx.getImageData(x, y, 1, 1).data;
+            eyeDropColor = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+            updateInputColor(eyeDropColor);
+        }
+    });
+    canvas_draw.addEventListener('click', _ => {
+        console.log('canvasA.click');
+        if (eyeDropping) {
+            setColor(eyeDropColor);
+            exitEyeDropping();
+        }
+    });
+    document.addEventListener('keydown', e => {
+        console.log('document.keydown');
+        if (!isActiveOrInSelection()) {
+            if      (e.code === 'KeyE')                enterEyeDropping();
+            else if (e.key === 'Escape' && eyeDropping) exitEyeDropping();
+        }
+    });
+}
 // endregion
 
 // region HACKS
@@ -186,14 +782,14 @@ const mouse = { x: 0, y: 0 };
 function SETUP_HOOKS_PRE() {
     window.w = window.innerWidth;
     window.h = window.innerHeight;
+    window.addEventListener('mouseenter', e => {
+        mouse.x = e.clientX;
+        mouse.y = e.clientY;
+    }, { capture: true });
     window.addEventListener('mousemove', e => {
         mouse.x = e.clientX;
         mouse.y = e.clientY;
-
-        if (cw_dragging) {
-            cw_drag();
-        }
-    });
+    }, { capture: true });
 }
 function SETUP_HOOKS_POST() {
     window.addEventListener("resize", () => {
@@ -205,9 +801,24 @@ function SETUP_HOOKS_POST() {
 
 // region INIT
 SETUP_HOOKS_PRE();
-SETUP_TOOLS();
-SETUP_CW_DRAG();
-SETUP_CW_ZOOM();
+{
+    SETUP_HISTORY_SYNC();
+    SETUP_HISTORY_CTL();
+    SETUP_TOOLS();
+    SETUP_CW_DRAG();
+    SETUP_CW_ZOOM();
+    SETUP_DRAWING();
+    SETUP_BRUSH_CURSOR();
+    SETUP_IMAGE_COPY();
+    SETUP_IMAGE_PASTE();
+    SETUP_IMAGE_PLACING();
+    SETUP_COLOR_PICKER();
+}
 SETUP_HOOKS_POST();
-cw_resize_true_scale();
+{
+    cw_setup_size();
+    cw_resize_true_scale();
+    set_thickness(3);
+    history_load();
+}
 // endregion

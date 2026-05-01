@@ -9,18 +9,21 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Iosevka+Charon+Mono:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&family=Jersey+10&display=swap">
     <link rel="stylesheet" href="css/site.css"/>
+    <script src="js/site.js" defer></script>
 </head>
 <body>
 
 <div id="viewport">
 
-    <div class="tips a">
-        <p>Scroll holding <kbd>Ctrl</kbd> to zoom</p>
-        <p>Scroll holding <kbd>Ctrl</kbd> and <kbd>Shift</kbd> to zoom faster</p>
-        <p>Hold <kbd>Shift</kbd> to scroll ←horizontally→</p>
-    </div>
-    <div class="tips b">
-        <p>Both <kbd>C-Z</kbd> and <kbd>C-y</kbd> work as <i>redo</i></p>
+    <div class="tips">
+        <div class="a">
+            <p>Scroll holding <kbd>Ctrl</kbd> to zoom</p>
+            <p>Scroll holding <kbd>Ctrl</kbd> and <kbd>Shift</kbd> to zoom faster</p>
+            <p>Hold <kbd>Shift</kbd> to scroll ←horizontally→</p>
+        </div>
+        <div class="b">
+            <p>Both <kbd>C-Z</kbd> and <kbd>C-y</kbd> work as <i>redo</i></p>
+        </div>
     </div>
 
     <div id="canvas-wrapper">
@@ -41,8 +44,8 @@
         <button id="button_zoom_in">
             <img src="img/icons/zoom-in.png">
         </button>
-        <button id="button_undo">   <kbd>C-z</kbd>  <span>undo ←</span></button>
-        <button id="button_redo">   <kbd>C-Z</kbd>  <span>redo →</span></button>
+        <button id="button_undo">   <kbd>C-z</kbd>  <img src="img/icons/view-refresh.png" style="transform: scaleX(-1)"></button>
+        <button id="button_redo">   <kbd>C-Z</kbd>  <img src="img/icons/view-refresh.png"></button>
         <button id="button_info">   <kbd>`</kbd>    <span>info  </span></button>
         <button id="tool_pick">     <kbd>c</kbd>    <span>color </span></button>
         <button id="button_fill">   <kbd>f</kbd>    <span>fill  </span></button>
@@ -50,6 +53,7 @@
         <button id="tool_draw">     <kbd>d</kbd>    <span>draw  </span></button>
         <button id="tool_rect">     <kbd>r</kbd>    <span>rect  </span></button>
         <button id="tool_laso">     <kbd>q</kbd>    <span>laso  </span></button>
+        <button id="tool_imgv" class="hide"></button>
         <button id="button_copy">   <kbd>C-c</kbd>
             <img src="img/icons/edit-copy.png">
         </button>
@@ -76,18 +80,30 @@
             <kbd>w</kbd>
             <img src="img/icons/list-add.png">
         </button>
-        <div id="out_thickness"
+        <div
              class="tool_draw">
             <img src="img/icons/media-record.png">
-            <span>3</span>
+            <span id="out_thickness">3</span>
         </div>
+        <!-- PLACING IMAGE -->
+        <button id="cancelButton"
+                class="tool_imgv cancel">
+            <kbd>Esc</kbd>
+            <!--            <span>CANCEL</span>-->
+            <img src="img/icons/dialog-error.png">
+        </button>
+        <button id="okButton"
+                class="tool_imgv ok">
+            <kbd>Tab</kbd>
+<!--            <span>OK</span>-->
+            <img src="img/icons/emblem-default.png">
+        </button>
         <!-- ... -->
     </div>
 
-    <div id="cursorCircle"></div>
 </div>
 
-<script src="js/site.js"></script>
+<div id="brush_cursor"></div>
 
 </body>
 </html>
