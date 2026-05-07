@@ -246,7 +246,7 @@ function history_write(item) {
 }
 function history_undo() {
     console.log('undo');
-    if (placing_image) return placing_image_exit();
+    if (imgv) return placing_image_exit();
     if (history_past.length) {
         history_future.push(history_past.pop());
         history_draw();
@@ -368,7 +368,7 @@ function cd_draw_dot(x, y, pen) {
 }
 function cd_draw_pasted_image() {
     console.log('drawPastedImage');
-    const { img, x, y, w, h } = placing_image;
+    const { img, x, y, w, h } = imgv;
     cd_ctx.drawImage(img, x, y, w, h);
     const data = canvas_draw.toDataURL("image/webp", 0.95);
 
@@ -536,7 +536,7 @@ function image_paste_button() {
     });
 }
 function loadPastedImage(blob) {
-    if (placing_image) cd_draw_pasted_image();
+    if (imgv) cd_draw_pasted_image();
 
     const url = URL.createObjectURL(blob);
     const img = new Image();
@@ -556,7 +556,7 @@ function SETUP_IMAGE_PASTE() {
     });
     document.addEventListener('keydown', e => {
         console.log('document.keydown');
-        if (placing_image && !isActiveOrInSelection()) {
+        if (imgv && !isActiveOrInSelection()) {
             if      (e.code === "Enter" ) cd_draw_pasted_image();
             else if (e.code === "Tab"   ) cd_draw_pasted_image();
             else if (e.code === "Space" ) cd_draw_pasted_image();
@@ -573,22 +573,27 @@ const MIN_IMG_SIZE = 10;
 
 const co_ctx = canvas_over.getContext('2d');
 
-let placing_image = null;
+let imgv = null;
 
 let dragOffset = { x: 0, y: 0 }; // cursor coords rel. to pasted image 0,0
-let imgv_grabbed_handle = null;
 
 function placing_image_start(img) {
     console.log('enterImagePlacingMode');
-    placing_image = {
+    imgv = {
         img: img,
         x: 0,
         y: 0,
         w:     img.width,
         h:     img.height,
         ratio: img.width / img.height,
+        grabbed_handle: null,
         is_dragging: false,
-        is_resizing: false
+        is_resizing: false,
+        is_mouseup: () => !imgv.is_dragging && !imgv.is_resizing,
+        mod_keep_ratio:     false, // shift
+        mod_drag_by_handle: false, //  ctrl
+        mod_drag_canvas:    false, //   alt
+        mod_resize_centered: () => imgv.mod_drag_canvas,
     };
     tool_activate(tool_imgv);
     placing_image_RENDER();
@@ -597,7 +602,7 @@ function placing_image_start(img) {
 }
 function placing_image_exit() {
     console.log('exitImagePlacingMode');
-    placing_image = null;
+    imgv = null;
     tool_activate(tool_last);
     vp.classList.remove('img-draggable');
     vp.classList.remove('img-dragging');
@@ -606,8 +611,8 @@ function placing_image_exit() {
 function placing_image_RENDER() {
     console.log('renderPastedImageOverlay');
     co_ctx.clearRect(0, 0, canvas_over.width, canvas_over.height);
-    if (placing_image) {
-        const { img, x, y, w, h } = placing_image;
+    if (imgv) {
+        const { img, x, y, w, h } = imgv;
         co_ctx.drawImage(img, x, y, w, h);
         co_ctx.fillStyle = 'black';
         for (const handle of imgv_get_handles()) {
@@ -637,7 +642,7 @@ function imgv_get_handle_name_at_cc(cc_x, cc_y) {
 }
 function imgv_get_handles() {
     console.log('getResizeHandles');
-    const s = placing_image;
+    const s = imgv;
     return [
         { name: "nw", x: s.x,       y: s.y       },
         { name: "ne", x: s.x + s.w, y: s.y       },
@@ -646,108 +651,118 @@ function imgv_get_handles() {
     ];
 }
 function imgv_interaction_start() {
-    if (placing_image) {
+    if (imgv) {
         const cc = getCanvasCursorXY();
-        const { x, y, w, h } = placing_image;
-        if (imgv_grabbed_handle = imgv_get_handle_name_at_cc(cc.x, cc.y)) {
-            placing_image.is_resizing = true;
+        const { x, y } = imgv;
+        if (imgv.grabbed_handle = imgv_get_handle_name_at_cc(cc.x, cc.y)) {
+            imgv.is_resizing = true;
         }
-        else if (
-            cc.x >= x && cc.x <= x + w &&
-            cc.y >= y && cc.y <= y + h
-            // ^ if cursor inside image
-        ) {
-            placing_image.is_dragging = true;
-            // canvas_over.style.cursor = 'grabbing';
+        else if (imgv.mod_drag_canvas) {
+            cw_drag_enable();
+            cw_drag_start();
+        }
+        else { // image drag
+            imgv.is_dragging = true;
             vp.classList.add('img-dragging');
             dragOffset.x = cc.x - x;
             dragOffset.y = cc.y - y;
         }
     }
 }
-function imgv_interact(e) { // todo comprehend and clear this mess
-    if (!placing_image) return;
-    const s = placing_image;
-    if (!s.is_dragging && !s.is_resizing) {
-        // change cursor if over handle
-        return canvas_over.style.cursor = imgv_get_cursor_style();
-    }
-    // DRAG / RESIZE IMAGE
-    const cc = getCanvasCursorXY();
-    if (s.is_dragging && s.is_resizing) { // dragging by handle
-        if (!e.ctrlKey) { // ctrl is released
-            // stop drag - continue resizing
-            s.is_dragging = false;
-            vp.classList.remove('img-dragging');
+function imgv_interaction_apply_mods(e) {
+    if (imgv) {
+        if (!imgv.mod_keep_ratio && e.shiftKey) {
+            // ~
         }
-    }
-    if      (s.is_dragging) {
-        s.x = cc.x - dragOffset.x;
-        s.y = cc.y - dragOffset.y;
-    }
-    else if (s.is_resizing) {
-        if (e.ctrlKey) {
-            // resizing, ctrl joins - start dragging
-            s.is_dragging = true;
-            vp.classList.add('img-dragging');
-            dragOffset.x = cc.x - s.x;
-            dragOffset.y = cc.y - s.y;
-            return;
+        else if (imgv.mod_keep_ratio && !e.shiftKey) {
+            // ~
         }
-        // old ?
-        const ox = s.x;
-        const oy = s.y;
-        const ow = s.w;
-        const oh = s.h;
+        if (!imgv.mod_drag_by_handle && e.ctrlKey) {
+            if (imgv.is_resizing) {
+                const cc = getCanvasCursorXY();
+                dragOffset.x = cc.x - imgv.x;
+                dragOffset.y = cc.y - imgv.y;
+            }
+        }
+        else if (imgv.mod_drag_by_handle && !e.ctrlKey) {
+            // ~
+        }
+        if (!imgv.mod_drag_canvas && e.altKey) {
+            if (imgv.is_dragging) cw_drag_enable() || cw_drag_start();
+        }
+        else if (imgv.mod_drag_canvas && !e.altKey) {
+            if (cw_draggable) cw_drag_disable();
+            e.preventDefault(); // firefox menu bar
+        }
+        imgv.mod_keep_ratio     = e.shiftKey;
+        imgv.mod_drag_by_handle = e. ctrlKey;
+        imgv.mod_drag_canvas    = e.  altKey;
+        imgv_interact(); // todo or call simplified version imgv_update()
+    }
+}
+function imgv_interact() {
+    if (!imgv) return;
 
-        switch (imgv_grabbed_handle) {
-            case "nw":
-                s.w = ow + (ox - cc.x);
-                s.h = oh + (oy - cc.y);
-                s.x = cc.x;
-                s.y = cc.y;
-                break;
-            case "ne":
-                s.w = cc.x - ox;
-                s.h = oh + (oy - cc.y);
-                s.y = cc.y;
-                break;
-            case "sw":
-                s.w = ow + (ox - cc.x);
-                s.h = cc.y - oy;
-                s.x = cc.x;
-                break;
-            case "se":
-                s.w = cc.x - ox;
-                s.h = cc.y - oy;
-                break;
-        }
-        if (e.shiftKey) {
-            if (imgv_grabbed_handle.endsWith('w')) {
-                let w = oh * s.ratio;
-                s.x += s.w - w
-                s.w = w;
+    if (imgv.is_mouseup()) {
+        if (!imgv.mod_drag_by_handle) // change cursor if over handle
+            canvas_over.style.cursor = imgv_get_cursor_style();
+    }
+    else {
+        const cc = getCanvasCursorXY();
+
+        if (imgv.is_dragging) {
+            if (imgv.mod_drag_canvas) {
+                cw_drag();
             }
-            else {
-                s.w = oh * s.ratio;
+            else { // drag image
+                imgv.x = cc.x - dragOffset.x;
+                imgv.y = cc.y - dragOffset.y;
             }
         }
-        s.w = Math.max(s.w, MIN_IMG_SIZE);
-        s.h = Math.max(s.h, MIN_IMG_SIZE);
+        else if (imgv.is_resizing) {
+            if (imgv.mod_drag_by_handle) {
+                imgv.x = cc.x - dragOffset.x;
+                imgv.y = cc.y - dragOffset.y;
+            }
+            const  og = { x: imgv.x, y: imgv.y, w: imgv.w, h: imgv.h };
+            const   g = imgv.grabbed_handle;
+            let w = g.includes('w') ? og.w + (og.x - cc.x) : cc.x - og.x;
+            let h = g.includes('n') ? og.h + (og.y - cc.y) : cc.y - og.y;
+            w = Math.max(w, MIN_IMG_SIZE);
+            h = Math.max(h, MIN_IMG_SIZE);
+            if (imgv.mod_keep_ratio) {
+                if (w / h > imgv.ratio) {
+                    w = Math.max(h * imgv.ratio, MIN_IMG_SIZE);
+                    h = w / imgv.ratio;
+                }
+                else {
+                    h = Math.max(w / imgv.ratio, MIN_IMG_SIZE);
+                    w = h * imgv.ratio;
+                }
+            }
+            const    c = imgv.mod_resize_centered();
+            imgv.x = c ? og.x + (og.w - w) / 2 : g.includes('w') ? og.x + og.w - w : og.x;
+            imgv.y = c ? og.y + (og.h - h) / 2 : g.includes('n') ? og.y + og.h - h : og.y;
+            imgv.w = w;
+            imgv.h = h;
+        }
     }
 }
 function imgv_interaction_stop() {
-    if (placing_image) {
-        placing_image.is_dragging = false;
-        placing_image.is_resizing = false;
+    if (imgv) {
+        imgv.is_dragging = false;
+        imgv.is_resizing = false;
+        imgv.grabbed_handle = null;
         vp.classList.remove('img-dragging');
+        if (imgv.mod_drag_canvas) cw_drag_disable();
     }
-    imgv_grabbed_handle = null;
 }
 function SETUP_IMAGE_PLACING() {
     document.addEventListener("mousedown", imgv_interaction_start);
     document.addEventListener("mousemove", imgv_interact);
     document.addEventListener("mouseup",   imgv_interaction_stop);
+    document.addEventListener("keydown",   imgv_interaction_apply_mods);
+    document.addEventListener("keyup",     imgv_interaction_apply_mods);
 }
 // endregion
 
