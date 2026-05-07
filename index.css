@@ -30,7 +30,7 @@ button {
     height: 100vh;
     overflow: hidden;
     position: relative;
-    background-image: url("../img/bg.png");
+    background-image: url("img/bg.png");
     background-color: #beae9e;
     background-repeat: repeat;
     background-size: 256px 128px;
@@ -128,7 +128,7 @@ button {
             height: 100%;
             background-image:
                linear-gradient(0deg, rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.15)),
-               url("../img/bg-light.png");
+               url("img/bg-light.png");
             background-color: #e5e6ea;
             background-repeat: repeat;
             background-size: 64px 64px;
@@ -162,7 +162,7 @@ button {
             &:hover {
                 background-image:
                    linear-gradient(0deg, rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.15)),
-                   url("../img/bg-dark.png");
+                   url("img/bg-dark.png");
                 background-repeat: repeat;
                 background-size: 64px 64px;
                 transform: translateY(1px);
@@ -192,7 +192,7 @@ button {
             text-align: center;
             background-image:
                linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.1)),
-                url("../img/bg-gray.png");
+                url("img/bg-gray.png");
             background-color: #63636b;
             background-repeat: repeat;
             padding-inline: 3px;
