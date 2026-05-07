@@ -68,11 +68,11 @@ function SETUP_TOOLS() {
     });
     window.addEventListener("keydown", e => {
         if (e.ctrlKey || e.altKey || e.shiftKey) return;
-        if      (e.key === 'c') e.preventDefault() || tool_activate(tool_pick);
-        else if (e.key === 'x') e.preventDefault() || tool_activate(tool_drag);
-        else if (e.key === 'd') e.preventDefault() || tool_activate(tool_draw);
-        else if (e.key === 'r') e.preventDefault() || tool_activate(tool_rect);
-        else if (e.key === 'q') e.preventDefault() || tool_activate(tool_laso);
+        if      (e.code === 'KeyC') e.preventDefault() || tool_activate(tool_pick);
+        else if (e.code === 'KeyX') e.preventDefault() || tool_activate(tool_drag);
+        else if (e.code === 'KeyD') e.preventDefault() || tool_activate(tool_draw);
+        else if (e.code === 'KeyR') e.preventDefault() || tool_activate(tool_rect);
+        else if (e.code === 'KeyQ') e.preventDefault() || tool_activate(tool_laso);
     });
 }
 // endregion
@@ -133,7 +133,7 @@ function SETUP_CW_ZOOM() {
     }, { passive: false });
     window.addEventListener("keydown", e => {
         if (e.ctrlKey) {
-            if (e.key === '1') {
+            if      (e.key === '1') {
                 e.preventDefault();
                 cw_resize_true_scale();
             }
@@ -149,8 +149,8 @@ function SETUP_CW_ZOOM() {
         cw_y -= (window.h - window.innerHeight) / 2;
         cw_transform();
     });
-    butt_zoom_1   .addEventListener("click", _ => cw_resize_true_scale());
-    butt_zoom_2   .addEventListener("click", _ => cw_resize_fit_screen());
+    butt_zoom_1   .addEventListener("click", cw_resize_true_scale);
+    butt_zoom_2   .addEventListener("click", cw_resize_fit_screen);
     butt_zoom_in  .addEventListener("click", e => cw_zoom(e, false, true));
     butt_zoom_out .addEventListener("click", e => cw_zoom(e, true, true));
 }
@@ -202,8 +202,8 @@ function cw_drag_stop() {
 
 function SETUP_CW_DRAG() {
     vp    .addEventListener('mousedown', e => e.button === 0 && cw_drag_start());
-    window.addEventListener('mousemove', _ => cw_drag());
-    window.addEventListener('mouseup',   _ => cw_drag_stop());
+    window.addEventListener('mousemove', cw_drag);
+    window.addEventListener('mouseup',   cw_drag_stop);
 }
 // endregion
 
@@ -230,7 +230,7 @@ function history_draw() {
         history_draw_pen_from(i_last_image + 1);
     }
     else // start from the last image to avoid blinking
-        cd_apply_history_img(history_past[i_last_image].data).then(_ => history_draw_pen_from(i_last_image + 1));
+        cd_apply_history_img(history_past[i_last_image].data).then(() => history_draw_pen_from(i_last_image + 1));
 }
 function history_draw_pen_from(offset) {
     for (let i = offset; i < history_past.length; i++) {
@@ -509,7 +509,7 @@ function fx_cd_copy() {
 }
 function SETUP_IMAGE_COPY() {
     butt_copy.onclick = cd_copy_to_clipboard;
-    document.addEventListener('copy', _ => {
+    document.addEventListener('copy', () => {
         console.log('document.copy');
         if (isActiveOrInSelection()) return;
 
@@ -771,7 +771,7 @@ let eyeDropping = false;
 let eyeDropColor = 'white';
 
 function SETUP_COLOR_PICKER() {
-    canvas_draw.addEventListener('mousemove', _ => {
+    canvas_draw.addEventListener('mousemove', () => {
         console.log('canvasA.mousemove');
         if (eyeDropping) {
             const { x, y } = getCanvasCursorXY();
@@ -780,7 +780,7 @@ function SETUP_COLOR_PICKER() {
             updateInputColor(eyeDropColor);
         }
     });
-    canvas_draw.addEventListener('click', _ => {
+    canvas_draw.addEventListener('click', () => {
         console.log('canvasA.click');
         if (eyeDropping) {
             setColor(eyeDropColor);
@@ -790,8 +790,8 @@ function SETUP_COLOR_PICKER() {
     document.addEventListener('keydown', e => {
         console.log('document.keydown');
         if (!isActiveOrInSelection()) {
-            if      (e.code === 'KeyE')                enterEyeDropping();
-            else if (e.key === 'Escape' && eyeDropping) exitEyeDropping();
+            if      (e.code === 'KeyE')                 enterEyeDropping();
+            else if (e.code === 'Escape' && eyeDropping) exitEyeDropping();
         }
     });
 }
