@@ -495,6 +495,30 @@ function isActiveOrInSelection() {
 }
 // endregion
 
+// region IMAGE SAVE
+function cd_save_image() {
+    canvas_draw.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `agartic-${Date.now()}.png`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    }, 'image/png');
+}
+function SETUP_IMAGE_SAVE() {
+    butt_save.onclick = cd_save_image;
+    document.addEventListener('keydown', e => {
+        if (e.ctrlKey && !e.shiftKey && !e.altKey && e.code === 'KeyS') {
+            e.preventDefault();
+            cd_save_image();
+        }
+    });
+}
+// endregion
+
 // region IMAGE COPY
 function cd_copy_to_clipboard() {
     console.log('copyCanvasToClipboard');
@@ -832,6 +856,7 @@ SETUP_HOOKS_PRE();
     SETUP_CW_ZOOM();
     SETUP_DRAWING();
     SETUP_BRUSH_CURSOR();
+    SETUP_IMAGE_SAVE();
     SETUP_IMAGE_COPY();
     SETUP_IMAGE_PASTE();
     SETUP_IMAGE_PLACING();
