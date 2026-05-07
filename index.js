@@ -91,6 +91,7 @@ const CW_ZOOM_FACTOR_SHIFT   = 1.35;
 
 function cw_transform() {
     cw.style.transform = `translate(${Math.floor(cw_x)}px, ${Math.floor(cw_y)}px) scale(${cw_scale})`;
+    brush_cursor_move_and_resize();
 }
 function cw_resize_true_scale() {
     cw_scale = 1;
@@ -144,7 +145,7 @@ function SETUP_CW_ZOOM() {
         }
     });
     window.addEventListener("resize", () => {
-        // keep canvase position relative to center
+        // keep canvas position relative to center
         cw_x -= (window.w - window.innerWidth)  / 2;
         cw_y -= (window.h - window.innerHeight) / 2;
         cw_transform();
@@ -415,12 +416,12 @@ function set_thickness(value) {
 function thickness_less(e) { set_thickness(e.shiftKey ? Math.floor(thickness / 1.5) : thickness - 1); }
 function thickness_more(e) { set_thickness(e.shiftKey ? Math.ceil (thickness * 1.5) : thickness + 1); }
 function brush_cursor_move_and_resize(x, y, r) {
-    const difference = (r - thickness) / 2;
+    const difference = (r - thickness * cw_scale) / 2;
     const style  = brush_cursor.style;
-    style.width  = `${thickness}px`;
-    style.height = `${thickness}px`;
-    style.left = `${x + difference}px`;
-    style.top  = `${y + difference}px`;
+    style.width  = `${Math.round(thickness * cw_scale)}px`;
+    style.height = `${Math.round(thickness * cw_scale)}px`;
+    style.left = `${Math.round(x + difference)}px`;
+    style.top  = `${Math.round(y + difference)}px`;
 }
 function SETUP_DRAWING() {
     butt_bs_less.onclick = thickness_less;
@@ -466,19 +467,18 @@ function SETUP_BRUSH_CURSOR() {
 
 // region ...
 function cw_setup_size() {
-    canvas_draw.width = 1280;
-    canvas_draw.height = 720;
-    canvas_over.width = 1280;
-    canvas_over.height = 720;
+    canvas_draw.width  = cw_true_w;
+    canvas_draw.height = cw_true_h;
+    canvas_over.width  = cw_true_w;
+    canvas_over.height = cw_true_h;
 }
 
 /** Cursor position relative to canvas 0,0. */
 function getCanvasCursorXY() {
     console.log('getCanvasCursorXY');
     const rect = canvas_draw.getBoundingClientRect();
-    const x = Math.floor(mouse.x - rect.left);
-    const y = Math.floor(mouse.y - rect.top);
-    console.log(mouse.x, mouse.y, x, y, rect.left, rect.top);
+    const x = Math.floor((mouse.x - rect.left) / cw_scale);
+    const y = Math.floor((mouse.y - rect.top ) / cw_scale);
     return { x, y };
 }
 // todo use this ↓ in keydown / copy / paste handlers
