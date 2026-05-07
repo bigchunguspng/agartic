@@ -209,72 +209,73 @@ function SETUP_CW_DRAG() {
 
 // region HISTORY
 
-let history_past   = [];
-let history_future = [];
+let history = [], history_len = 0;
 
 function history_load() {
     console.log('fetchAndDrawHistory');
-    history_past   = JSON.parse(localStorage.getItem('history_past'))   ?? [];
-    history_future = JSON.parse(localStorage.getItem('history_future')) ?? [];
+    history = JSON.parse(localStorage.getItem('history'))    ?? [];
+    history_len =        localStorage.getItem('history_len') ?? 0;
     history_draw();
 }
 function history_save() {
-    localStorage.setItem('history_past',   JSON.stringify(history_past));
-    localStorage.setItem('history_future', JSON.stringify(history_future));
+    localStorage.setItem('history', JSON.stringify(history));
+    localStorage.setItem('history_len', history_len);
 }
 function history_draw() {
     console.log('drawHistory');
-    const i_last_image = history_past.findLastIndex(x => x.type === 1);
+    const i_last_image = history_get_last_image_index() ?? -1;
     if   (i_last_image < 0) {
         cd_clear();
         history_draw_pen_from(i_last_image + 1);
     }
     else // start from the last image to avoid blinking
-        cd_apply_history_img(history_past[i_last_image].data).then(() => history_draw_pen_from(i_last_image + 1));
+        cd_apply_history_img(history[i_last_image].data).then(() => history_draw_pen_from(i_last_image + 1));
+}
+function history_get_last_image_index() {
+    for (let i = history_len - 1; i >= 0; i--) if (history[i].type === 1) return i;
 }
 function history_draw_pen_from(offset) {
-    for (let i = offset; i < history_past.length; i++) {
-        const item = history_past[i];
+    for (let i = offset; i < history_len; i++) {
+        const item = history[i];
         cd_apply_history_pen(item.pen, item.path);
     }
 }
 function history_write(item) {
     console.log('historyPush');
-    history_past.push(item);
-    history_future = [];
+    history[history_len++] = item;
+    history.length = history_len;
     history_save();
 }
 function history_undo() {
     console.log('undo');
     if (imgv) return placing_image_exit();
-    if (history_past.length) {
-        history_future.push(history_past.pop());
+    if (history_len) {
+        history_len--;
         history_draw();
         history_save();
     }
 }
 function history_redo() {
     console.log('redo');
-    if (history_future.length) {
-        history_past.push(history_future.pop());
+    if (history_len < history.length) {
+        history_len++;
         history_draw();
         history_save();
     }
 }
 function history_clear() {
-    history_past   = [];
-    history_future = [];
+    history = [];
+    history_len = 0;
     cd_clear();
     history_save();
 }
 function SETUP_HISTORY_SYNC() {
     window.addEventListener('storage', (e) => {
-        if      (e.key === 'history_past') {
-            history_past   = JSON.parse(e.newValue);
-            history_draw();
-        }
-        else if (e.key === "history_future")
-            history_future = JSON.parse(e.newValue);
+        if      (e.key === 'history')     history = JSON.parse(e.newValue);
+        else if (e.key === "history_len") history_len = e.newValue;
+        else return;
+
+        history_draw();
     });
 }
 function SETUP_HISTORY_CTL() {
