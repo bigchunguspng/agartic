@@ -213,7 +213,6 @@ function SETUP_CW_DRAG() {
 let history = [], history_len = 0;
 
 function history_load() {
-    console.log('fetchAndDrawHistory');
     history = JSON.parse(localStorage.getItem('history'))    ?? [];
     history_len =        localStorage.getItem('history_len') ?? 0;
     history_draw();
@@ -223,7 +222,6 @@ function history_save() {
     localStorage.setItem('history_len', history_len);
 }
 function history_draw() {
-    console.log('drawHistory');
     const i_last_image = history_get_last_image_index() ?? -1;
     if   (i_last_image < 0) {
         cd_clear();
@@ -242,13 +240,11 @@ function history_draw_pen_from(offset) {
     }
 }
 function history_write(item) {
-    console.log('historyPush');
     history[history_len++] = item;
     history.length = history_len;
     history_save();
 }
 function history_undo() {
-    console.log('undo');
     if (imgv) return placing_image_exit();
     if (history_len) {
         history_len--;
@@ -257,7 +253,6 @@ function history_undo() {
     }
 }
 function history_redo() {
-    console.log('redo');
     if (history_len < history.length) {
         history_len++;
         history_draw();
@@ -284,7 +279,6 @@ function SETUP_HISTORY_CTL() {
     butt_redo.onclick = history_redo;
     butt_delete.onclick = history_clear;
     document.addEventListener('keydown', function (e) {
-        console.log('document.keydown');
         if      (e.ctrlKey && !e.shiftKey && !e.altKey) {
             if      (e.code === 'KeyY') e.preventDefault() || history_redo();
             else if (e.code === 'KeyZ') e.preventDefault() || history_undo();
@@ -347,12 +341,10 @@ function drawing_stop() {
 }
 
 function cd_clear() {
-    console.log('clearCanvas');
     cd_ctx.fillStyle = "white";
     cd_ctx.fillRect(0, 0, canvas_draw.width, canvas_draw.height);
 }
 function cd_draw_segment(x1, y1, x2, y2, pen) {
-    console.log('drawCanvas');
     cd_ctx.globalCompositeOperation  = 'source-over'; // todo experiment with values
     cd_ctx.lineJoin = cd_ctx.lineCap = 'round';
     cd_ctx.strokeStyle = pen.color;
@@ -369,7 +361,6 @@ function cd_draw_dot(x, y, pen) {
     cd_ctx.fill();
 }
 function cd_draw_pasted_image() {
-    console.log('drawPastedImage');
     const { img, x, y, w, h } = imgv;
     cd_ctx.drawImage(img, x, y, w, h);
     const data = canvas_draw.toDataURL("image/webp", 0.95);
@@ -378,7 +369,6 @@ function cd_draw_pasted_image() {
     history_write({ type: 1, data });
 }
 function cd_apply_history_pen(pen, path) {
-    console.log('applyPenDrawing');
     if (path.length > 1) {
         let prev = path[0];
         for (let i = 1; i < path.length; i++) {
@@ -393,7 +383,6 @@ function cd_apply_history_pen(pen, path) {
     }
 }
 function cd_apply_history_img(data) {
-    console.log('drawImage');
     return new Promise((resolve, reject) => {
         const image = new Image();
         image.onload = () => resolve(image);
@@ -402,7 +391,6 @@ function cd_apply_history_img(data) {
     }).then(img => { cd_ctx.drawImage(img, 0, 0); });
 }
 function set_thickness(value) {
-    console.log('setThickness');
     thickness = Math.min(Math.max(value, 1), 999);
     out_thickness.innerText = thickness;
     const style = brush_cursor.style;
@@ -426,18 +414,9 @@ function brush_cursor_move_and_resize(x, y, r) {
 function SETUP_DRAWING() {
     butt_bs_less.onclick = thickness_less;
     butt_bs_more.onclick = thickness_more;
-    canvas_draw.addEventListener('mousedown', e => {
-        console.log('canvasA.mousedown SETUP_DRAWING');
-        drawing_start();
-    });
-    document.addEventListener('mousemove', e => {
-        console.log('document.mousemove SETUP_DRAWING');
-        drawing_draw();
-    });
-    document.addEventListener('mouseup', e => {
-        console.log('document.mouseup SETUP_DRAWING');
-        drawing_stop();
-    });
+    canvas_draw.addEventListener('mousedown', drawing_start);
+    document.addEventListener('mousemove',    drawing_draw);
+    document.addEventListener('mouseup',      drawing_stop);
     document.addEventListener('keydown', e => {
         if (!drawing_enabled || e.ctrlKey || e.altKey) return;
         if      (e.code === 'KeyW') thickness_more(e);
@@ -446,16 +425,13 @@ function SETUP_DRAWING() {
 }
 function SETUP_BRUSH_CURSOR() {
     canvas_draw.addEventListener('mouseenter', () => {
-        console.log('canvasA.mouseenter CURSOR');
         brush_cursor.classList.add('on-canvas');
         brush_cursor_move_and_resize(mouse.x, mouse.y, 0);
     });
     canvas_draw.addEventListener('mouseleave', () => {
-        console.log('canvasA.mouseleave CURSOR');
         brush_cursor.classList.remove('on-canvas');
     });
     canvas_draw.addEventListener('mousemove', e => {
-        console.log('canvasA.mousemove CURSOR');
         const { x, y } = getCanvasCursorXY();
         const [r, g, b, a] = cd_ctx.getImageData(x, y, 1, 1).data;
         brush_cursor_move_and_resize(e.pageX, e.pageY, 0);
@@ -475,7 +451,6 @@ function cw_setup_size() {
 
 /** Cursor position relative to canvas 0,0. */
 function getCanvasCursorXY() {
-    console.log('getCanvasCursorXY');
     const rect = canvas_draw.getBoundingClientRect();
     const x = Math.floor((mouse.x - rect.left) / cw_scale);
     const y = Math.floor((mouse.y - rect.top ) / cw_scale);
@@ -484,7 +459,6 @@ function getCanvasCursorXY() {
 // todo use this ↓ in keydown / copy / paste handlers
 /** Check if something on page is selected OR text input field is active. */
 function isActiveOrInSelection() {
-    console.log('isActiveOrInSelection');
     const selection = window.getSelection();
     if (selection && !selection.isCollapsed) return 1;
 
@@ -521,7 +495,6 @@ function SETUP_IMAGE_SAVE() {
 
 // region IMAGE COPY
 function cd_copy_to_clipboard() {
-    console.log('copyCanvasToClipboard');
     const callback = (blob) => {
         let item = new ClipboardItem({ 'image/png': blob });
         navigator.clipboard.write([item]).then(fx_cd_copy);
@@ -535,7 +508,6 @@ function fx_cd_copy() {
 function SETUP_IMAGE_COPY() {
     butt_copy.onclick = cd_copy_to_clipboard;
     document.addEventListener('copy', () => {
-        console.log('document.copy');
         if (isActiveOrInSelection()) return;
 
         cd_copy_to_clipboard();
@@ -545,13 +517,11 @@ function SETUP_IMAGE_COPY() {
 
 // region IMAGE PASTE
 function image_paste(e) {
-    console.log('image_paste');
     const items = Array.from(e.clipboardData?.items);
     const item  = items.find(i => i.type.startsWith("image"));
     if   (item) loadPastedImage(item.getAsFile());
 }
 function image_paste_button() {
-    console.log("image_paste_button");
     navigator.clipboard.read().then(items => {
         const item  = items.find(i => i.types.some(t => t.startsWith('image')));
         if   (item) {
@@ -576,11 +546,9 @@ function SETUP_IMAGE_PASTE() {
     butt_imgv_ok.onclick = cd_draw_pasted_image;
     butt_imgv_no.onclick = placing_image_exit;
     document.addEventListener('paste', function (e) {
-        console.log('document.paste');
         if (!isActiveOrInSelection()) image_paste(e);
     });
     document.addEventListener('keydown', e => {
-        console.log('document.keydown');
         if (imgv && !isActiveOrInSelection()) {
             if      (e.code === "Enter" ) cd_draw_pasted_image();
             else if (e.code === "Tab"   ) cd_draw_pasted_image();
@@ -603,7 +571,6 @@ let imgv = null;
 let dragOffset = { x: 0, y: 0 }; // cursor coords rel. to pasted image 0,0
 
 function placing_image_start(img) {
-    console.log('enterImagePlacingMode');
     imgv = {
         img: img,
         x: 0,
@@ -626,7 +593,6 @@ function placing_image_start(img) {
     canvas_over.classList.add('img-draggable');
 }
 function placing_image_exit() {
-    console.log('exitImagePlacingMode');
     imgv = null;
     tool_activate(tool_last);
     vp.classList.remove('img-draggable');
@@ -634,7 +600,6 @@ function placing_image_exit() {
     canvas_over.classList.remove('img-draggable');
 }
 function placing_image_RENDER() {
-    console.log('renderPastedImageOverlay');
     co_ctx.clearRect(0, 0, canvas_over.width, canvas_over.height);
     if (imgv) {
         const { img, x, y, w, h } = imgv;
@@ -650,14 +615,12 @@ function placing_image_RENDER() {
     }
 }
 function imgv_get_cursor_style() {
-    console.log('getImagePlacementModeCursor');
     const cc = getCanvasCursorXY();
     const  handle = imgv_get_handle_name_at_cc(cc.x, cc.y);
     return handle === 'nw' || handle === 'se' ? 'nwse-resize'
         :  handle === 'ne' || handle === 'sw' ? 'nesw-resize' : '';
 }
 function imgv_get_handle_name_at_cc(cc_x, cc_y) {
-    console.log('getHandleUnderMouse');
     for (const handle of imgv_get_handles()) {
         if (cc_x >= handle.x - HANDLE_SIZE &&
             cc_x <= handle.x + HANDLE_SIZE &&
@@ -666,7 +629,6 @@ function imgv_get_handle_name_at_cc(cc_x, cc_y) {
     }
 }
 function imgv_get_handles() {
-    console.log('getResizeHandles');
     const s = imgv;
     return [
         { name: "nw", x: s.x,       y: s.y       },
@@ -797,7 +759,6 @@ let eyeDropColor = 'white';
 
 function SETUP_COLOR_PICKER() {
     canvas_draw.addEventListener('mousemove', () => {
-        console.log('canvasA.mousemove');
         if (eyeDropping) {
             const { x, y } = getCanvasCursorXY();
             const [r, g, b] = cd_ctx.getImageData(x, y, 1, 1).data;
@@ -806,14 +767,12 @@ function SETUP_COLOR_PICKER() {
         }
     });
     canvas_draw.addEventListener('click', () => {
-        console.log('canvasA.click');
         if (eyeDropping) {
             setColor(eyeDropColor);
             exitEyeDropping();
         }
     });
     document.addEventListener('keydown', e => {
-        console.log('document.keydown');
         if (!isActiveOrInSelection()) {
             if      (e.code === 'KeyE')                 enterEyeDropping();
             else if (e.code === 'Escape' && eyeDropping) exitEyeDropping();
