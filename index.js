@@ -38,6 +38,7 @@ const butt_imgv_no  = document.getElementById('cancelButton');
 const brush_cursor  = document.getElementById('brush_cursor');
 const out_thickness = document.getElementById('out_thickness');
 const input_color   = document.getElementById('input_color');
+const input_color_t = document.getElementById('input_color_txt');
 
 // endregion
 
@@ -70,7 +71,7 @@ function SETUP_TOOLS() {
         if (tool) tool_activate(tool);
     });
     window.addEventListener("keydown", e => {
-        if (e.ctrlKey || e.altKey || e.shiftKey) return;
+        if (e.ctrlKey || e.altKey || e.shiftKey || anyInp()) return;
         if      (e.code === 'KeyC') e.preventDefault() || tool_activate(tool_pick);
         else if (e.code === 'KeyX') e.preventDefault() || tool_activate(tool_drag);
         else if (e.code === 'KeyD') e.preventDefault() || tool_activate(tool_draw);
@@ -282,12 +283,13 @@ function SETUP_HISTORY_CTL() {
     butt_redo.onclick = history_redo;
     butt_delete.onclick = history_clear;
     document.addEventListener('keydown', function (e) {
-        if      (e.ctrlKey && !e.shiftKey && !e.altKey) {
+        if (e.altKey || anyInp()) return;
+        if      (e.ctrlKey && !e.shiftKey) {
             if      (e.code === 'KeyY') e.preventDefault() || history_redo();
             else if (e.code === 'KeyZ') e.preventDefault() || history_undo();
             else if (e.code === "KeyD") e.preventDefault() || history_clear();
         }
-        else if (e.ctrlKey &&  e.shiftKey && !e.altKey) {
+        else if (e.ctrlKey &&  e.shiftKey) {
             if      (e.code === 'KeyZ') e.preventDefault() || history_redo();
         }
     });
@@ -421,7 +423,7 @@ function SETUP_DRAWING() {
     document.addEventListener('mousemove',    drawing_draw);
     document.addEventListener('mouseup',      drawing_stop);
     document.addEventListener('keydown', e => {
-        if (!drawing_enabled || e.ctrlKey || e.altKey) return;
+        if (!drawing_enabled || e.ctrlKey || e.altKey || anyInp()) return;
         if      (e.code === 'KeyW') thickness_more(e);
         else if (e.code === 'KeyS') thickness_less(e);
     });
@@ -459,12 +461,18 @@ function getCanvasCursorXY() {
     const y = Math.floor((mouse.y - rect.top ) / cw_scale);
     return { x, y };
 }
-// todo use this ↓ in keydown / copy / paste handlers
 /** Check if something on page is selected OR text input field is active. */
 function anySel() {
     const selection = window.getSelection();
     if (selection && !selection.isCollapsed) return 1;
 
+    const a = document.activeElement;
+    if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable)) return 1;
+
+    return 0;
+}
+/** Check if any text input field is active. */
+function anyInp() {
     const a = document.activeElement;
     if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable)) return 1;
 
@@ -547,7 +555,7 @@ function SETUP_IMAGE_PASTE() {
     butt_imgv_ok.onclick = cd_draw_pasted_image;
     butt_imgv_no.onclick = placing_image_exit;
     document.addEventListener('paste', function (e) {
-        if (!anySel()) image_paste(e);
+        if (!anyInp()) image_paste(e);
     });
     document.addEventListener('keydown', e => {
         if (imgv && !anySel()) {
@@ -770,31 +778,70 @@ function cp_pick_color() {
     if (cp) {
         const { x, y } = getCanvasCursorXY();
         const [r, g, b] = cd_ctx.getImageData(x, y, 1, 1).data;
-        const hex = ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        const hex = ((r << 16) + (g << 8) + b).toString(16).padStart(6, '0');
         cp_input_update_full(cp_color = '#' + hex);
     }
 }
 function cp_exit_apply(e, value) {
     if (cp) {
-        color = value ?? cp_color;
-        cp_input_update_full(color);
+        cp_apply_color(value);
         cp_exit();
         tool_activate(tool_last);
     }
 }
+function cp_apply_color(value) {
+    color = value ?? cp_color;
+    cp_input_update_full(color);
+}
 function cp_input_update_full(value) {
+    input_color_t.value = value;
+    cp_input_update_from_input(value);
+}
+function cp_input_update_from_input(value) {
     input_color.value = value;
     cp_input_update_accent();
 }
 function cp_input_update_accent() {
     input_color.style.setProperty('--color', input_color.value);
 }
+function validate_color(input) {
+    const style = new Option().style;
+    style.color = input;
+    console.log(style.color);
+    if (style.color !== '') return input;
+    return string_to_color(input);
+}
+function string_to_color(str) {
+    let hash = 5381;
+    for (let i = 0; i < str.length; i++) {
+        hash = (hash * 33) ^ str.charCodeAt(i);
+    }
+    const rgb = hash >>> 0;
+    const r = (rgb >> 16) & 0xff;
+    const g = (rgb >>  8) & 0xff;
+    const b =  rgb        & 0xff;
+    return "#" + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+}
 function SETUP_COLOR_PICKER() {
-    input_color.addEventListener('input',     cp_input_update_accent);
+    input_color  .addEventListener('input',       cp_input_update_accent);
+    input_color_t.addEventListener('input', () => cp_input_update_from_input(validate_color(input_color_t.value)));
+    input_color_t.addEventListener('keydown', e => {
+        if (e.ctrlKey || e.shiftKey || e.altKey) return;
+        if (e.code === 'Enter' || e.code === 'Tab') cp
+            ? cp_exit_apply(e, validate_color(input_color_t.value))
+            : cp_apply_color  (validate_color(input_color_t.value));
+        else if (e.code === 'Escape') cp_apply_color(color);
+        else return;
+        input_color_t.blur() || e.preventDefault();
+    });
+    input_color_t.addEventListener('blur', () => cp_apply_color(color));
     canvas_draw.addEventListener('mousemove', cp_pick_color);
     canvas_draw.addEventListener('click',     cp_exit_apply);
     document.addEventListener('keydown', e => {
-        if (e.code === 'Escape' && !anySel()) cp_exit_apply(e, color);
+        if (e.altKey || e.ctrlKey || anySel())  return;
+        if (e.code === 'Escape' && !e.shiftKey) return cp_exit_apply(e, color);
+        if (e.code === 'KeyC'   &&  e.shiftKey && (drawing_enabled || cp))
+            return input_color_t.focus() || e.preventDefault();
     });
 }
 // endregion
@@ -822,7 +869,12 @@ function SETUP_HOOKS_POST() {
     });
     document.addEventListener('keydown', e => {
         if (e.code === 'Escape' && !e.ctrlKey && !e.shiftKey && !e.altKey && anySel()) {
-            window.getSelection().removeAllRanges();
+            const sel = window.getSelection();
+            if   (sel && !sel.isCollapsed)
+                return sel.removeAllRanges();
+            const el = document.activeElement;
+            if   (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable))
+                return el.selectionStart = el.selectionEnd = 0;
         }
     })
 }
