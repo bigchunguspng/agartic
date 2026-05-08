@@ -266,10 +266,12 @@ function history_redo() {
     }
 }
 function history_clear() {
-    history = [];
-    history_len = 0;
-    cd_clear();
-    history_save();
+    if (confirm("😳 NUKE THE WHOLE THING!?")) {
+        history = [];
+        history_len = 0;
+        cd_clear();
+        history_save();
+    }
 }
 function SETUP_HISTORY_SYNC() {
     window.addEventListener('storage', (e) => {
