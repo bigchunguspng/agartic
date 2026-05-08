@@ -808,7 +808,7 @@ function cp_color_inputs_update_both(value) {
 }
 function input_color_update(value) {
     input_color.value = value;
-    input_color.style.setProperty('--color', input_color.value);
+    input_color.style.setProperty('--color', value);
 }
 function valid_color(input) {
     const style = new Option().style;

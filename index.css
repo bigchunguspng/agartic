@@ -243,6 +243,7 @@ input[type="color"] {
         & img {
             width: 24px;
             height: 24px;
+            image-rendering: auto;
         }
         & kbd {
             min-width: 8px;
