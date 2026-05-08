@@ -37,6 +37,7 @@ const butt_imgv_no  = document.getElementById('cancelButton');
 
 const brush_cursor  = document.getElementById('brush_cursor');
 const out_thickness = document.getElementById('out_thickness');
+const input_color   = document.getElementById('input_color');
 
 // endregion
 
@@ -50,6 +51,7 @@ let tool_active, tool_last;
 function tool_activate(tool) {
     if      (tool_active === tool_drag) cw_drag_disable();
     else if (tool_active === tool_draw) drawing_disable();
+    else if (tool_active === tool_pick) cp_exit();
 
     tools.forEach(x => x.classList.remove("active"));
     tool.classList.add('active');
@@ -59,6 +61,7 @@ function tool_activate(tool) {
 
     if      (tool_active === tool_drag) cw_drag_enable();
     else if (tool_active === tool_draw) drawing_enable();
+    else if (tool_active === tool_pick) cp_start();
 }
 function SETUP_TOOLS() {
     tool_activate(tool_draw);
@@ -458,7 +461,7 @@ function getCanvasCursorXY() {
 }
 // todo use this ↓ in keydown / copy / paste handlers
 /** Check if something on page is selected OR text input field is active. */
-function isActiveOrInSelection() {
+function anySel() {
     const selection = window.getSelection();
     if (selection && !selection.isCollapsed) return 1;
 
@@ -508,9 +511,7 @@ function fx_cd_copy() {
 function SETUP_IMAGE_COPY() {
     butt_copy.onclick = cd_copy_to_clipboard;
     document.addEventListener('copy', () => {
-        if (isActiveOrInSelection()) return;
-
-        cd_copy_to_clipboard();
+        if (!anySel()) cd_copy_to_clipboard();
     });
 }
 // endregion
@@ -546,10 +547,10 @@ function SETUP_IMAGE_PASTE() {
     butt_imgv_ok.onclick = cd_draw_pasted_image;
     butt_imgv_no.onclick = placing_image_exit;
     document.addEventListener('paste', function (e) {
-        if (!isActiveOrInSelection()) image_paste(e);
+        if (!anySel()) image_paste(e);
     });
     document.addEventListener('keydown', e => {
-        if (imgv && !isActiveOrInSelection()) {
+        if (imgv && !anySel()) {
             if      (e.code === "Enter" ) cd_draw_pasted_image();
             else if (e.code === "Tab"   ) cd_draw_pasted_image();
             else if (e.code === "Space" ) cd_draw_pasted_image();
@@ -753,30 +754,47 @@ function SETUP_IMAGE_PLACING() {
 }
 // endregion
 
-// region COLOR ------ TODO!!!!!
-let eyeDropping = false;
-let eyeDropColor = 'white';
+// region COLOR PICKER
 
+let cp = false, cp_color;
+
+function cp_start() {
+    canvas_draw.classList.add("eyedropper");
+    cp = true;
+}
+function cp_exit() {
+    canvas_draw.classList.remove("eyedropper");
+    cp = false;
+}
+function cp_pick_color() {
+    if (cp) {
+        const { x, y } = getCanvasCursorXY();
+        const [r, g, b] = cd_ctx.getImageData(x, y, 1, 1).data;
+        const hex = ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+        cp_input_update_full(cp_color = '#' + hex);
+    }
+}
+function cp_exit_apply(e, value) {
+    if (cp) {
+        color = value ?? cp_color;
+        cp_input_update_full(color);
+        cp_exit();
+        tool_activate(tool_last);
+    }
+}
+function cp_input_update_full(value) {
+    input_color.value = value;
+    cp_input_update_accent();
+}
+function cp_input_update_accent() {
+    input_color.style.setProperty('--color', input_color.value);
+}
 function SETUP_COLOR_PICKER() {
-    canvas_draw.addEventListener('mousemove', () => {
-        if (eyeDropping) {
-            const { x, y } = getCanvasCursorXY();
-            const [r, g, b] = cd_ctx.getImageData(x, y, 1, 1).data;
-            eyeDropColor = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
-            updateInputColor(eyeDropColor);
-        }
-    });
-    canvas_draw.addEventListener('click', () => {
-        if (eyeDropping) {
-            setColor(eyeDropColor);
-            exitEyeDropping();
-        }
-    });
+    input_color.addEventListener('input',     cp_input_update_accent);
+    canvas_draw.addEventListener('mousemove', cp_pick_color);
+    canvas_draw.addEventListener('click',     cp_exit_apply);
     document.addEventListener('keydown', e => {
-        if (!isActiveOrInSelection()) {
-            if      (e.code === 'KeyE')                 enterEyeDropping();
-            else if (e.code === 'Escape' && eyeDropping) exitEyeDropping();
-        }
+        if (e.code === 'Escape' && !anySel()) cp_exit_apply(e, color);
     });
 }
 // endregion
@@ -802,6 +820,11 @@ function SETUP_HOOKS_POST() {
         window.w = window.innerWidth;
         window.h = window.innerHeight;
     });
+    document.addEventListener('keydown', e => {
+        if (e.code === 'Escape' && !e.ctrlKey && !e.shiftKey && !e.altKey && anySel()) {
+            window.getSelection().removeAllRanges();
+        }
+    })
 }
 // endregion
 
@@ -825,6 +848,7 @@ SETUP_HOOKS_POST();
 {
     cw_setup_size();
     cw_resize_true_scale();
+    cp_input_update_full(color);
     set_thickness(3);
     history_load();
 }
