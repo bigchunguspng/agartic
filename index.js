@@ -50,6 +50,8 @@ const panel_aux_items = Array.from(panel_aux.children);
 let tool_active, tool_last;
 
 function tool_activate(tool) {
+    if (tool === tool_active) return;
+
     if      (tool_active === tool_drag) cw_drag_disable();
     else if (tool_active === tool_draw) drawing_disable();
     else if (tool_active === tool_pick) cp_exit();
@@ -462,14 +464,19 @@ function getCanvasCursorXY() {
     return { x, y };
 }
 /** Check if something on page is selected OR text input field is active. */
+
 function anySel() {
-    const selection = window.getSelection();
-    if (selection && !selection.isCollapsed) return 1;
-
-    const a = document.activeElement;
-    if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable)) return 1;
-
-    return 0;
+    const sel = window.getSelection();
+    if   (sel && !sel.isCollapsed)                return true;
+    if (el_is_text_input(document.activeElement)) return true;
+    return false;
+}
+const text_input_types = ['text', 'search', 'email', 'url', 'password', 'tel'];
+function el_is_text_input(el) {
+    return  el && (
+            el.tagName === 'TEXTAREA'
+        ||  el.isContentEditable
+        || (el.tagName === 'INPUT' && text_input_types.includes(el.type)));
 }
 /** Check if any text input field is active. */
 function anyInp() {
@@ -764,7 +771,7 @@ function SETUP_IMAGE_PLACING() {
 
 // region COLOR PICKER
 
-let cp = false, cp_color;
+let cp = false;
 
 function cp_start() {
     canvas_draw.classList.add("eyedropper");
@@ -774,15 +781,15 @@ function cp_exit() {
     canvas_draw.classList.remove("eyedropper");
     cp = false;
 }
-function cp_pick_color() {
+function cp_pick_from_canvas() {
     if (cp) {
         const { x, y } = getCanvasCursorXY();
         const [r, g, b] = cd_ctx.getImageData(x, y, 1, 1).data;
         const hex = ((r << 16) + (g << 8) + b).toString(16).padStart(6, '0');
-        cp_input_update_full(cp_color = '#' + hex);
+        input_color_update(input_color_t.value = '#' + hex);
     }
 }
-function cp_exit_apply(e, value) {
+function cp_apply_color_and_exit(value) {
     if (cp) {
         cp_apply_color(value);
         cp_exit();
@@ -790,24 +797,20 @@ function cp_exit_apply(e, value) {
     }
 }
 function cp_apply_color(value) {
-    color = value ?? cp_color;
-    cp_input_update_full(color);
+    color = value;
+    cp_color_inputs_update_both(color);
 }
-function cp_input_update_full(value) {
+function cp_color_inputs_update_both(value) {
+    input_color_update(value);
     input_color_t.value = value;
-    cp_input_update_from_input(value);
 }
-function cp_input_update_from_input(value) {
+function input_color_update(value) {
     input_color.value = value;
-    cp_input_update_accent();
-}
-function cp_input_update_accent() {
     input_color.style.setProperty('--color', input_color.value);
 }
-function validate_color(input) {
+function valid_color(input) {
     const style = new Option().style;
     style.color = input;
-    console.log(style.color);
     if (style.color !== '') return input;
     return string_to_color(input);
 }
@@ -823,24 +826,25 @@ function string_to_color(str) {
     return "#" + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
 }
 function SETUP_COLOR_PICKER() {
-    input_color  .addEventListener('input',       cp_input_update_accent);
-    input_color_t.addEventListener('input', () => cp_input_update_from_input(validate_color(input_color_t.value)));
+    input_color  .addEventListener('input',  () => cp_apply_color                (input_color  .value));
+    input_color  .addEventListener('change', () => cp_apply_color_and_exit       (input_color  .value));
+    input_color_t.addEventListener('input',  () => input_color_update(valid_color(input_color_t.value)));
     input_color_t.addEventListener('keydown', e => {
         if (e.ctrlKey || e.shiftKey || e.altKey) return;
         if (e.code === 'Enter' || e.code === 'Tab') cp
-            ? cp_exit_apply(e, validate_color(input_color_t.value))
-            : cp_apply_color  (validate_color(input_color_t.value));
-        else if (e.code === 'Escape') cp_apply_color(color);
+            ? cp_apply_color_and_exit(valid_color(input_color_t.value))  // cp -> exit
+            : cp_apply_color         (valid_color(input_color_t.value)); // drawing/…
+        else if (e.code === 'Escape') cp_apply_color(color); // reset
         else return;
-        input_color_t.blur() || e.preventDefault();
+        input_color_t.blur() || e.preventDefault(); // leave input field
     });
-    input_color_t.addEventListener('blur', () => cp_apply_color(color));
-    canvas_draw.addEventListener('mousemove', cp_pick_color);
-    canvas_draw.addEventListener('click',     cp_exit_apply);
+    input_color_t.addEventListener('blur', () => cp_apply_color(color)); // reset
+    canvas_draw.addEventListener('mousemove',    cp_pick_from_canvas);
+    canvas_draw.addEventListener('click',  () => cp_apply_color_and_exit(input_color.value));
     document.addEventListener('keydown', e => {
         if (e.altKey || e.ctrlKey || anySel())  return;
-        if (e.code === 'Escape' && !e.shiftKey) return cp_exit_apply(e, color);
-        if (e.code === 'KeyC'   &&  e.shiftKey && (drawing_enabled || cp))
+        if (e.code === 'Escape' && !e.shiftKey) return cp_apply_color_and_exit(color); // esc -> exit cp
+        if (e.code === 'KeyC'   &&  e.shiftKey && (drawing_enabled || cp)) // S-c -> focus color input (text)
             return input_color_t.focus() || e.preventDefault();
     });
 }
@@ -873,7 +877,7 @@ function SETUP_HOOKS_POST() {
             if   (sel && !sel.isCollapsed)
                 return sel.removeAllRanges();
             const el = document.activeElement;
-            if   (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable))
+            if   (el_is_text_input(el))
                 return el.selectionStart = el.selectionEnd = 0;
         }
     })
@@ -900,7 +904,7 @@ SETUP_HOOKS_POST();
 {
     cw_setup_size();
     cw_resize_true_scale();
-    cp_input_update_full(color);
+    cp_color_inputs_update_both(color);
     set_thickness(3);
     history_load();
 }
