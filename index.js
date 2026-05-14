@@ -34,6 +34,7 @@ const butt_bs_more  = document.getElementById('button_thickness_more');
 
 const butt_imgv_ok  = document.getElementById('okButton');
 const butt_imgv_no  = document.getElementById('cancelButton');
+const butt_co_no    = document.getElementById('cancelButton_2');
 
 const brush_cursor  = document.getElementById('brush_cursor');
 const out_thickness = document.getElementById('out_thickness');
@@ -573,10 +574,10 @@ function SETUP_IMAGE_PASTE() {
     });
     document.addEventListener('keydown', e => {
         if (imgv && !anySel()) {
-            if      (e.code === 'Enter' ) fx_click(butt_imgv_ok) || cd_draw_pasted_image();
-            else if (e.code === 'Tab'   ) fx_click(butt_imgv_ok) || cd_draw_pasted_image();
-            else if (e.code === 'Space' ) fx_click(butt_imgv_ok) || cd_draw_pasted_image();
-            else if (e.code === 'Escape') fx_click(butt_imgv_no) || placing_image_exit();
+            if      (e.code === 'Enter' ) cd_draw_pasted_image();
+            else if (e.code === 'Tab'   ) cd_draw_pasted_image();
+            else if (e.code === 'Space' ) cd_draw_pasted_image();
+            else if (e.code === 'Escape') placing_image_exit();
         }
     });
 }
@@ -835,6 +836,7 @@ function string_to_color(str) {
     return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
 }
 function SETUP_COLOR_PICKER() {
+    butt_co_no.onclick = () => cp_apply_color_and_exit(color);
     input_color  .addEventListener('input',  () => cp_apply_color                (input_color  .value));
     input_color  .addEventListener('change', () => cp_apply_color_and_exit       (input_color  .value));
     input_color_t.addEventListener('input',  () => input_color_update(valid_color(input_color_t.value)));
