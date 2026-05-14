@@ -27,7 +27,7 @@ const butt_redo     = document.getElementById('button_redo');
 const butt_copy     = document.getElementById('button_copy');
 const butt_paste    = document.getElementById('button_paste');
 const butt_save     = document.getElementById('button_save');
-const butt_delete   = document.getElementById('button_delete');
+const butt_nuke     = document.getElementById('button_delete');
 
 const butt_bs_less  = document.getElementById('button_thickness_less');
 const butt_bs_more  = document.getElementById('button_thickness_more');
@@ -49,7 +49,7 @@ const panel_aux_items = Array.from(panel_aux.children);
 
 let tool_active, tool_last;
 
-function tool_activate(tool) {
+function tool_activate(tool, by_key) {
     if (tool === tool_active) return;
 
     if      (tool_active === tool_drag) cw_drag_disable();
@@ -61,6 +61,7 @@ function tool_activate(tool) {
     tool_last = tool_active;
     tool_active = tool;
     panel_aux_items.forEach(x => x.classList.toggle('hide', !x.classList.contains(tool.id)));
+    if (by_key) fx_click(tool_active);
 
     if      (tool_active === tool_drag) cw_drag_enable();
     else if (tool_active === tool_draw) drawing_enable();
@@ -74,11 +75,12 @@ function SETUP_TOOLS() {
     });
     window.addEventListener('keydown', e => {
         if (e.ctrlKey || e.altKey || e.shiftKey || anyInp()) return;
-        if      (e.code === 'KeyC') e.preventDefault() || tool_activate(tool_pick);
-        else if (e.code === 'KeyX') e.preventDefault() || tool_activate(tool_drag);
-        else if (e.code === 'KeyD') e.preventDefault() || tool_activate(tool_draw);
-        else if (e.code === 'KeyR') e.preventDefault() || tool_activate(tool_rect);
-        else if (e.code === 'KeyQ') e.preventDefault() || tool_activate(tool_laso);
+        if      (e.code === 'KeyC') e.preventDefault() || tool_activate(tool_pick, true);
+        else if (e.code === 'KeyE') e.preventDefault() || tool_activate(tool_pick, true); // I got used to it from prev ver.
+        else if (e.code === 'KeyX') e.preventDefault() || tool_activate(tool_drag, true);
+        else if (e.code === 'KeyD') e.preventDefault() || tool_activate(tool_draw, true);
+        else if (e.code === 'KeyR') e.preventDefault() || tool_activate(tool_rect, true);
+        else if (e.code === 'KeyQ') e.preventDefault() || tool_activate(tool_laso, true);
     });
 }
 // endregion
@@ -140,8 +142,8 @@ function SETUP_CW_ZOOM() {
     }, { passive: false });
     window.addEventListener('keydown', e => {
         if (e.ctrlKey) {
-            if      (e.key === '1') e.preventDefault() || cw_resize_true_scale();
-            else if (e.key === '2') e.preventDefault() || cw_resize_fit_screen();
+            if      (e.key === '1') e.preventDefault() || fx_click(butt_zoom_1) || cw_resize_true_scale();
+            else if (e.key === '2') e.preventDefault() || fx_click(butt_zoom_2) || cw_resize_fit_screen();
         }
     });
     window.addEventListener('resize', () => {
@@ -279,16 +281,16 @@ function SETUP_HISTORY_SYNC() {
 function SETUP_HISTORY_CTL() {
     butt_undo.onclick = history_undo;
     butt_redo.onclick = history_redo;
-    butt_delete.onclick = history_clear;
+    butt_nuke.onclick = history_clear;
     document.addEventListener('keydown', function (e) {
         if (e.altKey || anyInp()) return;
         if      (e.ctrlKey && !e.shiftKey) {
-            if      (e.code === 'KeyY') e.preventDefault() || history_redo();
-            else if (e.code === 'KeyZ') e.preventDefault() || history_undo();
-            else if (e.code === 'KeyD') e.preventDefault() || history_clear();
+            if      (e.code === 'KeyY') e.preventDefault() || fx_click(butt_redo) || history_redo();
+            else if (e.code === 'KeyZ') e.preventDefault() || fx_click(butt_undo) || history_undo();
+            else if (e.code === 'KeyD') e.preventDefault() || fx_click(butt_nuke) || history_clear();
         }
         else if (e.ctrlKey &&  e.shiftKey) {
-            if      (e.code === 'KeyZ') e.preventDefault() || history_redo();
+            if      (e.code === 'KeyZ') e.preventDefault() || fx_click(butt_redo) || history_redo();
         }
     });
 }
@@ -363,12 +365,12 @@ function cd_draw_dot(x, y, pen) {
     cd_ctx.arc(x, y, pen.size / 2, 0, 2 * Math.PI);
     cd_ctx.fill();
 }
-function cd_draw_pasted_image() {
+function cd_draw_pasted_image(e, paste_another_img) {
     const { img, x, y, w, h } = imgv;
     cd_ctx.drawImage(img, x, y, w, h);
     const data = canvas_draw.toDataURL('image/webp', 0.95);
 
-    placing_image_exit();
+    if (!paste_another_img) placing_image_exit();
     history_write({ type: 1, data });
 }
 function cd_apply_history_pen(pen, path) {
@@ -422,8 +424,8 @@ function SETUP_DRAWING() {
     document.addEventListener('pointerup',      drawing_stop);
     document.addEventListener('keydown', e => {
         if (!drawing_enabled || e.ctrlKey || e.altKey || anyInp()) return;
-        if      (e.code === 'KeyW') thickness_more(e);
-        else if (e.code === 'KeyS') thickness_less(e);
+        if      (e.code === 'KeyW') fx_click(butt_bs_more) || thickness_more(e);
+        else if (e.code === 'KeyS') fx_click(butt_bs_less) || thickness_less(e);
     });
 }
 function SETUP_BRUSH_CURSOR() {
@@ -481,6 +483,10 @@ function anyInp() {
 
     return 0;
 }
+function fx_click(butt) {
+    butt.classList.add('fx-clicked');
+    setTimeout(() => butt.classList.remove('fx-clicked'), 100);
+}
 // endregion
 
 // region IMAGE SAVE
@@ -501,6 +507,7 @@ function SETUP_IMAGE_SAVE() {
     document.addEventListener('keydown', e => {
         if (e.ctrlKey && !e.shiftKey && !e.altKey && e.code === 'KeyS') {
             e.preventDefault();
+            fx_click(butt_save);
             cd_save_image();
         }
     });
@@ -522,7 +529,7 @@ function fx_cd_copy() {
 function SETUP_IMAGE_COPY() {
     butt_copy.onclick = cd_copy_to_clipboard;
     document.addEventListener('copy', () => {
-        if (!anySel()) cd_copy_to_clipboard();
+        if (!anySel()) fx_click(butt_copy) || cd_copy_to_clipboard();
     });
 }
 // endregion
@@ -543,7 +550,7 @@ function image_paste_button() {
     });
 }
 function loadPastedImage(blob) {
-    if (imgv) cd_draw_pasted_image();
+    if (imgv) cd_draw_pasted_image(null, true);
 
     const url = URL.createObjectURL(blob);
     const img = new Image();
@@ -558,14 +565,14 @@ function SETUP_IMAGE_PASTE() {
     butt_imgv_ok.onclick = cd_draw_pasted_image;
     butt_imgv_no.onclick = placing_image_exit;
     document.addEventListener('paste', function (e) {
-        if (!anyInp()) image_paste(e);
+        if (!anyInp()) fx_click(butt_paste) || image_paste(e);
     });
     document.addEventListener('keydown', e => {
         if (imgv && !anySel()) {
-            if      (e.code === 'Enter' ) cd_draw_pasted_image();
-            else if (e.code === 'Tab'   ) cd_draw_pasted_image();
-            else if (e.code === 'Space' ) cd_draw_pasted_image();
-            else if (e.code === 'Escape') placing_image_exit();
+            if      (e.code === 'Enter' ) fx_click(butt_imgv_ok) || cd_draw_pasted_image();
+            else if (e.code === 'Tab'   ) fx_click(butt_imgv_ok) || cd_draw_pasted_image();
+            else if (e.code === 'Space' ) fx_click(butt_imgv_ok) || cd_draw_pasted_image();
+            else if (e.code === 'Escape') fx_click(butt_imgv_no) || placing_image_exit();
         }
     });
 }
@@ -606,7 +613,7 @@ function placing_image_start(img) {
 }
 function placing_image_exit() {
     imgv = null;
-    tool_activate(tool_last);
+    tool_activate(tool_last, true);
     vp.classList.remove('img-draggable');
     vp.classList.remove('img-dragging');
     canvas_over.classList.remove('img-draggable');
@@ -789,7 +796,7 @@ function cp_apply_color_and_exit(value) {
     if (cp) {
         cp_apply_color(value);
         cp_exit();
-        tool_activate(tool_last);
+        tool_activate(tool_last, true);
     }
 }
 function cp_apply_color(value) {
@@ -876,7 +883,7 @@ function SETUP_HOOKS_POST() {
             if   (el_is_text_input(el))
                 return el.selectionStart = el.selectionEnd = 0;
         }
-    })
+    });
 }
 // endregion
 

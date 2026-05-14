@@ -6,9 +6,9 @@ html, body {
     font-family: "Iosevka Charon Mono", monospace, sans-serif;
 }
 ::selection {
-    background-color: black;
-    color: gold;
-    text-shadow: none;
+    background-color: rgba(0, 0, 0, 0.85);
+    color: white;
+    text-shadow: 1px 1px 2px #2d0000;
 }
 button {
     all: unset;
@@ -95,6 +95,7 @@ input[type="color"] {
         cursor: grabbing;
     }
     & .tips > * {
+        user-select: none;
         position: absolute;
         margin: 40px;
         color: #7c7367;
@@ -222,10 +223,12 @@ input[type="color"] {
                    url("img/bg-dark.png");
                 background-repeat: repeat;
                 background-size: 64px 64px;
-                transform: translateY(1px);
                 & kbd {
                     color: #ffe;
                 }
+            }
+            &:active, &.fx-clicked {
+                transform: translateY(1px);
             }
             &:focus {
                 outline: 1px dashed #babcc2;
