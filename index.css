@@ -100,6 +100,15 @@ input[type="color"] {
         margin: 40px;
         color: #7c7367;
         text-shadow: 0 0 3px #eadbc8;
+        opacity: 1;
+        filter: none;
+        transition:
+           opacity 250ms ease,
+           filter 250ms ease;
+        &.hide {
+            opacity: 0;
+            filter: blur(10px);
+        }
         & kbd {
             font-family: "Jersey 10", monospace, sans-serif;
             padding-inline: 3px;
@@ -114,6 +123,23 @@ input[type="color"] {
             left: 600px;
             bottom: 25px;
             transform: rotate(-5deg);
+        }
+        &.c {
+            left: 900px;
+            bottom: 25px;
+            transform: rotate(2deg);
+        }
+        &.d {
+            left: 600px;
+            top: 15px;
+            transform: rotate(-2deg);
+        }
+        &.imgv {
+            top: 300px;
+            transform: rotate(3deg);
+            & h3::before {
+                content: '➢ ';
+            }
         }
     }
     & #canvas-wrapper {

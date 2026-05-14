@@ -40,6 +40,8 @@ const out_thickness = document.getElementById('out_thickness');
 const input_color   = document.getElementById('input_color');
 const input_color_t = document.getElementById('input_color_txt');
 
+const tips_imgv     = document.getElementById('tips_imgv');
+
 // endregion
 
 // region TOOLS
@@ -608,12 +610,14 @@ function placing_image_start(img) {
     };
     tool_activate(tool_imgv);
     placing_image_RENDER();
+    tips_imgv.classList.remove('hide');
     vp.classList.add('img-draggable');
     canvas_over.classList.add('img-draggable');
 }
 function placing_image_exit() {
     imgv = null;
     tool_activate(tool_last, true);
+    tips_imgv.classList.add('hide');
     vp.classList.remove('img-draggable');
     vp.classList.remove('img-dragging');
     canvas_over.classList.remove('img-draggable');
