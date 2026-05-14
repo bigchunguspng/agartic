@@ -1,25 +1,25 @@
-"use strict";
+'use strict';
 
 // region ELEMENTS
 
-const vp            = document.getElementById("viewport");
-const cw            = document.getElementById("canvas-wrapper");
+const vp            = document.getElementById('viewport');
+const cw            = document.getElementById('canvas-wrapper');
 const canvas_draw   = document.getElementById('canvas-draw');
 const canvas_over   = document.getElementById('canvas-over');
 
-const panel_main    = document.getElementById("panel-main");
-const panel_aux     = document.getElementById("panel-aux");
+const panel_main    = document.getElementById('panel-main');
+const panel_aux     = document.getElementById('panel-aux');
 
-const butt_zoom_1   = document.getElementById("button_zoom_1");
-const butt_zoom_2   = document.getElementById("button_zoom_2");
-const butt_zoom_in  = document.getElementById("button_zoom_in");
-const butt_zoom_out = document.getElementById("button_zoom_out");
+const butt_zoom_1   = document.getElementById('button_zoom_1');
+const butt_zoom_2   = document.getElementById('button_zoom_2');
+const butt_zoom_in  = document.getElementById('button_zoom_in');
+const butt_zoom_out = document.getElementById('button_zoom_out');
 
-const tool_pick     = document.getElementById("tool_pick");
-const tool_drag     = document.getElementById("tool_drag");
-const tool_draw     = document.getElementById("tool_draw");
-const tool_rect     = document.getElementById("tool_rect");
-const tool_laso     = document.getElementById("tool_laso");
+const tool_pick     = document.getElementById('tool_pick');
+const tool_drag     = document.getElementById('tool_drag');
+const tool_draw     = document.getElementById('tool_draw');
+const tool_rect     = document.getElementById('tool_rect');
+const tool_laso     = document.getElementById('tool_laso');
 const tool_imgv     = document.getElementById('tool_imgv');
 
 const butt_undo     = document.getElementById('button_undo');
@@ -56,7 +56,7 @@ function tool_activate(tool) {
     else if (tool_active === tool_draw) drawing_disable();
     else if (tool_active === tool_pick) cp_exit();
 
-    tools.forEach(x => x.classList.remove("active"));
+    tools.forEach(x => x.classList.remove('active'));
     tool.classList.add('active');
     tool_last = tool_active;
     tool_active = tool;
@@ -68,11 +68,11 @@ function tool_activate(tool) {
 }
 function SETUP_TOOLS() {
     tool_activate(tool_draw);
-    panel_main.addEventListener("click", e => {
+    panel_main.addEventListener('click', e => {
         const tool = tools.find(x => x.contains(e.target));
         if (tool) tool_activate(tool);
     });
-    window.addEventListener("keydown", e => {
+    window.addEventListener('keydown', e => {
         if (e.ctrlKey || e.altKey || e.shiftKey || anyInp()) return;
         if      (e.code === 'KeyC') e.preventDefault() || tool_activate(tool_pick);
         else if (e.code === 'KeyX') e.preventDefault() || tool_activate(tool_drag);
@@ -127,7 +127,7 @@ function cw_zoom(e, out, centered) {
 }
 
 function SETUP_CW_ZOOM() {
-    vp.addEventListener("wheel", e => {
+    vp.addEventListener('wheel', e => {
         e.preventDefault();
         if (e.ctrlKey) {
             cw_zoom(e, e.deltaY > 0);
@@ -138,28 +138,22 @@ function SETUP_CW_ZOOM() {
             cw_transform();
         }
     }, { passive: false });
-    window.addEventListener("keydown", e => {
+    window.addEventListener('keydown', e => {
         if (e.ctrlKey) {
-            if      (e.key === '1') {
-                e.preventDefault();
-                cw_resize_true_scale();
-            }
-            else if (e.key === '2') {
-                e.preventDefault();
-                cw_resize_fit_screen();
-            }
+            if      (e.key === '1') e.preventDefault() || cw_resize_true_scale();
+            else if (e.key === '2') e.preventDefault() || cw_resize_fit_screen();
         }
     });
-    window.addEventListener("resize", () => {
+    window.addEventListener('resize', () => {
         // keep canvas position relative to center
         cw_x -= (window.w - window.innerWidth)  / 2;
         cw_y -= (window.h - window.innerHeight) / 2;
         cw_transform();
     });
-    butt_zoom_1   .addEventListener("click", cw_resize_true_scale);
-    butt_zoom_2   .addEventListener("click", cw_resize_fit_screen);
-    butt_zoom_in  .addEventListener("click", e => cw_zoom(e, false, true));
-    butt_zoom_out .addEventListener("click", e => cw_zoom(e, true, true));
+    butt_zoom_1   .addEventListener('click', cw_resize_true_scale);
+    butt_zoom_2   .addEventListener('click', cw_resize_fit_screen);
+    butt_zoom_in  .addEventListener('click', e => cw_zoom(e, false, true));
+    butt_zoom_out .addEventListener('click', e => cw_zoom(e, true, true));
 }
 // endregion
 
@@ -175,11 +169,11 @@ const cw_dragging_from = {
 };
 
 function cw_drag_enable() {
-    vp.classList.add("draggable");
+    vp.classList.add('draggable');
     cw_draggable = true;
 }
 function cw_drag_disable() {
-    vp.classList.remove("draggable");
+    vp.classList.remove('draggable');
     cw_draggable = false;
     cw_drag_stop();
 }
@@ -203,7 +197,7 @@ function cw_drag() {
 function cw_drag_stop() {
     if (cw_dragging) {
         cw_dragging = false;
-        vp.classList.remove("dragging");
+        vp.classList.remove('dragging');
     }
 }
 
@@ -231,7 +225,7 @@ function history_draw() {
     const i_last_image = history_get_last_image_index() ?? -1;
     if   (i_last_image < 0) {
         cd_clear();
-        history_draw_pen_from(i_last_image + 1);
+        history_draw_pen_from(0);
     }
     else // start from the last image to avoid blinking
         cd_apply_history_img(history[i_last_image].data).then(() => history_draw_pen_from(i_last_image + 1));
@@ -266,7 +260,7 @@ function history_redo() {
     }
 }
 function history_clear() {
-    if (confirm("😳 NUKE THE WHOLE THING!?")) {
+    if (confirm('😳 NUKE THE WHOLE THING!?')) {
         history = [];
         history_len = 0;
         cd_clear();
@@ -276,7 +270,7 @@ function history_clear() {
 function SETUP_HISTORY_SYNC() {
     window.addEventListener('storage', (e) => {
         if      (e.key === 'history')     history = JSON.parse(e.newValue);
-        else if (e.key === "history_len") history_len = e.newValue;
+        else if (e.key === 'history_len') history_len = e.newValue;
         else return;
 
         history_draw();
@@ -291,7 +285,7 @@ function SETUP_HISTORY_CTL() {
         if      (e.ctrlKey && !e.shiftKey) {
             if      (e.code === 'KeyY') e.preventDefault() || history_redo();
             else if (e.code === 'KeyZ') e.preventDefault() || history_undo();
-            else if (e.code === "KeyD") e.preventDefault() || history_clear();
+            else if (e.code === 'KeyD') e.preventDefault() || history_clear();
         }
         else if (e.ctrlKey &&  e.shiftKey) {
             if      (e.code === 'KeyZ') e.preventDefault() || history_redo();
@@ -308,7 +302,7 @@ let drawing_enabled = false;
 let drawing_now     = false;
 let pen_path = [];
 let pen;
-let color = "black";
+let color = 'black';
 let thickness;
 
 function drawing_enable() {
@@ -350,7 +344,7 @@ function drawing_stop() {
 }
 
 function cd_clear() {
-    cd_ctx.fillStyle = "white";
+    cd_ctx.fillStyle = 'white';
     cd_ctx.fillRect(0, 0, canvas_draw.width, canvas_draw.height);
 }
 function cd_draw_segment(x1, y1, x2, y2, pen) {
@@ -372,7 +366,7 @@ function cd_draw_dot(x, y, pen) {
 function cd_draw_pasted_image() {
     const { img, x, y, w, h } = imgv;
     cd_ctx.drawImage(img, x, y, w, h);
-    const data = canvas_draw.toDataURL("image/webp", 0.95);
+    const data = canvas_draw.toDataURL('image/webp', 0.95);
 
     placing_image_exit();
     history_write({ type: 1, data });
@@ -536,7 +530,7 @@ function SETUP_IMAGE_COPY() {
 // region IMAGE PASTE
 function image_paste(e) {
     const items = Array.from(e.clipboardData?.items);
-    const item  = items.find(i => i.type.startsWith("image"));
+    const item  = items.find(i => i.type.startsWith('image'));
     if   (item) loadPastedImage(item.getAsFile());
 }
 function image_paste_button() {
@@ -568,10 +562,10 @@ function SETUP_IMAGE_PASTE() {
     });
     document.addEventListener('keydown', e => {
         if (imgv && !anySel()) {
-            if      (e.code === "Enter" ) cd_draw_pasted_image();
-            else if (e.code === "Tab"   ) cd_draw_pasted_image();
-            else if (e.code === "Space" ) cd_draw_pasted_image();
-            else if (e.code === "Escape") placing_image_exit();
+            if      (e.code === 'Enter' ) cd_draw_pasted_image();
+            else if (e.code === 'Tab'   ) cd_draw_pasted_image();
+            else if (e.code === 'Space' ) cd_draw_pasted_image();
+            else if (e.code === 'Escape') placing_image_exit();
         }
     });
 }
@@ -649,10 +643,10 @@ function imgv_get_handle_name_at_cc(cc_x, cc_y) {
 function imgv_get_handles() {
     const s = imgv;
     return [
-        { name: "nw", x: s.x,       y: s.y       },
-        { name: "ne", x: s.x + s.w, y: s.y       },
-        { name: "sw", x: s.x,       y: s.y + s.h },
-        { name: "se", x: s.x + s.w, y: s.y + s.h },
+        { name: 'nw', x: s.x,       y: s.y       },
+        { name: 'ne', x: s.x + s.w, y: s.y       },
+        { name: 'sw', x: s.x,       y: s.y + s.h },
+        { name: 'se', x: s.x + s.w, y: s.y + s.h },
     ];
 }
 function imgv_interaction_start() {
@@ -763,11 +757,11 @@ function imgv_interaction_stop() {
     }
 }
 function SETUP_IMAGE_PLACING() {
-    document.addEventListener("mousedown", imgv_interaction_start);
-    document.addEventListener("mousemove", imgv_interact);
-    document.addEventListener("mouseup",   imgv_interaction_stop);
-    document.addEventListener("keydown",   imgv_interaction_apply_mods);
-    document.addEventListener("keyup",     imgv_interaction_apply_mods);
+    document.addEventListener('mousedown', imgv_interaction_start);
+    document.addEventListener('mousemove', imgv_interact);
+    document.addEventListener('mouseup',   imgv_interaction_stop);
+    document.addEventListener('keydown',   imgv_interaction_apply_mods);
+    document.addEventListener('keyup',     imgv_interaction_apply_mods);
 }
 // endregion
 
@@ -776,11 +770,11 @@ function SETUP_IMAGE_PLACING() {
 let cp = false;
 
 function cp_start() {
-    canvas_draw.classList.add("eyedropper");
+    canvas_draw.classList.add('eyedropper');
     cp = true;
 }
 function cp_exit() {
-    canvas_draw.classList.remove("eyedropper");
+    canvas_draw.classList.remove('eyedropper');
     cp = false;
 }
 function cp_pick_from_canvas() {
@@ -825,7 +819,7 @@ function string_to_color(str) {
     const r = (rgb >> 16) & 0xff;
     const g = (rgb >>  8) & 0xff;
     const b =  rgb        & 0xff;
-    return "#" + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+    return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
 }
 function SETUP_COLOR_PICKER() {
     input_color  .addEventListener('input',  () => cp_apply_color                (input_color  .value));
@@ -869,7 +863,7 @@ function SETUP_HOOKS_PRE() {
     }, { capture: true });
 }
 function SETUP_HOOKS_POST() {
-    window.addEventListener("resize", () => {
+    window.addEventListener('resize', () => {
         window.w = window.innerWidth;
         window.h = window.innerHeight;
     });
