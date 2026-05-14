@@ -21,10 +21,15 @@ input[type="text"] {
     background: white;
     height: 24px;
     width: 80px;
+    margin-right: 5px;
     padding-inline: 5px;
     border-radius: 2px;
     font-size: 14px;
-    color: #444444;
+    color: #222;
+    box-sizing: border-box;
+    border: 1px solid #888;
+    border-bottom: 1px solid #777;
+    border-top: 1px solid #999;
     box-shadow: 0 2px 0 rgba(0, 0, 0, 0.25);
 }
 input[type="color"] {
@@ -33,7 +38,6 @@ input[type="color"] {
     appearance: none;
     width: 24px;
     height: 24px;
-    margin-right: 8px;
     cursor: pointer;
     box-sizing: border-box;
     border-radius: 2px;
@@ -198,8 +202,8 @@ input[type="color"] {
             margin-bottom: 8px;
         }
         &#panel-aux {
-            & > * {
-                padding-inline: 10px;
+            & > div {
+                padding-inline: 6px;
             }
             & #out_thickness {
                 min-width: 24px;
@@ -221,6 +225,12 @@ input[type="color"] {
             max-height: 36px;
             display: flex;
             align-items: center;
+            & .divider {
+                width: 0;
+                height: 24px;
+                border-left: 1px dashed #666;
+                margin-inline: 6px;
+            }
             &.hide {
                 display: none;
             }
@@ -253,7 +263,7 @@ input[type="color"] {
                     color: #ffe;
                 }
             }
-            &:active, &.fx-clicked {
+            &:active {
                 transform: translateY(1px);
             }
             &:focus {
@@ -292,6 +302,33 @@ input[type="color"] {
             box-shadow: 0 2px 0 #333;
             font-size: 18px;
             font-family: "Jersey 10", monospace, sans-serif;
+            &.y {
+                color: #f0fff9;
+                background-image:
+                   linear-gradient(rgba(0, 127, 68, 0.15), rgba(0, 255, 136, 0.25)),
+                   linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.1)),
+                   url("img/bg-gray.png");
+                border: 1px solid #3C594C;
+                border-top: 1px solid #C4E1D4;
+                border-left: 1px solid #799588;
+                box-shadow: 0 2px 0 #2D4A3C;
+                /*https://meyerweb.com/eric/tools/color-blend/#00FF88:333333:8:hex*/
+            }
+            &.n {
+                color: #fff2f8;
+                background-image:
+                   linear-gradient(rgba(127, 0, 34, 0.15), rgba(255, 0, 68, 0.25)),
+                   linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.1)),
+                   url("img/bg-gray.png");
+                border: 1px solid #593C44;
+                border-top: 1px solid #E1C4CC;
+                border-left: 1px solid #957980;
+                box-shadow: 0 2px 0 #4A2D35;
+            }
+            &.fx-clicked {
+                transform: translateY(1px);
+                box-shadow: 0 1px 0 #333;
+            }
         }
     }
 }

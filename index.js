@@ -41,6 +41,7 @@ const input_color   = document.getElementById('input_color');
 const input_color_t = document.getElementById('input_color_txt');
 
 const tips_imgv     = document.getElementById('tips_imgv');
+const color_inputs  = document.getElementById('color_inputs');
 
 // endregion
 
@@ -485,9 +486,10 @@ function anyInp() {
 
     return 0;
 }
-function fx_click(butt) {
-    butt.classList.add('fx-clicked');
-    setTimeout(() => butt.classList.remove('fx-clicked'), 100);
+function fx_click(butt, index) {
+    const kbd = butt.getElementsByTagName('kbd')[index ?? 0];
+    kbd.classList.add('fx-clicked');
+    setTimeout(() => kbd.classList.remove('fx-clicked'), 100);
 }
 // endregion
 
@@ -838,10 +840,10 @@ function SETUP_COLOR_PICKER() {
     input_color_t.addEventListener('input',  () => input_color_update(valid_color(input_color_t.value)));
     input_color_t.addEventListener('keydown', e => {
         if (e.ctrlKey || e.shiftKey || e.altKey) return;
-        if (e.code === 'Enter' || e.code === 'Tab') cp
+        if (e.code === 'Enter' || e.code === 'Tab') fx_click(color_inputs, 3) || cp
             ? cp_apply_color_and_exit(valid_color(input_color_t.value))  // cp -> exit
             : cp_apply_color         (valid_color(input_color_t.value)); // drawing/…
-        else if (e.code === 'Escape') cp_apply_color(color); // reset
+        else if (e.code === 'Escape') fx_click(color_inputs, 2) || cp_apply_color(color); // reset
         else return;
         input_color_t.blur() || e.preventDefault(); // leave input field
     });
@@ -851,8 +853,12 @@ function SETUP_COLOR_PICKER() {
     document.addEventListener('keydown', e => {
         if (e.altKey || e.ctrlKey || anySel())  return;
         if (e.code === 'Escape' && !e.shiftKey) return cp_apply_color_and_exit(color); // esc -> exit cp
-        if (e.code === 'KeyC'   &&  e.shiftKey && (drawing_enabled || cp)) // S-c -> focus color input (text)
-            return input_color_t.focus() || e.preventDefault();
+        if (drawing_enabled || cp) {
+            if (e.code === 'KeyC' && e.shiftKey) // S-c -> focus color input (text)
+                return fx_click(color_inputs, 1) || input_color_t.focus() || e.preventDefault();
+            if (e.code === 'KeyX' && e.shiftKey)
+                return fx_click(color_inputs, 0) || input_color.click();
+        }
     });
 }
 // endregion

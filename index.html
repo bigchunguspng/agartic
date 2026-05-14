@@ -67,7 +67,7 @@
         <button id="tool_draw">     <kbd>d</kbd>    <span>draw  </span></button>
         <button id="tool_rect">     <kbd>r</kbd>    <span>rect  </span></button>
         <button id="tool_laso">     <kbd>q</kbd>    <span>laso  </span></button>
-        <button id="tool_imgv" class="hide"></button>
+        <button id="tool_imgv" class="hide">HOLY SHIT!! SECRET BUTTON!?</button>
         <button id="button_copy">   <kbd>C-c</kbd>
             <img src="img/icons/edit-copy.png">
         </button>
@@ -98,10 +98,14 @@
             <img src="img/icons/media-record.png">
             <span id="out_thickness">3</span>
         </div>
-        <div class="tool_draw tool_pick">
+        <div class="tool_draw tool_pick" id="color_inputs">
+            <kbd>S-x</kbd>
             <input type="color" id="input_color">
+            <div class="divider"></div>
             <kbd>S-c</kbd>
             <input type="text" id="input_color_txt">
+            <kbd class="n">Esc</kbd>
+            <kbd class="y">Tab</kbd>
         </div>
         <!-- PLACING IMAGE -->
         <button id="cancelButton"
