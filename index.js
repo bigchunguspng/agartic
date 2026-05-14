@@ -202,9 +202,9 @@ function cw_drag_stop() {
 }
 
 function SETUP_CW_DRAG() {
-    vp    .addEventListener('mousedown', e => e.button === 0 && cw_drag_start());
-    window.addEventListener('mousemove', cw_drag);
-    window.addEventListener('mouseup',   cw_drag_stop);
+    vp    .addEventListener('pointerdown', e => e.button === 0 && cw_drag_start());
+    window.addEventListener('pointermove', cw_drag);
+    window.addEventListener('pointerup',   cw_drag_stop);
 }
 // endregion
 
@@ -417,9 +417,9 @@ function brush_cursor_move_and_resize(x, y, r) {
 function SETUP_DRAWING() {
     butt_bs_less.onclick = thickness_less;
     butt_bs_more.onclick = thickness_more;
-    canvas_draw.addEventListener('mousedown', drawing_start);
-    document.addEventListener('mousemove',    drawing_draw);
-    document.addEventListener('mouseup',      drawing_stop);
+    canvas_draw.addEventListener('pointerdown', drawing_start);
+    document.addEventListener('pointermove',    drawing_draw);
+    document.addEventListener('pointerup',      drawing_stop);
     document.addEventListener('keydown', e => {
         if (!drawing_enabled || e.ctrlKey || e.altKey || anyInp()) return;
         if      (e.code === 'KeyW') thickness_more(e);
@@ -427,14 +427,14 @@ function SETUP_DRAWING() {
     });
 }
 function SETUP_BRUSH_CURSOR() {
-    canvas_draw.addEventListener('mouseenter', () => {
+    canvas_draw.addEventListener('pointerenter', () => {
         brush_cursor.classList.add('on-canvas');
         brush_cursor_move_and_resize(mouse.x, mouse.y, 0);
     });
-    canvas_draw.addEventListener('mouseleave', () => {
+    canvas_draw.addEventListener('pointerleave', () => {
         brush_cursor.classList.remove('on-canvas');
     });
-    canvas_draw.addEventListener('mousemove', e => {
+    canvas_draw.addEventListener('pointermove', e => {
         const { x, y } = getCanvasCursorXY();
         const [r, g, b, a] = cd_ctx.getImageData(x, y, 1, 1).data;
         brush_cursor_move_and_resize(e.pageX, e.pageY, 0);
@@ -757,9 +757,9 @@ function imgv_interaction_stop() {
     }
 }
 function SETUP_IMAGE_PLACING() {
-    document.addEventListener('mousedown', imgv_interaction_start);
-    document.addEventListener('mousemove', imgv_interact);
-    document.addEventListener('mouseup',   imgv_interaction_stop);
+    document.addEventListener('pointerdown', imgv_interaction_start);
+    document.addEventListener('pointermove', imgv_interact);
+    document.addEventListener('pointerup',   imgv_interaction_stop);
     document.addEventListener('keydown',   imgv_interaction_apply_mods);
     document.addEventListener('keyup',     imgv_interaction_apply_mods);
 }
@@ -835,7 +835,7 @@ function SETUP_COLOR_PICKER() {
         input_color_t.blur() || e.preventDefault(); // leave input field
     });
     input_color_t.addEventListener('blur', () => cp_apply_color(color)); // reset
-    canvas_draw.addEventListener('mousemove',    cp_pick_from_canvas);
+    canvas_draw.addEventListener('pointermove',    cp_pick_from_canvas);
     canvas_draw.addEventListener('click',  () => cp_apply_color_and_exit(input_color.value));
     document.addEventListener('keydown', e => {
         if (e.altKey || e.ctrlKey || anySel())  return;
@@ -853,11 +853,11 @@ const mouse = { x: 0, y: 0 };
 function SETUP_HOOKS_PRE() {
     window.w = window.innerWidth;
     window.h = window.innerHeight;
-    window.addEventListener('mouseenter', e => {
+    window.addEventListener('pointerenter', e => {
         mouse.x = e.clientX;
         mouse.y = e.clientY;
     }, { capture: true });
-    window.addEventListener('mousemove', e => {
+    window.addEventListener('pointermove', e => {
         mouse.x = e.clientX;
         mouse.y = e.clientY;
     }, { capture: true });
