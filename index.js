@@ -137,8 +137,8 @@ function SETUP_CW_ZOOM() {
             cw_zoom(e, e.deltaY > 0);
         }
         else {
-            if (e.shiftKey) cw_x -= e.deltaY;
-            else            cw_y -= e.deltaY;
+            cw_x -= e.shiftKey ? e.deltaY : e.deltaX;
+            cw_y -= e.shiftKey ? e.deltaX : e.deltaY;
             cw_transform();
         }
     }, { passive: false });
