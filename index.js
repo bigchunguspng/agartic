@@ -100,6 +100,12 @@ const MAX_CW_SCALE = 20;
 const CW_ZOOM_FACTOR_DEFAULT = 1.1;
 const CW_ZOOM_FACTOR_SHIFT   = 1.35;
 
+function getCanvasCursorXY() {
+    const x = Math.floor((mouse.x - cw_x) / cw_scale);
+    const y = Math.floor((mouse.y - cw_y) / cw_scale);
+    return { x, y };
+}
+
 function cw_transform() {
     cw.style.transform = `translate(${Math.floor(cw_x)}px, ${Math.floor(cw_y)}px) scale(${cw_scale})`;
     brush_cursor_move_and_resize();
@@ -130,7 +136,12 @@ function cw_zoom(e, out, centered) {
     cw_y = y - cw_true_y * cw_scale;
     cw_transform();
 }
-
+function cw_setup_size() {
+    canvas_draw.width  = cw_true_w;
+    canvas_draw.height = cw_true_h;
+    canvas_over.width  = cw_true_w;
+    canvas_over.height = cw_true_h;
+}
 function SETUP_CW_ZOOM() {
     vp.addEventListener('wheel', e => {
         e.preventDefault();
@@ -438,49 +449,6 @@ function SETUP_BRUSH_CURSOR() {
 }
 // endregion
 
-// region ...
-function cw_setup_size() {
-    canvas_draw.width  = cw_true_w;
-    canvas_draw.height = cw_true_h;
-    canvas_over.width  = cw_true_w;
-    canvas_over.height = cw_true_h;
-}
-
-/** Cursor position relative to canvas 0,0. */
-function getCanvasCursorXY() {
-    const x = Math.floor((mouse.x - cw_x) / cw_scale);
-    const y = Math.floor((mouse.y - cw_y) / cw_scale);
-    return { x, y };
-}
-/** Check if something on page is selected OR text input field is active. */
-
-function anySel() {
-    const sel = window.getSelection();
-    if   (sel && !sel.isCollapsed)                return true;
-    if (el_is_text_input(document.activeElement)) return true;
-    return false;
-}
-const text_input_types = ['text', 'search', 'email', 'url', 'password', 'tel'];
-function el_is_text_input(el) {
-    return  el && (
-            el.tagName === 'TEXTAREA'
-        ||  el.isContentEditable
-        || (el.tagName === 'INPUT' && text_input_types.includes(el.type)));
-}
-/** Check if any text input field is active. */
-function anyInp() {
-    const a = document.activeElement;
-    if (a && (a.tagName === 'INPUT' || a.tagName === 'TEXTAREA' || a.isContentEditable)) return 1;
-
-    return 0;
-}
-function fx_click(butt, index) {
-    const kbd = butt.getElementsByTagName('kbd')[index ?? 0];
-    kbd.classList.add('fx-clicked');
-    setTimeout(() => kbd.classList.remove('fx-clicked'), 100);
-}
-// endregion
-
 // region IMAGE SAVE
 function cd_save_image() {
     canvas_draw.toBlob((blob) => {
@@ -506,13 +474,9 @@ function SETUP_IMAGE_SAVE() {
 function cd_copy_to_clipboard() {
     const callback = (blob) => {
         let item = new ClipboardItem({ 'image/png': blob });
-        navigator.clipboard.write([item]).then(fx_cd_copy);
+        navigator.clipboard.write([item]).then(() => temp_fx(canvas_over, 'fx-copied', 500));
     };
     canvas_draw.toBlob(callback, 'image/png');
-}
-function fx_cd_copy() {
-    canvas_over.classList.add('fx-copied');
-    setTimeout(() => canvas_over.classList.remove('fx-copied'), 500);
 }
 function SETUP_IMAGE_COPY() {
     butt_copy.onclick = cd_copy_to_clipboard;
@@ -914,11 +878,36 @@ function key_is(e, shortcut) {
            && (mods.includes('S') || e.shiftKey === mods.includes('s'))
            && (mods.includes('A') || e.  altKey === mods.includes('a'));
 }
-function bind(e, button, logic) {
+/** Usage: <pre>if (key_is(e, 's^c')) bind(e, butt_save, save);</pre> */
+function bind(e, butt, logic) {
     e.preventDefault();
-    fx_click(button);
+    fx_click(butt);
     logic();
 }
+function fx_click(butt, index) {
+    const kbd = butt.getElementsByTagName('kbd')[index ?? 0];
+    temp_fx(kbd, 'fx-clicked', 100);
+}
+function temp_fx(el, css_class, time) {
+    el.classList.add(css_class);
+    setTimeout(() => el.classList.remove(css_class), time);
+}
+
+/** Check if anything is selected OR if any text input field is active. */
+function anySel() {
+    return !window.getSelection()?.isCollapsed || anyInp();
+}
+/** Check if any text input field is active. */
+function anyInp() {
+    return el_is_text_input(document.activeElement);
+}
+function el_is_text_input(el) {
+    return  el && (
+            el.isContentEditable
+        ||  el.tagName === 'TEXTAREA'
+        || (el.tagName === 'INPUT' && text_input_types.has(el.type)));
+}
+const text_input_types = new Set(['text', 'search', 'email', 'url', 'password', 'tel']);
 // endregion
 
 // region INIT
