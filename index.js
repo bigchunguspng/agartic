@@ -27,14 +27,14 @@ const butt_redo     = document.getElementById('button_redo');
 const butt_copy     = document.getElementById('button_copy');
 const butt_paste    = document.getElementById('button_paste');
 const butt_save     = document.getElementById('button_save');
-const butt_nuke     = document.getElementById('button_delete');
+const butt_nuke     = document.getElementById('button_nuke');
 
 const butt_bs_less  = document.getElementById('button_thickness_less');
 const butt_bs_more  = document.getElementById('button_thickness_more');
 
-const butt_imgv_ok  = document.getElementById('okButton');
-const butt_imgv_no  = document.getElementById('cancelButton');
-const butt_co_no    = document.getElementById('cancelButton_2');
+const butt_ok_imgv  = document.getElementById('button_ok_imgv');
+const butt_no_imgv  = document.getElementById('button_no_imgv');
+const butt_no_cp    = document.getElementById('button_no_cp');
 
 const brush_cursor  = document.getElementById('brush_cursor');
 const out_thickness = document.getElementById('out_thickness');
@@ -567,8 +567,8 @@ function loadPastedImage(blob) {
 }
 function SETUP_IMAGE_PASTE() {
     butt_paste  .onclick = image_paste_button;
-    butt_imgv_ok.onclick = cd_draw_pasted_image;
-    butt_imgv_no.onclick = placing_image_exit;
+    butt_ok_imgv.onclick = cd_draw_pasted_image;
+    butt_no_imgv.onclick = placing_image_exit;
     document.addEventListener('paste', function (e) {
         if (!anyInp()) fx_click(butt_paste) || image_paste(e);
     });
@@ -836,7 +836,7 @@ function string_to_color(str) {
     return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
 }
 function SETUP_COLOR_PICKER() {
-    butt_co_no.onclick = () => cp_apply_color_and_exit(color);
+    butt_no_cp.onclick = () => cp_apply_color_and_exit(color);
     input_color  .addEventListener('input',  () => cp_apply_color                (input_color  .value));
     input_color  .addEventListener('change', () => cp_apply_color_and_exit       (input_color  .value));
     input_color_t.addEventListener('input',  () => input_color_update(valid_color(input_color_t.value)));
