@@ -887,13 +887,18 @@ function SETUP_HOOKS_POST() {
         window.h = window.innerHeight;
     });
     document.addEventListener('keydown', e => {
-        if (e.code === 'Escape' && !e.ctrlKey && !e.shiftKey && !e.altKey && anySel()) {
+        // remove selection on Esc
+        if (e.code === 'Escape' && !e.ctrlKey && !e.shiftKey && !e.altKey &&  anySel()) {
             const sel = window.getSelection();
             if   (sel && !sel.isCollapsed)
                 return sel.removeAllRanges();
             const el = document.activeElement;
             if   (el_is_text_input(el))
                 return el.selectionStart = el.selectionEnd = 0;
+        }
+        // prevent phantom selection on Ctrl+A
+        if (e.code === 'KeyA'   &&  e.ctrlKey && !e.shiftKey && !e.altKey && !anySel()) {
+            e.preventDefault();
         }
     });
 }

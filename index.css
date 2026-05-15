@@ -100,6 +100,7 @@ input[type="color"] {
     }
     & .tips > * {
         user-select: none;
+        -webkit-user-select: none;
         position: absolute;
         margin: 40px;
         color: #7c7367;
