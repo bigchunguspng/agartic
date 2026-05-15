@@ -38,8 +38,8 @@ const butt_no_cp    = document.getElementById('button_no_cp');
 
 const brush_cursor  = document.getElementById('brush_cursor');
 const out_thickness = document.getElementById('out_thickness');
-const input_color   = document.getElementById('input_color');
-const input_color_t = document.getElementById('input_color_txt');
+const cp_input_col  = document.getElementById('input_cp_col');
+const cp_input_txt  = document.getElementById('input_cp_txt');
 
 const tips_imgv     = document.getElementById('tips_imgv');
 const color_inputs  = document.getElementById('color_inputs');
@@ -53,7 +53,7 @@ const panel_aux_items = Array.from(panel_aux.children);
 
 let tool_active, tool_last;
 
-function tool_activate(tool, by_key) {
+function tool_activate(tool) {
     if (tool === tool_active) return;
 
     if      (tool_active === tool_drag) cw_drag_disable();
@@ -65,7 +65,6 @@ function tool_activate(tool, by_key) {
     tool_last = tool_active;
     tool_active = tool;
     panel_aux_items.forEach(x => x.classList.toggle('hide', !x.classList.contains(tool.id)));
-    if (by_key) fx_click(tool_active);
 
     if      (tool_active === tool_drag) cw_drag_enable();
     else if (tool_active === tool_draw) drawing_enable();
@@ -78,13 +77,13 @@ function SETUP_TOOLS() {
         if (tool) tool_activate(tool);
     });
     window.addEventListener('keydown', e => {
-        if (e.ctrlKey || e.altKey || e.shiftKey || anyInp()) return;
-        if      (e.code === 'KeyC') e.preventDefault() || tool_activate(tool_pick, true);
-        else if (e.code === 'KeyE') e.preventDefault() || tool_activate(tool_pick, true); // I got used to it from prev ver.
-        else if (e.code === 'KeyX') e.preventDefault() || tool_activate(tool_drag, true);
-        else if (e.code === 'KeyD') e.preventDefault() || tool_activate(tool_draw, true);
-        else if (e.code === 'KeyR') e.preventDefault() || tool_activate(tool_rect, true);
-        else if (e.code === 'KeyQ') e.preventDefault() || tool_activate(tool_laso, true);
+        if (anyInp()) return;
+        if      (key_is(e, 'c')) bind(e, tool_pick, () => tool_activate(tool_pick));
+        else if (key_is(e, 'e')) bind(e, tool_pick, () => tool_activate(tool_pick)); // I got used to it from prev ver.
+        else if (key_is(e, 'x')) bind(e, tool_drag, () => tool_activate(tool_drag));
+        else if (key_is(e, 'd')) bind(e, tool_draw, () => tool_activate(tool_draw));
+        else if (key_is(e, 'r')) bind(e, tool_rect, () => tool_activate(tool_rect));
+        else if (key_is(e, 'q')) bind(e, tool_laso, () => tool_activate(tool_laso));
     });
 }
 // endregion
@@ -145,10 +144,8 @@ function SETUP_CW_ZOOM() {
         }
     }, { passive: false });
     window.addEventListener('keydown', e => {
-        if (e.ctrlKey) {
-            if      (e.key === '1') e.preventDefault() || fx_click(butt_zoom_1) || cw_resize_true_scale();
-            else if (e.key === '2') e.preventDefault() || fx_click(butt_zoom_2) || cw_resize_fit_screen();
-        }
+        if      (key_is(e, '1^c')) bind(e, butt_zoom_1, cw_resize_true_scale);
+        else if (key_is(e, '2^c')) bind(e, butt_zoom_2, cw_resize_fit_screen);
     });
     window.addEventListener('resize', () => {
         // keep canvas position relative to center
@@ -287,15 +284,11 @@ function SETUP_HISTORY_CTL() {
     butt_redo.onclick = history_redo;
     butt_nuke.onclick = history_clear;
     document.addEventListener('keydown', function (e) {
-        if (e.altKey || anyInp()) return;
-        if      (e.ctrlKey && !e.shiftKey) {
-            if      (e.code === 'KeyY') e.preventDefault() || fx_click(butt_redo) || history_redo();
-            else if (e.code === 'KeyZ') e.preventDefault() || fx_click(butt_undo) || history_undo();
-            else if (e.code === 'KeyD') e.preventDefault() || fx_click(butt_nuke) || history_clear();
-        }
-        else if (e.ctrlKey &&  e.shiftKey) {
-            if      (e.code === 'KeyZ') e.preventDefault() || fx_click(butt_redo) || history_redo();
-        }
+        if (anyInp()) return;
+        if      (key_is(e, 'y^c' )) bind(e, butt_redo, history_redo);
+        else if (key_is(e, 'z^cs')) bind(e, butt_redo, history_redo);
+        else if (key_is(e, 'z^c' )) bind(e, butt_undo, history_undo);
+        else if (key_is(e, 'd^c' )) bind(e, butt_nuke, history_clear);
     });
 }
 // endregion
@@ -427,9 +420,9 @@ function SETUP_DRAWING() {
     document.addEventListener('pointermove',    drawing_draw);
     document.addEventListener('pointerup',      drawing_stop);
     document.addEventListener('keydown', e => {
-        if (!drawing_enabled || e.ctrlKey || e.altKey || anyInp()) return;
-        if      (e.code === 'KeyW') fx_click(butt_bs_more) || thickness_more(e);
-        else if (e.code === 'KeyS') fx_click(butt_bs_less) || thickness_less(e);
+        if (!drawing_enabled || anyInp()) return;
+        if      (key_is(e, 'w^S')) bind(e, butt_bs_more, () => thickness_more(e));
+        else if (key_is(e, 's^S')) bind(e, butt_bs_less, () => thickness_less(e));
     });
 }
 function SETUP_BRUSH_CURSOR() {
@@ -510,11 +503,7 @@ function cd_save_image() {
 function SETUP_IMAGE_SAVE() {
     butt_save.onclick = cd_save_image;
     document.addEventListener('keydown', e => {
-        if (e.ctrlKey && !e.shiftKey && !e.altKey && e.code === 'KeyS') {
-            e.preventDefault();
-            fx_click(butt_save);
-            cd_save_image();
-        }
+        if (key_is(e, 's^c')) bind(e, butt_save, cd_save_image);
     });
 }
 // endregion
@@ -574,10 +563,10 @@ function SETUP_IMAGE_PASTE() {
     });
     document.addEventListener('keydown', e => {
         if (imgv && !anySel()) {
-            if      (e.code === 'Enter' ) cd_draw_pasted_image();
-            else if (e.code === 'Tab'   ) cd_draw_pasted_image();
-            else if (e.code === 'Space' ) cd_draw_pasted_image();
-            else if (e.code === 'Escape') placing_image_exit();
+            if      (key_is(e, 'Enter' )) cd_draw_pasted_image();
+            else if (key_is(e, 'Tab'   )) cd_draw_pasted_image();
+            else if (key_is(e, 'Space' )) cd_draw_pasted_image();
+            else if (key_is(e, 'Escape')) placing_image_exit();
         }
     });
 }
@@ -619,7 +608,8 @@ function placing_image_start(img) {
 }
 function placing_image_exit() {
     imgv = null;
-    tool_activate(tool_last, true);
+    fx_click(tool_last);
+    tool_activate(tool_last);
     tips_imgv.classList.add('hide');
     vp.classList.remove('img-draggable');
     vp.classList.remove('img-dragging');
@@ -774,8 +764,8 @@ function SETUP_IMAGE_PLACING() {
     document.addEventListener('pointerdown', imgv_interaction_start);
     document.addEventListener('pointermove', imgv_interact);
     document.addEventListener('pointerup',   imgv_interaction_stop);
-    document.addEventListener('keydown',   imgv_interaction_apply_mods);
-    document.addEventListener('keyup',     imgv_interaction_apply_mods);
+    document.addEventListener('keydown',     imgv_interaction_apply_mods);
+    document.addEventListener('keyup',       imgv_interaction_apply_mods);
 }
 // endregion
 
@@ -796,14 +786,15 @@ function cp_pick_from_canvas() {
         const { x, y } = getCanvasCursorXY();
         const [r, g, b] = cd_ctx.getImageData(x, y, 1, 1).data;
         const hex = ((r << 16) + (g << 8) + b).toString(16).padStart(6, '0');
-        input_color_update(input_color_t.value = '#' + hex);
+        input_color_update(cp_input_txt.value = '#' + hex);
     }
 }
 function cp_apply_color_and_exit(value) {
     if (cp) {
         cp_apply_color(value);
         cp_exit();
-        tool_activate(tool_last, true);
+        fx_click(tool_last);
+        tool_activate(tool_last);
     }
 }
 function cp_apply_color(value) {
@@ -812,11 +803,11 @@ function cp_apply_color(value) {
 }
 function cp_color_inputs_update_both(value) {
     input_color_update(value);
-    input_color_t.value = value;
+    cp_input_txt.value = value;
 }
 function input_color_update(value) {
-    input_color.value = value;
-    input_color.style.setProperty('--color', value);
+    cp_input_col.value = value;
+    cp_input_col.style.setProperty('--color', value);
 }
 function valid_color(input) {
     const style = new Option().style;
@@ -837,30 +828,36 @@ function string_to_color(str) {
 }
 function SETUP_COLOR_PICKER() {
     butt_no_cp.onclick = () => cp_apply_color_and_exit(color);
-    input_color  .addEventListener('input',  () => cp_apply_color                (input_color  .value));
-    input_color  .addEventListener('change', () => cp_apply_color_and_exit       (input_color  .value));
-    input_color_t.addEventListener('input',  () => input_color_update(valid_color(input_color_t.value)));
-    input_color_t.addEventListener('keydown', e => {
-        if (e.ctrlKey || e.shiftKey || e.altKey) return;
-        if (e.code === 'Enter' || e.code === 'Tab') fx_click(color_inputs, 3) || cp
-            ? cp_apply_color_and_exit(valid_color(input_color_t.value))  // cp -> exit
-            : cp_apply_color         (valid_color(input_color_t.value)); // drawing/…
-        else if (e.code === 'Escape') fx_click(color_inputs, 2) || cp_apply_color(color); // reset
-        else return;
-        input_color_t.blur() || e.preventDefault(); // leave input field
-    });
-    input_color_t.addEventListener('blur', () => cp_apply_color(color)); // reset
-    canvas_draw.addEventListener('pointermove',    cp_pick_from_canvas);
-    canvas_draw.addEventListener('click',  () => cp_apply_color_and_exit(input_color.value));
-    document.addEventListener('keydown', e => {
-        if (e.altKey || e.ctrlKey || anySel())  return;
-        if (e.code === 'Escape' && !e.shiftKey) return cp_apply_color_and_exit(color); // esc -> exit cp
-        if (drawing_enabled || cp) {
-            if (e.code === 'KeyC' && e.shiftKey) // S-c -> focus color input (text)
-                return fx_click(color_inputs, 1) || input_color_t.focus() || e.preventDefault();
-            if (e.code === 'KeyX' && e.shiftKey)
-                return fx_click(color_inputs, 0) || input_color.click();
+    cp_input_col.addEventListener('input',  () => cp_apply_color                (cp_input_col.value));
+    cp_input_col.addEventListener('change', () => cp_apply_color_and_exit       (cp_input_col.value));
+    cp_input_txt.addEventListener('input',  () => input_color_update(valid_color(cp_input_txt.value)));
+    cp_input_txt.addEventListener('keydown', e => {
+        if (key_is(e, 'Tab') || key_is(e, 'Enter')) {
+            const new_color = valid_color(cp_input_txt.value);
+            fx_click(color_inputs, 3);
+            cp
+                ? cp_apply_color_and_exit(new_color)  // cp -> exit
+                : cp_apply_color         (new_color); // drawing/…
         }
+        else if (key_is(e, 'Escape')) {
+            fx_click(color_inputs, 2);
+            cp_apply_color(color); // reset
+        }
+        else return;
+        // leave input field
+        cp_input_txt.blur();
+        e.preventDefault();
+    });
+    cp_input_txt.addEventListener('blur', () => cp_apply_color(color)); // reset
+    canvas_draw.addEventListener('pointermove', cp_pick_from_canvas);
+    canvas_draw.addEventListener('click', () => cp_apply_color_and_exit(cp_input_col.value));
+    document.addEventListener('keydown', e => {
+        if (anySel()) return;
+        if (cp || drawing_enabled) {
+            if      (key_is(e, 'c^s')) fx_click(color_inputs, 1) || cp_input_txt.focus() || e.preventDefault();
+            else if (key_is(e, 'x^s')) fx_click(color_inputs, 0) || cp_input_col.click();
+        }
+        if (cp && key_is(e, 'Escape')) cp_apply_color_and_exit(color); // esc -> exit cp
     });
 }
 // endregion
@@ -888,7 +885,7 @@ function SETUP_HOOKS_POST() {
     });
     document.addEventListener('keydown', e => {
         // remove selection on Esc
-        if (e.code === 'Escape' && !e.ctrlKey && !e.shiftKey && !e.altKey &&  anySel()) {
+        if (key_is(e, 'Escape') && anySel()) {
             const sel = window.getSelection();
             if   (sel && !sel.isCollapsed)
                 return sel.removeAllRanges();
@@ -897,10 +894,36 @@ function SETUP_HOOKS_POST() {
                 return el.selectionStart = el.selectionEnd = 0;
         }
         // prevent phantom selection on Ctrl+A
-        if (e.code === 'KeyA'   &&  e.ctrlKey && !e.shiftKey && !e.altKey && !anySel()) {
+        if (key_is(e, 'a^c') && !anySel()) {
             e.preventDefault();
         }
     });
+}
+// endregion
+
+// region UTILS
+
+/** Shortcut syntax: <key>[^mods].
+ * <br/> [cas] - required mods (Ctrl, Alt, Shift).
+ * <br/> [CAS] -  allowed mods (Ctrl, Alt, Shift).
+ */
+function key_is(e, shortcut) {
+    let [key, mods] = shortcut.split('^');
+    if (key.length === 1) {
+        const c = key.charCodeAt(0);
+        if   (c >= 97 && c <= 122)
+            key = 'Key' + String.fromCharCode(c - 32);
+    }
+    mods ??= '';
+    return (e.code === key || key.length === 1 && e.key === key)
+           && (mods.includes('C') || e. ctrlKey === mods.includes('c'))
+           && (mods.includes('S') || e.shiftKey === mods.includes('s'))
+           && (mods.includes('A') || e.  altKey === mods.includes('a'));
+}
+function bind(e, button, logic) {
+    e.preventDefault();
+    fx_click(button);
+    logic();
 }
 // endregion
 
