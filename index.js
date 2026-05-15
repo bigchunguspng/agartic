@@ -395,23 +395,18 @@ function cd_apply_history_img(data) {
 function set_thickness(value) {
     thickness = Math.min(Math.max(value, 1), 999);
     out_thickness.innerText = thickness;
-    const style = brush_cursor.style;
-    if   (style.display !== 'none') {
-        const x = parseFloat(style.left);
-        const y = parseFloat(style.top);
-        const r = parseFloat(style.width);
-        brush_cursor_move_and_resize(x, y, r);
-    }
+    if (brush_cursor.style.display !== 'none')
+        brush_cursor_move_and_resize();
 }
 function thickness_less(e) { set_thickness(e.shiftKey ? Math.floor(thickness / 1.5) : thickness - 1); }
 function thickness_more(e) { set_thickness(e.shiftKey ? Math.ceil (thickness * 1.5) : thickness + 1); }
-function brush_cursor_move_and_resize(x, y, r) {
-    const difference = (r - thickness * cw_scale) / 2;
+function brush_cursor_move_and_resize() {
+    const cc = getCanvasCursorXY();
     const style  = brush_cursor.style;
     style.width  = `${Math.round(thickness * cw_scale)}px`;
     style.height = `${Math.round(thickness * cw_scale)}px`;
-    style.left = `${Math.round(x + difference)}px`;
-    style.top  = `${Math.round(y + difference)}px`;
+    style.left = `${Math.round(cw_x + cc.x * cw_scale)}px`;
+    style.top  = `${Math.round(cw_y + cc.y * cw_scale)}px`;
 }
 function SETUP_DRAWING() {
     butt_bs_less.onclick = thickness_less;
@@ -428,15 +423,15 @@ function SETUP_DRAWING() {
 function SETUP_BRUSH_CURSOR() {
     canvas_draw.addEventListener('pointerenter', () => {
         brush_cursor.classList.add('on-canvas');
-        brush_cursor_move_and_resize(mouse.x, mouse.y, 0);
+        brush_cursor_move_and_resize();
     });
     canvas_draw.addEventListener('pointerleave', () => {
         brush_cursor.classList.remove('on-canvas');
     });
-    canvas_draw.addEventListener('pointermove', e => {
+    canvas_draw.addEventListener('pointermove', () => {
         const { x, y } = getCanvasCursorXY();
         const [r, g, b, a] = cd_ctx.getImageData(x, y, 1, 1).data;
-        brush_cursor_move_and_resize(e.pageX, e.pageY, 0);
+        brush_cursor_move_and_resize();
         brush_cursor.style.borderColor = (a > 0 && r + g + b < 480) ? 'white' : 'black';
         // ^ todo thickness > 10 && take 4 more samples && some are dark and some are light - make gray (add it to move and resize func)
     });
