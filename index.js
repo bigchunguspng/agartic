@@ -448,9 +448,8 @@ function cw_setup_size() {
 
 /** Cursor position relative to canvas 0,0. */
 function getCanvasCursorXY() {
-    const rect = canvas_draw.getBoundingClientRect();
-    const x = Math.floor((mouse.x - rect.left) / cw_scale);
-    const y = Math.floor((mouse.y - rect.top ) / cw_scale);
+    const x = Math.floor((mouse.x - cw_x) / cw_scale);
+    const y = Math.floor((mouse.y - cw_y) / cw_scale);
     return { x, y };
 }
 /** Check if something on page is selected OR text input field is active. */
