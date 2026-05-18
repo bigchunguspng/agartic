@@ -37,11 +37,14 @@ const butt_no_imgv  = document.getElementById('button_no_imgv');
 const butt_no_cp    = document.getElementById('button_no_cp');
 
 const brush_cursor  = document.getElementById('brush_cursor');
-const out_thickness = document.getElementById('out_thickness');
+const in_thickness  = document.getElementById('input_thickness');
 const cp_input_col  = document.getElementById('input_cp_col');
 const cp_input_txt  = document.getElementById('input_cp_txt');
 
 const tips_imgv     = document.getElementById('tips_imgv');
+const tips_draw     = document.getElementById('tips_draw');
+const tips_bs       = document.getElementById('tips_bs');
+const brush_inputs  = document.getElementById('brush_inputs');
 const color_inputs  = document.getElementById('color_inputs');
 
 // endregion
@@ -145,7 +148,10 @@ function cw_setup_size() {
 function SETUP_CW_ZOOM() {
     vp.addEventListener('wheel', e => {
         e.preventDefault();
-        if (e.ctrlKey) {
+        if (document.activeElement === in_thickness && in_thickness.matches(':focus-visible')) {
+            e.deltaY > 0 ? thickness_less(e) : thickness_more(e);
+        }
+        else if (e.ctrlKey) {
             cw_zoom(e, e.deltaY > 0);
         }
         else {
@@ -318,11 +324,13 @@ let thickness;
 function drawing_enable() {
     brush_cursor.classList.add('drawing');
     canvas_draw.classList.add('drawing');
+    tips_draw.classList.remove('hide');
     drawing_enabled = true;
 }
 function drawing_disable() {
     brush_cursor.classList.remove('drawing');
     canvas_draw.classList.remove('drawing');
+    tips_draw.classList.add('hide');
     drawing_enabled = false;
     drawing_stop();
 }
@@ -405,7 +413,7 @@ function cd_apply_history_img(data) {
 }
 function set_thickness(value) {
     thickness = Math.min(Math.max(value, 1), 999);
-    out_thickness.innerText = thickness;
+    in_thickness.value = thickness;
     if (brush_cursor.style.display !== 'none')
         brush_cursor_move_and_resize();
 }
@@ -429,6 +437,29 @@ function SETUP_DRAWING() {
         if (!drawing_enabled || anyInp()) return;
         if      (key_is(e, 'w^S')) bind(e, butt_bs_more, () => thickness_more(e));
         else if (key_is(e, 's^S')) bind(e, butt_bs_less, () => thickness_less(e));
+        else if (key_is(e, 'z^s')) fx_click(brush_inputs, 0) || in_thickness.focus() || e.preventDefault();
+    });
+    in_thickness.addEventListener('focus', () => {
+        tips_bs.classList.remove('hide');
+        tips_draw.classList.add('move');
+    });
+    in_thickness.addEventListener('blur', () => {
+        tips_bs.classList.add('hide');
+        tips_draw.classList.remove('move');
+    });
+    in_thickness.addEventListener('keydown', e => {
+        if (key_is(e, 'Tab') || key_is(e, 'Enter')) {
+            fx_click(brush_inputs, 2);
+            set_thickness(in_thickness.value);
+        }
+        else if (key_is(e, 'Escape')) {
+            fx_click(brush_inputs, 1);
+            in_thickness.value = thickness;
+        }
+        else return;
+        // leave input field
+        in_thickness.blur();
+        e.preventDefault();
     });
 }
 function SETUP_BRUSH_CURSOR() {
@@ -907,7 +938,7 @@ function el_is_text_input(el) {
         ||  el.tagName === 'TEXTAREA'
         || (el.tagName === 'INPUT' && text_input_types.has(el.type)));
 }
-const text_input_types = new Set(['text', 'search', 'email', 'url', 'password', 'tel']);
+const text_input_types = new Set(['text', 'number']);
 // endregion
 
 // region INIT

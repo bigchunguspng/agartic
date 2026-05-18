@@ -28,7 +28,10 @@
             <p>Both <kbd>c</kbd> and <kbd>e</kbd> activates <i>color picker</i></p>
         </div>
         <div class="d">
-            <p>Combine <kbd>s</kbd> & <kbd>w</kbd> with <kbd>Shift</kbd> to resize brush faster</p>
+            <p><kbd>Tab</kbd> = <kbd>Enter</kbd></p>
+        </div>
+        <div class="draw hide fast" id="tips_draw">
+            <p>Hold <kbd>Shift</kbd> to resize brush faster</p>
         </div>
         <div class="imgv hide" id="tips_imgv">
             <h3>When dragging…</h3>
@@ -37,6 +40,9 @@
             <p>Hold <kbd>Ctrl</kbd> to drag image</p>
             <p>Hold <kbd>Shift</kbd> to keep image aspect ratio</p>
             <p>Hold <kbd>Alt</kbd> to anchor image at center</p>
+        </div>
+        <div class="bs hide fast" id="tips_bs">
+            <p>Scroll to resize brush</p>
         </div>
     </div>
 
@@ -99,11 +105,15 @@
             <kbd>w</kbd>
             <img src="img/icons/list-add.png">
         </button>
-        <div class="tool_draw">
+        <div id="brush_inputs" class="tool_draw">
             <img src="img/icons/media-record.png">
-            <span id="out_thickness">3</span>
+            <kbd class="w">S-z</kbd>
+            <input type="number" id="input_thickness">
+            <kbd class="n w">Esc</kbd>
+            <kbd class="y w">Tab</kbd>
         </div>
-        <div class="tool_draw tool_pick" id="color_inputs">
+        <div id="color_inputs" class="tool_draw tool_pick">
+            <img src="img/icons/applications-graphics.png">
             <kbd class="w">S-x</kbd>
             <input type="color" id="input_cp_col">
             <div class="divider"></div>
