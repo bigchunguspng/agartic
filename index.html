@@ -46,10 +46,10 @@
     </div>
 
     <div id="panel-main" class="panel">
-        <button id="button_zoom_1"> <kbd>C-1</kbd>
+        <button id="button_zoom_1"> <kbd class="w">C-1</kbd>
             <img src="img/icons/zoom-original.png">
         </button>
-        <button id="button_zoom_2"> <kbd>C-2</kbd>
+        <button id="button_zoom_2"> <kbd class="w">C-2</kbd>
             <img src="img/icons/zoom-fit-best.png">
         </button>
         <button id="button_zoom_out">
@@ -58,8 +58,8 @@
         <button id="button_zoom_in">
             <img src="img/icons/zoom-in.png">
         </button>
-        <button id="button_undo">   <kbd>C-z</kbd>  <img src="img/icons/view-refresh.png" style="transform: scaleX(-1)"></button>
-        <button id="button_redo">   <kbd>C-Z</kbd>  <img src="img/icons/view-refresh.png"></button>
+        <button id="button_undo">   <kbd class="w">C-z</kbd>  <img src="img/icons/view-refresh.png" style="transform: scaleX(-1)"></button>
+        <button id="button_redo">   <kbd class="w">C-Z</kbd>  <img src="img/icons/view-refresh.png"></button>
         <button id="button_info">   <kbd>`</kbd>    <span>info  </span></button>
         <button id="tool_pick">     <kbd>c</kbd>    <span>color </span></button>
         <button id="button_fill">   <kbd>f</kbd>    <span>fill  </span></button>
@@ -68,16 +68,16 @@
         <button id="tool_rect">     <kbd>r</kbd>    <span>rect  </span></button>
         <button id="tool_laso">     <kbd>q</kbd>    <span>laso  </span></button>
         <button id="tool_imgv" class="hide">HOLY SHIT!! SECRET BUTTON!?</button>
-        <button id="button_copy">   <kbd>C-c</kbd>
+        <button id="button_copy">   <kbd class="w">C-c</kbd>
             <img src="img/icons/edit-copy.png">
         </button>
-        <button id="button_paste">  <kbd><abbr title="Use shortcut to paste files!">C-v</abbr></kbd>
+        <button id="button_paste">  <kbd class="w"><abbr title="Use shortcut to paste files!">C-v</abbr></kbd>
             <img src="img/icons/edit-paste.png">
         </button>
-        <button id="button_save">   <kbd>C-s</kbd>
+        <button id="button_save">   <kbd class="w">C-s</kbd>
             <img src="img/icons/media-floppy.png">
         </button>
-        <button id="button_nuke"> <kbd>C-d</kbd>
+        <button id="button_nuke">   <kbd class="w">C-d</kbd>
             <img src="img/icons/user-trash-full-2.png">
         </button>
     </div>
@@ -86,7 +86,7 @@
         <!-- DRAW, COLOR -->
         <button id="button_no_cp"
                 class="tool_pick">
-            <kbd>Esc</kbd>
+            <kbd class="w">Esc</kbd>
             <img src="img/icons/dialog-error.png">
         </button>
         <button id="button_thickness_less"
@@ -104,23 +104,23 @@
             <span id="out_thickness">3</span>
         </div>
         <div class="tool_draw tool_pick" id="color_inputs">
-            <kbd>S-x</kbd>
+            <kbd class="w">S-x</kbd>
             <input type="color" id="input_cp_col">
             <div class="divider"></div>
-            <kbd>S-c</kbd>
+            <kbd class="w">S-c</kbd>
             <input type="text" id="input_cp_txt">
-            <kbd class="n">Esc</kbd>
-            <kbd class="y">Tab</kbd>
+            <kbd class="n w">Esc</kbd>
+            <kbd class="y w">Tab</kbd>
         </div>
         <!-- PLACING IMAGE -->
         <button id="button_no_imgv"
                 class="tool_imgv">
-            <kbd>Esc</kbd>
+            <kbd class="w">Esc</kbd>
             <img src="img/icons/dialog-error.png">
         </button>
         <button id="button_ok_imgv"
                 class="tool_imgv">
-            <kbd>Tab</kbd>
+            <kbd class="w">Tab</kbd>
             <img src="img/icons/emblem-default.png">
         </button>
         <!-- ... -->
