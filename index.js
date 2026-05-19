@@ -117,7 +117,7 @@ function getCanvasCursorXY() {
 
 function cw_transform() {
     cw.style.transform = `translate(${Math.floor(cw_x)}px, ${Math.floor(cw_y)}px) scale(${cw_scale})`;
-    brush_cursor_move_and_resize();
+    brush_cursor_RENDER();
 }
 function cw_resize_true_scale() {
     cw_scale = 1;
@@ -424,17 +424,47 @@ function set_thickness(value) {
     thickness = Math.min(Math.max(value, 1), 999);
     in_thickness.value = thickness;
     if (brush_cursor.style.display !== 'none')
-        brush_cursor_move_and_resize();
+        brush_cursor_RENDER();
 }
 function thickness_less(e) { set_thickness(e.shiftKey ? Math.floor(thickness / 1.5) : thickness - 1); }
 function thickness_more(e) { set_thickness(e.shiftKey ? Math.ceil (thickness * 1.5) : thickness + 1); }
-function brush_cursor_move_and_resize() {
+function brush_cursor_RENDER() {
     const cc = getCanvasCursorXY();
     const style  = brush_cursor.style;
     style.width  = `${Math.round(thickness * cw_scale)}px`;
     style.height = `${Math.round(thickness * cw_scale)}px`;
     style.left = `${Math.round(cw_x + cc.x * cw_scale)}px`;
     style.top  = `${Math.round(cw_y + cc.y * cw_scale)}px`;
+    brush_cursor.style.borderColor = brush_cursor_get_color();
+}
+function brush_cursor_get_color() {
+    const { x, y } = getCanvasCursorXY();
+    if (thickness >= 10) {
+        const o = 0.5 * thickness * 0.7071067811865476;
+        const r = 0.5 * thickness;
+        const c = [
+            cd_lightness_at(x + o, y + o),
+            cd_lightness_at(x + o, y - o),
+            cd_lightness_at(x - o, y + o),
+            cd_lightness_at(x - o, y - o),
+            cd_lightness_at(x, y + r),
+            cd_lightness_at(x, y - r),
+            cd_lightness_at(x + r, y),
+            cd_lightness_at(x - r, y),
+        ];
+        const min = Math.min(...c);
+        const max = Math.max(...c);
+        const avg = c.reduce((acc, val) => acc + val, 0) / c.length;
+        const v = 255 - avg;
+        const  range = max - min;
+        return range > 160 ? `rgb(${v},${v},${v})` : avg < 127 ? 'white' : 'black';
+    }
+    else
+        return cd_lightness_at(x, y) < 120 ? 'white' : 'black';
+}
+function cd_lightness_at(x, y) {
+    const [r, g, b, a] = cd_ctx.getImageData(x, y, 1, 1).data;
+    return a > 0 ? 0.2126 * r + 0.7152 * g + 0.0722 * b : 255;
 }
 function SETUP_DRAWING() {
     butt_bs_less.onclick = thickness_less;
@@ -474,17 +504,13 @@ function SETUP_DRAWING() {
 function SETUP_BRUSH_CURSOR() {
     canvas_draw.addEventListener('pointerenter', () => {
         brush_cursor.classList.add('on-canvas');
-        brush_cursor_move_and_resize();
+        brush_cursor_RENDER();
     });
     canvas_draw.addEventListener('pointerleave', () => {
         brush_cursor.classList.remove('on-canvas');
     });
     canvas_draw.addEventListener('pointermove', () => {
-        const { x, y } = getCanvasCursorXY();
-        const [r, g, b, a] = cd_ctx.getImageData(x, y, 1, 1).data;
-        brush_cursor_move_and_resize();
-        brush_cursor.style.borderColor = (a > 0 && r + g + b < 480) ? 'white' : 'black';
-        // ^ todo thickness > 10 && take 4 more samples && some are dark and some are light - make gray (add it to move and resize func)
+        brush_cursor_RENDER();
     });
 }
 // endregion
