@@ -394,10 +394,9 @@ function cd_draw_dot(x, y, pen) {
 function cd_draw_pasted_image(e, paste_another_img) {
     const { img, x, y, w, h } = imgv;
     cd_ctx.drawImage(img, x, y, w, h);
-    const data = canvas_draw.toDataURL('image/webp', 0.95);
-
     if (!paste_another_img) placing_image_exit();
-    history_write({ type: 1, data });
+
+    history_write({ type: 1, data: canvas_draw.toDataURL('image/webp', 0.95) });
 }
 function cd_apply_history_pen(pen, path) {
     if (path.length > 1) {
