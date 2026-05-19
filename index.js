@@ -236,16 +236,20 @@ function SETUP_CW_DRAG() {
 
 // region HISTORY
 
+const history_channel = new BroadcastChannel('history_sync');
+
 let history = [], history_len = 0;
 
-function history_load() {
-    history = JSON.parse(localStorage.getItem('history'))    ?? [];
-    history_len =        localStorage.getItem('history_len') ?? 0;
+async function history_load() {
+    history     = await db_get('history')     ?? [];
+    history_len = await db_get('history_len') ?? 0;
     history_draw();
 }
-function history_save() {
-    localStorage.setItem('history', JSON.stringify(history));
-    localStorage.setItem('history_len', history_len);
+async function history_save() {
+    await db_set('history',     history);
+    await db_set('history_len', history_len);
+    history_channel.postMessage({ key: 'history',     value: history     });
+    history_channel.postMessage({ key: 'history_len', value: history_len });
 }
 function history_draw() {
     const i_last_image = history_get_last_image_index() ?? -1;
@@ -294,13 +298,13 @@ function history_clear() {
     }
 }
 function SETUP_HISTORY_SYNC() {
-    window.addEventListener('storage', (e) => {
-        if      (e.key === 'history')     history = JSON.parse(e.newValue);
-        else if (e.key === 'history_len') history_len = e.newValue;
+    history_channel.onmessage = (e) => {
+        const { key, value } = e.data;
+        if      (key === 'history')     history     = value;
+        else if (key === 'history_len') history_len = value;
         else return;
-
         history_draw();
-    });
+    };
 }
 function SETUP_HISTORY_CTL() {
     butt_undo.onclick = history_undo;
@@ -828,6 +832,46 @@ function SETUP_COLOR_PICKER() {
             else if (key_is(e, 'x^s')) fx_click(color_inputs, 0) || cp_input_col.click();
         }
         if (cp && key_is(e, 'Escape')) cp_apply_color_and_exit(color); // esc -> exit cp
+    });
+}
+// endregion
+
+// region DB
+
+const DB_NAME = 'db_agartic', DB_VERSION = 1, DB_STORE_NAME = 'kv';
+
+function db_open() {
+    return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = e => {
+            const db = request.result;
+            switch (e.oldVersion) {
+                case 0:
+                    db.createObjectStore(DB_STORE_NAME);
+            }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror   = () => reject (request.error);
+    });
+}
+function db_get(key) {
+    return db_open().then((db) => {
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(DB_STORE_NAME, 'readonly');
+            const request = tx.objectStore(DB_STORE_NAME).get(key);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror   = () => reject (request.error);
+        });
+    });
+}
+function db_set(key, value) {
+    return db_open().then((db) => {
+        return new Promise((resolve, reject) => {
+            const tx = db.transaction(DB_STORE_NAME, 'readwrite');
+            const request = tx.objectStore(DB_STORE_NAME).put(value, key);
+            request.onsuccess = () => resolve();
+            request.onerror   = () => reject (request.error);
+        });
     });
 }
 // endregion
