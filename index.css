@@ -49,6 +49,10 @@ kbd {
     &.dragging, &.img-dragging {
         cursor: grabbing;
     }
+    &.resizing-tl { cursor: nwse-resize; }
+    &.resizing-tr { cursor: nesw-resize; }
+    &.resizing-bl { cursor: nesw-resize; }
+    &.resizing-br { cursor: nwse-resize; }
 }
 
 /* TIPS */
@@ -119,11 +123,12 @@ kbd {
 }
 
 /* CANVAS */
-& #canvas-wrapper {
+#canvas-wrapper {
     image-rendering: auto; /* todo configurable auto|pixelated */
     width: 1280px;
     height: 720px;
     position: absolute;
+    overflow: visible;
     left: 0;
     top: 0;
     transform-origin: 0 0;
@@ -131,30 +136,47 @@ kbd {
     box-shadow:
        0 3px 0 rgba(0, 0, 0, .25),
        0 0 5px rgba(0, 0, 0, .25);
-    & canvas {
+    & canvas,
+    & #imgv-wrapper {
         position: absolute;
         inset: 0;
         width: 100%;
         height: 100%;
-        &#canvas-draw {
-            &.drawing {
-                cursor: none;
-            }
-            &.eyedropper {
-                cursor: copy;
-            }
+        &.hide { display: none; }
+    }
+    & #canvas-draw {
+        &.drawing    { cursor: none; }
+        &.eyedropper { cursor: copy; }
+    }
+    & #canvas-over {
+        pointer-events: none;
+    }
+    &.fx-copied {
+        /* todo animation */
+        outline: 3px solid white;
+        outline-offset: 3px;
+    }
+    & .selection {
+        position: absolute;
+        outline: 1px dashed black;
+        & .handle {
+            --size: 10px;
+            --offset: -10px;
+            width:  var(--size);
+            height: var(--size);
+            position: absolute;
+            background: white;
+            border: 1px solid black;
+            pointer-events: all;
         }
-        &#canvas-over {
-            pointer-events: none;
-            &.img-draggable {
-                pointer-events: all;
-            }
-            &.fx-copied {
-                /* todo animation */
-                outline: 3px solid white;
-                outline-offset: 3px;
-            }
-        }
+        & .handle.tl { cursor: nwse-resize; }
+        & .handle.tr { cursor: nesw-resize; }
+        & .handle.bl { cursor: nesw-resize; }
+        & .handle.br { cursor: nwse-resize; }
+        & .handle.l { left:   var(--offset); }
+        & .handle.r { right:  var(--offset); }
+        & .handle.t { top:    var(--offset); }
+        & .handle.b { bottom: var(--offset); }
     }
 }
 #brush_cursor {

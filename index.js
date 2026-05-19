@@ -6,6 +6,12 @@ const vp            = document.getElementById('viewport');
 const cw            = document.getElementById('canvas-wrapper');
 const canvas_draw   = document.getElementById('canvas-draw');
 const canvas_over   = document.getElementById('canvas-over');
+const imgv_wrapper  = document.getElementById('imgv-wrapper');
+const imgv_sel      = document.getElementById('imgv_sel');
+const handle_tl     = document.getElementById('handle_tl');
+const handle_tr     = document.getElementById('handle_tr');
+const handle_bl     = document.getElementById('handle_bl');
+const handle_br     = document.getElementById('handle_br');
 
 const panel_main    = document.getElementById('panel-main');
 const panel_aux     = document.getElementById('panel-aux');
@@ -505,7 +511,7 @@ function SETUP_IMAGE_SAVE() {
 function cd_copy_to_clipboard() {
     const callback = (blob) => {
         let item = new ClipboardItem({ 'image/png': blob });
-        navigator.clipboard.write([item]).then(() => temp_fx(canvas_over, 'fx-copied', 500));
+        navigator.clipboard.write([item]).then(() => temp_fx(cw, 'fx-copied', 500));
     };
     canvas_draw.toBlob(callback, 'image/png');
 }
@@ -563,27 +569,33 @@ function SETUP_IMAGE_PASTE() {
 
 // region PLACING IMAGE
 
-const  HANDLE_SIZE = 10;
 const MIN_IMG_SIZE = 10;
 
 const co_ctx = canvas_over.getContext('2d');
 
-let imgv = null;
+const class_from_handle = new Map();
+{
+    class_from_handle.set(handle_tl, 'resizing-tl');
+    class_from_handle.set(handle_tr, 'resizing-tr');
+    class_from_handle.set(handle_bl, 'resizing-bl');
+    class_from_handle.set(handle_br, 'resizing-br');
+}
 
-let dragOffset = { x: 0, y: 0 }; // cursor coords rel. to pasted image 0,0
+let imgv = null;
 
 function placing_image_start(img) {
     imgv = {
         img: img,
         x: 0,
         y: 0,
+        drag_x: 0,
+        drag_y: 0, // cursor to pasted image 0,0
         w:     img.width,
         h:     img.height,
         ratio: img.width / img.height,
         grabbed_handle: null,
         is_dragging: false,
         is_resizing: false,
-        is_mouseup: () => !imgv.is_dragging && !imgv.is_resizing,
         mod_keep_ratio:     false, // shift
         mod_drag_by_handle: false, //  ctrl
         mod_drag_canvas:    false, //   alt
@@ -591,63 +603,34 @@ function placing_image_start(img) {
     };
     tool_activate(tool_imgv);
     placing_image_RENDER();
-    tips_imgv.classList.remove('hide');
+    tips_imgv   .classList.remove('hide');
+    imgv_wrapper.classList.remove('hide');
     vp.classList.add('img-draggable');
-    canvas_over.classList.add('img-draggable');
 }
 function placing_image_exit() {
     imgv = null;
     fx_click(tool_last);
     tool_activate(tool_last);
-    tips_imgv.classList.add('hide');
+    tips_imgv   .classList.add('hide');
+    imgv_wrapper.classList.add('hide');
     vp.classList.remove('img-draggable');
     vp.classList.remove('img-dragging');
-    canvas_over.classList.remove('img-draggable');
+    co_ctx.clearRect(0, 0, canvas_over.width, canvas_over.height);
 }
 function placing_image_RENDER() {
+    const { img, x, y, w, h } = imgv;
     co_ctx.clearRect(0, 0, canvas_over.width, canvas_over.height);
+    co_ctx.drawImage(img, x, y, w, h);
+    imgv_sel.style.left   = `${x}px`;
+    imgv_sel.style.top    = `${y}px`;
+    imgv_sel.style.width  = `${w}px`;
+    imgv_sel.style.height = `${h}px`;
+}
+function imgv_interaction_start(e) {
     if (imgv) {
-        const { img, x, y, w, h } = imgv;
-        co_ctx.drawImage(img, x, y, w, h);
-        co_ctx.fillStyle = 'black';
-        for (const handle of imgv_get_handles()) {
-            let hx = handle.x - HANDLE_SIZE / 2;
-            let hy = handle.y - HANDLE_SIZE / 2;
-            co_ctx.fillRect(hx, hy, HANDLE_SIZE, HANDLE_SIZE);
-        }
-        window.requestAnimationFrame(placing_image_RENDER);
-        // todo ^ request frame only if something changed
-    }
-}
-function imgv_get_cursor_style() {
-    const cc = getCanvasCursorXY();
-    const  handle = imgv_get_handle_name_at_cc(cc.x, cc.y);
-    return handle === 'nw' || handle === 'se' ? 'nwse-resize'
-        :  handle === 'ne' || handle === 'sw' ? 'nesw-resize' : '';
-}
-function imgv_get_handle_name_at_cc(cc_x, cc_y) {
-    for (const handle of imgv_get_handles()) {
-        if (cc_x >= handle.x - HANDLE_SIZE &&
-            cc_x <= handle.x + HANDLE_SIZE &&
-            cc_y >= handle.y - HANDLE_SIZE &&
-            cc_y <= handle.y + HANDLE_SIZE) return handle.name;
-    }
-}
-function imgv_get_handles() {
-    const s = imgv;
-    return [
-        { name: 'nw', x: s.x,       y: s.y       },
-        { name: 'ne', x: s.x + s.w, y: s.y       },
-        { name: 'sw', x: s.x,       y: s.y + s.h },
-        { name: 'se', x: s.x + s.w, y: s.y + s.h },
-    ];
-}
-function imgv_interaction_start() {
-    if (imgv) {
-        const cc = getCanvasCursorXY();
-        const { x, y } = imgv;
-        if (imgv.grabbed_handle = imgv_get_handle_name_at_cc(cc.x, cc.y)) {
+        if (imgv.grabbed_handle = e.target.closest('.handle')) {
             imgv.is_resizing = true;
+            vp.classList.add(class_from_handle.get(imgv.grabbed_handle));
         }
         else if (imgv.mod_drag_canvas) {
             cw_drag_enable();
@@ -656,8 +639,9 @@ function imgv_interaction_start() {
         else { // image drag
             imgv.is_dragging = true;
             vp.classList.add('img-dragging');
-            dragOffset.x = cc.x - x;
-            dragOffset.y = cc.y - y;
+            const cc = getCanvasCursorXY();
+            imgv.drag_x = cc.x - imgv.x;
+            imgv.drag_y = cc.y - imgv.y;
         }
     }
 }
@@ -672,8 +656,8 @@ function imgv_interaction_apply_mods(e) {
         if (!imgv.mod_drag_by_handle && e.ctrlKey) {
             if (imgv.is_resizing) {
                 const cc = getCanvasCursorXY();
-                dragOffset.x = cc.x - imgv.x;
-                dragOffset.y = cc.y - imgv.y;
+                imgv.drag_x = cc.x - imgv.x;
+                imgv.drag_y = cc.y - imgv.y;
             }
         }
         else if (imgv.mod_drag_by_handle && !e.ctrlKey) {
@@ -695,57 +679,54 @@ function imgv_interaction_apply_mods(e) {
 function imgv_interact() {
     if (!imgv) return;
 
-    if (imgv.is_mouseup()) {
-        if (!imgv.mod_drag_by_handle) // change cursor if over handle
-            canvas_over.style.cursor = imgv_get_cursor_style();
-    }
-    else {
-        const cc = getCanvasCursorXY();
+    const cc = getCanvasCursorXY();
 
-        if (imgv.is_dragging) {
-            if (imgv.mod_drag_canvas) {
-                cw_drag();
-            }
-            else { // drag image
-                imgv.x = cc.x - dragOffset.x;
-                imgv.y = cc.y - dragOffset.y;
-            }
+    if (imgv.is_dragging) {
+        if (imgv.mod_drag_canvas) {
+            cw_drag();
         }
-        else if (imgv.is_resizing) {
-            if (imgv.mod_drag_by_handle) {
-                imgv.x = cc.x - dragOffset.x;
-                imgv.y = cc.y - dragOffset.y;
-            }
-            const  og = { x: imgv.x, y: imgv.y, w: imgv.w, h: imgv.h };
-            const   g = imgv.grabbed_handle;
-            let w = g.includes('w') ? og.w + (og.x - cc.x) : cc.x - og.x;
-            let h = g.includes('n') ? og.h + (og.y - cc.y) : cc.y - og.y;
-            w = Math.max(w, MIN_IMG_SIZE);
-            h = Math.max(h, MIN_IMG_SIZE);
-            if (imgv.mod_keep_ratio) {
-                if (w / h > imgv.ratio) {
-                    w = Math.max(h * imgv.ratio, MIN_IMG_SIZE);
-                    h = w / imgv.ratio;
-                }
-                else {
-                    h = Math.max(w / imgv.ratio, MIN_IMG_SIZE);
-                    w = h * imgv.ratio;
-                }
-            }
-            const    c = imgv.mod_resize_centered();
-            imgv.x = c ? og.x + (og.w - w) / 2 : g.includes('w') ? og.x + og.w - w : og.x;
-            imgv.y = c ? og.y + (og.h - h) / 2 : g.includes('n') ? og.y + og.h - h : og.y;
-            imgv.w = w;
-            imgv.h = h;
+        else { // drag image
+            imgv.x = cc.x - imgv.drag_x;
+            imgv.y = cc.y - imgv.drag_y;
         }
     }
+    else if (imgv.is_resizing) {
+        if (imgv.mod_drag_by_handle) {
+            imgv.x = cc.x - imgv.drag_x;
+            imgv.y = cc.y - imgv.drag_y;
+        }
+        const  og = { x: imgv.x, y: imgv.y, w: imgv.w, h: imgv.h };
+        const   g = imgv.grabbed_handle.classList;
+        let w = g.contains('l') ? og.w + (og.x - cc.x) : cc.x - og.x;
+        let h = g.contains('t') ? og.h + (og.y - cc.y) : cc.y - og.y;
+        w = Math.max(w, MIN_IMG_SIZE);
+        h = Math.max(h, MIN_IMG_SIZE);
+        if (imgv.mod_keep_ratio) {
+            if (w / h > imgv.ratio) {
+                w = Math.max(h * imgv.ratio, MIN_IMG_SIZE);
+                h = w / imgv.ratio;
+            }
+            else {
+                h = Math.max(w / imgv.ratio, MIN_IMG_SIZE);
+                w = h * imgv.ratio;
+            }
+        }
+        const    c = imgv.mod_resize_centered();
+        imgv.x = c ? og.x + (og.w - w) / 2 : g.contains('l') ? og.x + og.w - w : og.x;
+        imgv.y = c ? og.y + (og.h - h) / 2 : g.contains('t') ? og.y + og.h - h : og.y;
+        imgv.w = w;
+        imgv.h = h;
+    }
+    placing_image_RENDER();
 }
 function imgv_interaction_stop() {
     if (imgv) {
+        const resizing_class = class_from_handle.get(imgv.grabbed_handle);
         imgv.is_dragging = false;
         imgv.is_resizing = false;
         imgv.grabbed_handle = null;
         vp.classList.remove('img-dragging');
+        vp.classList.remove(resizing_class);
         if (imgv.mod_drag_canvas) cw_drag_disable();
     }
 }
