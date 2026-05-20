@@ -43,6 +43,8 @@ const butt_no_imgv  = document.getElementById('button_no_imgv');
 const butt_no_cp    = document.getElementById('button_no_cp');
 const butt_s1_imgv  = document.getElementById('button_zoom_1_imgv');
 const butt_s2_imgv  = document.getElementById('button_zoom_2_imgv');
+const butt_vf_imgv  = document.getElementById('button_vflip_imgv');
+const butt_hf_imgv  = document.getElementById('button_hflip_imgv');
 
 const brush_cursor  = document.getElementById('brush_cursor');
 const in_thickness  = document.getElementById('input_thickness');
@@ -88,7 +90,7 @@ function SETUP_TOOLS() {
         if (tool) tool_activate(tool);
     });
     window.addEventListener('keydown', e => {
-        if (anyInp()) return;
+        if (imgv || anyInp()) return;
         if      (key_is(e, 'c')) bind(e, tool_pick, () => tool_activate(tool_pick));
         else if (key_is(e, 'e')) bind(e, tool_pick, () => tool_activate(tool_pick)); // I got used to it from prev ver.
         else if (key_is(e, 'x')) bind(e, tool_drag, () => tool_activate(tool_drag));
@@ -394,8 +396,7 @@ function cd_draw_dot(x, y, pen) {
     cd_ctx.fill();
 }
 function cd_draw_pasted_image(e, paste_another_img) {
-    const { img, x, y, w, h } = imgv;
-    cd_ctx.drawImage(img, x, y, w, h);
+    imgv_draw_image(cd_ctx);
     if (!paste_another_img) placing_image_exit();
 
     history_write({ type: 1, data: canvas_draw.toDataURL('image/webp', 0.95) });
@@ -626,6 +627,8 @@ function placing_image_start(img) {
         w_og:  img.width,
         h_og:  img.height,
         ratio: img.width / img.height,
+        hflip: false,
+        vflip: false,
         grabbed_handle: null,
         is_dragging: false,
         is_resizing: false,
@@ -651,13 +654,27 @@ function placing_image_exit() {
     co_ctx.clearRect(0, 0, canvas_over.width, canvas_over.height);
 }
 function placing_image_RENDER() {
-    const { img, x, y, w, h } = imgv;
     co_ctx.clearRect(0, 0, canvas_over.width, canvas_over.height);
-    co_ctx.drawImage(img, x, y, w, h);
-    imgv_sel.style.left   = `${x}px`;
-    imgv_sel.style.top    = `${y}px`;
-    imgv_sel.style.width  = `${w}px`;
-    imgv_sel.style.height = `${h}px`;
+    imgv_draw_image(co_ctx);
+    imgv_sel.style.left   = `${imgv.x}px`;
+    imgv_sel.style.top    = `${imgv.y}px`;
+    imgv_sel.style.width  = `${imgv.w}px`;
+    imgv_sel.style.height = `${imgv.h}px`;
+}
+function imgv_draw_image(ctx) {
+    const { img, x, y, w, h, hflip, vflip } = imgv;
+    if (vflip || hflip) {
+        ctx.setTransform(
+            hflip ? -1 : 1, 0, 0,
+            vflip ? -1 : 1,
+            hflip ? x + w : x,
+            vflip ? y + h : y
+        );
+        ctx.drawImage(img, 0, 0, w, h);
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+    }
+    else
+        ctx.drawImage(img, x, y, w, h);
 }
 function imgv_interaction_start(e) {
     if (imgv) {
@@ -750,6 +767,7 @@ function imgv_interact() {
         imgv.w = w;
         imgv.h = h;
     }
+    else return;
     placing_image_RENDER();
 }
 function imgv_interaction_stop() {
@@ -777,9 +795,19 @@ function imgv_resize_stretch() {
     imgv.h = canvas_draw.height;
     placing_image_RENDER();
 }
+function imgv_vflip() {
+    imgv.vflip = !imgv.vflip;
+    placing_image_RENDER();
+}
+function imgv_hflip() {
+    imgv.hflip = !imgv.hflip;
+    placing_image_RENDER();
+}
 function SETUP_IMAGE_PLACING() {
     butt_s1_imgv.onclick = imgv_resize_true_scale;
     butt_s2_imgv.onclick = imgv_resize_stretch;
+    butt_vf_imgv.onclick = imgv_vflip;
+    butt_hf_imgv.onclick = imgv_hflip;
     document.addEventListener('pointerdown', imgv_interaction_start);
     document.addEventListener('pointermove', imgv_interact);
     document.addEventListener('pointerup',   imgv_interaction_stop);
@@ -789,6 +817,8 @@ function SETUP_IMAGE_PLACING() {
         if (imgv) {
             if      (key_is(e, '1^a')) bind(e, butt_s1_imgv, imgv_resize_true_scale);
             else if (key_is(e, '2^a')) bind(e, butt_s2_imgv, imgv_resize_stretch);
+            else if (key_is(e, 'w'  )) bind(e, butt_vf_imgv, imgv_vflip);
+            else if (key_is(e, 'd'  )) bind(e, butt_hf_imgv, imgv_hflip);
         }
     });
 }
