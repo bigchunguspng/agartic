@@ -41,6 +41,8 @@ const butt_bs_more  = document.getElementById('button_thickness_more');
 const butt_ok_imgv  = document.getElementById('button_ok_imgv');
 const butt_no_imgv  = document.getElementById('button_no_imgv');
 const butt_no_cp    = document.getElementById('button_no_cp');
+const butt_s1_imgv  = document.getElementById('button_zoom_1_imgv');
+const butt_s2_imgv  = document.getElementById('button_zoom_2_imgv');
 
 const brush_cursor  = document.getElementById('brush_cursor');
 const in_thickness  = document.getElementById('input_thickness');
@@ -621,6 +623,8 @@ function placing_image_start(img) {
         drag_y: 0, // cursor to pasted image 0,0
         w:     img.width,
         h:     img.height,
+        w_og:  img.width,
+        h_og:  img.height,
         ratio: img.width / img.height,
         grabbed_handle: null,
         is_dragging: false,
@@ -759,12 +763,34 @@ function imgv_interaction_stop() {
         if (imgv.mod_drag_canvas) cw_drag_disable();
     }
 }
+function imgv_resize_true_scale() {
+    imgv.x = imgv.x - Math.floor((imgv.w_og - imgv.w) / 2);
+    imgv.y = imgv.y - Math.floor((imgv.h_og - imgv.h) / 2);
+    imgv.w = imgv.w_og;
+    imgv.h = imgv.h_og;
+    placing_image_RENDER();
+}
+function imgv_resize_stretch() {
+    imgv.x = 0;
+    imgv.y = 0;
+    imgv.w = canvas_draw.width;
+    imgv.h = canvas_draw.height;
+    placing_image_RENDER();
+}
 function SETUP_IMAGE_PLACING() {
+    butt_s1_imgv.onclick = imgv_resize_true_scale;
+    butt_s2_imgv.onclick = imgv_resize_stretch;
     document.addEventListener('pointerdown', imgv_interaction_start);
     document.addEventListener('pointermove', imgv_interact);
     document.addEventListener('pointerup',   imgv_interaction_stop);
     document.addEventListener('keydown',     imgv_interaction_apply_mods);
     document.addEventListener('keyup',       imgv_interaction_apply_mods);
+    document.addEventListener('keydown', e => {
+        if (imgv) {
+            if      (key_is(e, '1^a')) bind(e, butt_s1_imgv, imgv_resize_true_scale);
+            else if (key_is(e, '2^a')) bind(e, butt_s2_imgv, imgv_resize_stretch);
+        }
+    });
 }
 // endregion
 
