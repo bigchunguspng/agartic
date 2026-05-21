@@ -11,6 +11,8 @@ html, body {
 }
 *, *::before, *::after {
     box-sizing: border-box;
+    user-select: none;
+    -webkit-user-select: none;
 }
 ::selection {
     background-color: rgba(0, 0, 0, 0.85);
@@ -57,8 +59,6 @@ kbd {
 
 /* TIPS */
 & .tips > * {
-    user-select: none;
-    -webkit-user-select: none;
     position: absolute;
     margin: 40px;
     color: #7c7367;
@@ -193,8 +193,6 @@ kbd {
 
 /* PANEL */
 & .panel {
-    user-select: none;
-    -webkit-user-select: none;
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
