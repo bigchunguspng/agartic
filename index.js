@@ -856,16 +856,6 @@ function imgv_interact() {
     else return;
     placing_image_RENDER();
 }
-function imgv_interaction_stop() {
-    if (imgv) {
-        imgv.is_dragging = false;
-        imgv.is_resizing = false;
-        imgv.grabbed_handle = null;
-        vp.classList.remove('img-dragging');
-        vp.dataset.cursor = '';
-        if (imgv.mod_drag_canvas) cw_drag_disable();
-    }
-}
 function imgv_resize_true_scale() {
     imgv.x = imgv.x - Math.floor((imgv.w_og - imgv.w) / 2);
     imgv.y = imgv.y - Math.floor((imgv.h_og - imgv.h) / 2);
