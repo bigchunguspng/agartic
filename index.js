@@ -455,16 +455,26 @@ function brush_cursor_get_color() {
     if (thickness >= 10) {
         const o = 0.5 * thickness * 0.7071067811865476;
         const r = 0.5 * thickness;
-        const c = [
-            cd_lightness_at(x + o, y + o),
-            cd_lightness_at(x + o, y - o),
-            cd_lightness_at(x - o, y + o),
-            cd_lightness_at(x - o, y - o),
-            cd_lightness_at(x, y + r),
-            cd_lightness_at(x, y - r),
-            cd_lightness_at(x + r, y),
-            cd_lightness_at(x - r, y),
+        const d = thickness + 1;
+        const data = cd_ctx.getImageData(x - r, y - r, d, d).data;
+        const points = [
+            [x + o, y + o],
+            [x + o, y - o],
+            [x - o, y + o],
+            [x - o, y - o],
+            [x, y + r],
+            [x, y - r],
+            [x + r, y],
+            [x - r, y],
         ];
+        const c = points.map(([px, py]) => {
+            const ix = Math.floor(px - x + r);
+            const iy = Math.floor(py - y + r);
+            const i = (iy * d + ix) * 4;
+            return data[i + 3] === 0
+                ? 255
+                : 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
+        });
         const min = Math.min(...c);
         const max = Math.max(...c);
         const avg = c.reduce((acc, val) => acc + val, 0) / c.length;
@@ -472,12 +482,11 @@ function brush_cursor_get_color() {
         const  range = max - min;
         return range > 160 ? `rgb(${v},${v},${v})` : avg < 127 ? 'white' : 'black';
     }
-    else
-        return cd_lightness_at(x, y) < 120 ? 'white' : 'black';
-}
-function cd_lightness_at(x, y) {
-    const [r, g, b, a] = cd_ctx.getImageData(x, y, 1, 1).data;
-    return a > 0 ? 0.2126 * r + 0.7152 * g + 0.0722 * b : 255;
+    else {
+        const [r, g, b, a] = cd_ctx.getImageData(x, y, 1, 1).data;
+        const  c = a > 0 ? 0.2126 * r + 0.7152 * g + 0.0722 * b : 255;
+        return c < 120 ? 'white' : 'black';
+    }
 }
 function SETUP_DRAWING() {
     butt_bs_less.onclick = thickness_less;
