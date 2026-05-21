@@ -48,17 +48,22 @@ const butt_vf_imgv  = document.getElementById('button_vflip_imgv');
 const butt_hf_imgv  = document.getElementById('button_hflip_imgv');
 const butt_rl_imgv  = document.getElementById('button_rot_l_imgv');
 const butt_rr_imgv  = document.getElementById('button_rot_r_imgv');
+const butt_re_imgv  = document.getElementById('button_restore_imgv');
+
 
 const brush_cursor  = document.getElementById('brush_cursor');
 const in_thickness  = document.getElementById('input_thickness');
 const cp_input_col  = document.getElementById('input_cp_col');
 const cp_input_txt  = document.getElementById('input_cp_txt');
+const in_imgv_rot   = document.getElementById('input_rotate');
 
 const tips_imgv     = document.getElementById('tips_imgv');
 const tips_draw     = document.getElementById('tips_draw');
 const tips_bs       = document.getElementById('tips_bs');
-const brush_inputs  = document.getElementById('brush_inputs');
-const color_inputs  = document.getElementById('color_inputs');
+
+const brush_inputs  = document.getElementById('inputs_brush');
+const color_inputs  = document.getElementById('inputs_color');
+const imgv_inputs   = document.getElementById('inputs_imgv');
 
 // endregion
 
@@ -643,6 +648,7 @@ function placing_image_start(img) {
     tool_activate(tool_imgv);
     placing_image_RENDER();
     imgv_handles_reset_style();
+    in_imgv_rot.value = 0;
     tips_imgv   .classList.remove('hide');
     imgv_wrapper.classList.remove('hide');
     vp.classList.add('img-draggable');
@@ -882,8 +888,14 @@ function imgv_hflip() {
     imgv.hflip = !imgv.hflip;
     placing_image_RENDER();
 }
+function imgv_restore() {
+    imgv.vflip  = imgv.hflip        = false;
+    imgv.rotate = in_imgv_rot.value = 0;
+    imgv_sel.style.transform = '';
+    placing_image_RENDER();
+}
 function imgv_rotate(deg) {
-    imgv.rotate = (360 + imgv.rotate + deg) % 360; // [0,360)
+    imgv.rotate = in_imgv_rot.value = (360 + imgv.rotate + deg % 360) % 360; // [0,360)
     imgv_sel.style.transform = `rotate(${imgv.rotate}deg)`;
     placing_image_RENDER();
     imgv_handles_restyle();
@@ -918,20 +930,39 @@ function SETUP_IMAGE_PLACING() {
     butt_s2_imgv.onclick = imgv_resize_stretch;
     butt_vf_imgv.onclick = imgv_vflip;
     butt_hf_imgv.onclick = imgv_hflip;
+    butt_rl_imgv.onclick = e => imgv_rotate(e.shiftKey ? -15 : -90);
+    butt_rr_imgv.onclick = e => imgv_rotate(e.shiftKey ? +15 : +90);
+    butt_re_imgv.onclick = imgv_restore;
     document.addEventListener('pointerdown', imgv_interaction_start);
     document.addEventListener('pointermove', imgv_interact);
     document.addEventListener('pointerup',   imgv_interaction_stop);
     document.addEventListener('keydown',     imgv_interaction_apply_mods);
     document.addEventListener('keyup',       imgv_interaction_apply_mods);
     document.addEventListener('keydown', e => {
-        if (imgv) {
+        if (imgv && !anySel()) {
             if      (key_is(e, '1^a')) bind(e, butt_s1_imgv, imgv_resize_true_scale);
             else if (key_is(e, '2^a')) bind(e, butt_s2_imgv, imgv_resize_stretch);
             else if (key_is(e, 'w'  )) bind(e, butt_vf_imgv, imgv_vflip);
             else if (key_is(e, 'd'  )) bind(e, butt_hf_imgv, imgv_hflip);
+            else if (key_is(e, 'r'  )) bind(e, butt_re_imgv, imgv_restore);
             else if (key_is(e, 'q^S')) bind(e, butt_rl_imgv, () => imgv_rotate(e.shiftKey ? -15 : -90));
             else if (key_is(e, 'e^S')) bind(e, butt_rr_imgv, () => imgv_rotate(e.shiftKey ? +15 : +90));
+            else if (key_is(e, 'q^a')) fx_click(imgv_inputs, 0) || in_imgv_rot.focus() || e.preventDefault();
         }
+    });
+    in_imgv_rot.addEventListener('keydown', e => {
+        if (key_is(e, 'Tab') || key_is(e, 'Enter')) {
+            fx_click(imgv_inputs, 2);
+            imgv_rotate(in_imgv_rot.value - imgv.rotate);
+        }
+        else if (key_is(e, 'Escape')) {
+            fx_click(imgv_inputs, 1);
+        }
+        else return;
+        // leave input field
+        in_imgv_rot.blur();
+        e.preventDefault();
+        e.stopPropagation(); // don't exit imgv
     });
 }
 // endregion
@@ -1102,6 +1133,8 @@ function SETUP_HOOKS_PRE() {
         mouse.x = e.clientX;
         mouse.y = e.clientY;
     }, { capture: true });
+    panel_main.addEventListener('pointerdown', (e) => e.stopPropagation());
+    panel_aux .addEventListener('pointerdown', (e) => e.stopPropagation());
 }
 function SETUP_HOOKS_POST() {
     window.addEventListener('resize', () => {
@@ -1215,3 +1248,5 @@ SETUP_HOOKS_POST();
     history_load();
 }
 // endregion
+
+// ← line count

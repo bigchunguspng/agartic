@@ -28,6 +28,7 @@ input {
     all: unset;
     box-sizing: border-box;
     appearance: none;
+    cursor: text;
 }
 kbd {
     border-radius: 3px;
@@ -204,6 +205,7 @@ kbd {
     border-radius: 2px;
     text-shadow: 0 0 5px rgba(0,0,0,0.15);
     box-shadow: 0 3px 0 #666;
+    cursor: default;
     &#panel-main {
         bottom: 0;
         margin-bottom: 8px;
@@ -337,6 +339,8 @@ kbd {
         }
     }
 }
+
+/* INPUTS */
 input[type="text"], input[type="number"] {
     background: rgba(255, 255, 255, 0.15);
     height: 24px;
@@ -403,4 +407,22 @@ input[type="color"] {
         outline: 1px dashed #babcc2;
         outline-offset: 2px;
     }
+}
+.deg {
+    position: relative;
+    display: inline-block;
+    &::after {
+        content: "°";
+        position: absolute;
+        right: 2px;
+        top: 50%;
+        transform: translateY(-50%);
+        pointer-events: none;
+    }
+    & input {
+        padding-right: 10px;
+    }
+}
+#input_rotate {
+    width: 64px;
 }

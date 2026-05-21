@@ -118,14 +118,14 @@
             <kbd>w</kbd>
             <img src="img/icons/list-add.png">
         </button>
-        <div id="brush_inputs" class="tool_draw">
+        <div id="inputs_brush" class="tool_draw">
             <img src="img/icons/media-record.png">
             <kbd class="w">S-z</kbd>
             <input type="number" id="input_thickness">
             <kbd class="n w">Esc</kbd>
             <kbd class="y w">Tab</kbd>
         </div>
-        <div id="color_inputs" class="tool_draw tool_pick">
+        <div id="inputs_color" class="tool_draw tool_pick">
             <img src="img/icons/applications-graphics.png">
             <kbd class="w">S-x</kbd>
             <input type="color" id="input_cp_col">
@@ -166,6 +166,20 @@
             <kbd>e</kbd>
             <img src="img/icons/object-rotate-right.png">
         </button>
+        <button id="button_restore_imgv"
+                class="tool_imgv">
+            <kbd>r</kbd>
+            <img src="img/icons/view-refresh.png" style="transform: scaleX(-1)">
+        </button>
+        <div id="inputs_imgv" class="tool_imgv">
+            <img src="img/icons/view-refresh.png">
+            <kbd class="w">A-q</kbd>
+            <div class="deg">
+                <input type="number" id="input_rotate">
+            </div>
+            <kbd class="n w">Esc</kbd>
+            <kbd class="y w">Tab</kbd>
+        </div>
         <button id="button_no_imgv"
                 class="tool_imgv">
             <kbd class="w">Esc</kbd>
