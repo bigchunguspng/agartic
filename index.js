@@ -6,6 +6,7 @@ const vp            = document.getElementById('viewport');
 const cw            = document.getElementById('canvas-wrapper');
 const canvas_draw   = document.getElementById('canvas-draw');
 const canvas_over   = document.getElementById('canvas-over');
+const canvas_info   = document.getElementById('canvas-info');
 const imgv_wrapper  = document.getElementById('imgv-wrapper');
 const imgv_sel      = document.getElementById('imgv_sel');
 const handle_tl     = document.getElementById('handle_tl');
@@ -45,6 +46,8 @@ const butt_s1_imgv  = document.getElementById('button_zoom_1_imgv');
 const butt_s2_imgv  = document.getElementById('button_zoom_2_imgv');
 const butt_vf_imgv  = document.getElementById('button_vflip_imgv');
 const butt_hf_imgv  = document.getElementById('button_hflip_imgv');
+const butt_rl_imgv  = document.getElementById('button_rot_l_imgv');
+const butt_rr_imgv  = document.getElementById('button_rot_r_imgv');
 
 const brush_cursor  = document.getElementById('brush_cursor');
 const in_thickness  = document.getElementById('input_thickness');
@@ -154,6 +157,8 @@ function cw_setup_size() {
     canvas_draw.height = cw_true_h;
     canvas_over.width  = cw_true_w;
     canvas_over.height = cw_true_h;
+    canvas_info.width  = cw_true_w;
+    canvas_info.height = cw_true_h;
 }
 function SETUP_CW_ZOOM() {
     vp.addEventListener('wheel', e => {
@@ -629,6 +634,7 @@ function placing_image_start(img) {
         ratio: img.width / img.height,
         hflip: false,
         vflip: false,
+        rotate: 0,
         grabbed_handle: null,
         is_dragging: false,
         is_resizing: false,
@@ -636,12 +642,18 @@ function placing_image_start(img) {
         mod_drag_by_handle: false, //  ctrl
         mod_drag_canvas:    false, //   alt
         mod_resize_centered: () => imgv.mod_drag_canvas,
+        pivot_point: () => {
+            const x = imgv.x + imgv.w / 2;
+            const y = imgv.y + imgv.h / 2;
+            return { x, y };
+        },
     };
     tool_activate(tool_imgv);
     placing_image_RENDER();
     tips_imgv   .classList.remove('hide');
     imgv_wrapper.classList.remove('hide');
     vp.classList.add('img-draggable');
+    imgv_sel.style.transform = '';
 }
 function placing_image_exit() {
     imgv = null;
@@ -660,21 +672,34 @@ function placing_image_RENDER() {
     imgv_sel.style.top    = `${imgv.y}px`;
     imgv_sel.style.width  = `${imgv.w}px`;
     imgv_sel.style.height = `${imgv.h}px`;
+    // DEBUG
+    if (debug_points.length) {
+        ci_ctx.clearRect(0, 0, canvas_over.width, canvas_over.height);
+        debug_points.forEach(x => debug_point_at(x.p, x.color));
+    }
 }
-function imgv_draw_image(ctx) {
-    const { img, x, y, w, h, hflip, vflip } = imgv;
-    if (vflip || hflip) {
-        ctx.setTransform(
-            hflip ? -1 : 1, 0, 0,
-            vflip ? -1 : 1,
-            hflip ? x + w : x,
-            vflip ? y + h : y
+function imgv_draw_image(ctx_2D) {
+    const { img, x, y, w, h, hflip, vflip, rotate } = imgv;
+    if (vflip || hflip || rotate) {
+        const px = x + w / 2;
+        const py = y + h / 2;
+        const sx = hflip ? -1 : 1;
+        const sy = vflip ? -1 : 1;
+        const cos = Math.cos(rotate);
+        const sin = Math.sin(rotate);
+        ctx_2D.setTransform(
+            cos *  sx,
+            sin *  sx,
+            sin * -sy, // bau 😭😂👌💔
+            cos *  sy,
+            px - (cos * sx) * px - (sin * -sy) * py,
+            py - (sin * sx) * px - (cos *  sy) * py
         );
-        ctx.drawImage(img, 0, 0, w, h);
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx_2D.drawImage(img, x, y, w, h);
+        ctx_2D.setTransform(1, 0, 0, 1, 0, 0);
     }
     else
-        ctx.drawImage(img, x, y, w, h);
+        ctx_2D.drawImage(img, x, y, w, h);
 }
 function imgv_interaction_start(e) {
     if (imgv) {
@@ -729,7 +754,7 @@ function imgv_interaction_apply_mods(e) {
 function imgv_interact() {
     if (!imgv) return;
 
-    const cc = getCanvasCursorXY();
+    let cc = getCanvasCursorXY();
 
     if (imgv.is_dragging) {
         if (imgv.mod_drag_canvas) {
@@ -745,27 +770,81 @@ function imgv_interact() {
             imgv.x = cc.x - imgv.drag_x;
             imgv.y = cc.y - imgv.drag_y;
         }
-        const  og = { x: imgv.x, y: imgv.y, w: imgv.w, h: imgv.h };
-        const   g = imgv.grabbed_handle.classList;
-        let w = g.contains('l') ? og.w + (og.x - cc.x) : cc.x - og.x;
-        let h = g.contains('t') ? og.h + (og.y - cc.y) : cc.y - og.y;
-        w = Math.max(w, MIN_IMG_SIZE);
-        h = Math.max(h, MIN_IMG_SIZE);
-        if (imgv.mod_keep_ratio) {
-            if (w / h > imgv.ratio) {
-                w = Math.max(h * imgv.ratio, MIN_IMG_SIZE);
-                h = w / imgv.ratio;
+        let { x, y, w, h } = imgv;
+        let l = imgv.grabbed_handle.classList.contains('l');
+        let t = imgv.grabbed_handle.classList.contains('t');
+        if (imgv.rotate) {
+            debug_points.length = 0;
+            const pp = imgv.pivot_point();
+            let oc = { // opposite corner
+                x: l ? x + w : x,
+                y: t ? y + h : y
+            };
+            oc = math_rotate_point(oc, pp, -imgv.rotate);
+            cc = math_rotate_point(cc, oc,  imgv.rotate);
+
+            let w2 = Math.abs(cc.x - oc.x);
+            let h2 = Math.abs(cc.y - oc.y); // todo abs -> proper formula for t/l
+            w2 = Math.max(w2, MIN_IMG_SIZE);
+            h2 = Math.max(h2, MIN_IMG_SIZE);
+            if (imgv.mod_keep_ratio) {
+                if (w2 / h2 > imgv.ratio)
+                    w2 = h2 * imgv.ratio;
+                else
+                    h2 = w2 / imgv.ratio;
             }
-            else {
-                h = Math.max(w / imgv.ratio, MIN_IMG_SIZE);
-                w = h * imgv.ratio;
-            }
+
+            const    centered = imgv.mod_resize_centered();
+            let nx = centered ? pp.x - w2 / 2 :   l ? oc.x - w2 :   oc.x;
+            let ny = centered ? pp.y - h2 / 2 :   t ? oc.y - h2 :   oc.y;
+            // ^ tl-corner of image rotated around { centered ? pp : oc }
+            debug_point_push({ x: nx,      y: ny      }, 'lime');
+            debug_point_push({ x: nx,      y: ny + h2 }, 'green');
+            debug_point_push({ x: nx + w2, y: ny      }, 'green');
+            debug_point_push({ x: nx + w2, y: ny + h2 }, 'green');
+            debug_point_push(pp, 'red');
+            debug_point_push(oc, 'black');
+            debug_point_push(cc, 'blue');
+
+            // center of image image placed at nx,ny
+            const center_new = { x: nx + w2 / 2, y: ny + h2 / 2 };
+            const center_rotated = centered ? pp : math_rotate_point(center_new, oc, -imgv.rotate);
+            // ^ centered ? pp : center rotated back around oc
+            debug_point_push(center_new, 'orange');
+            debug_point_push(center_rotated, 'gold');
+
+            imgv.x = center_rotated.x - w2 / 2;
+            imgv.y = center_rotated.y - h2 / 2;
+            imgv.w = w2;
+            imgv.h = h2;
+
+            // todo fix - oppo corner shakes a bit
+            // todo add style to sel based on rotation value to adjust cursors
+            // todo fix resizing style stuck when lag happens
+            // ^ conditions: img rotated, debug enabled
+            // todo pivot resize at center when mod_resize_centered
         }
-        const    c = imgv.mod_resize_centered();
-        imgv.x = c ? og.x + (og.w - w) / 2 : g.contains('l') ? og.x + og.w - w : og.x;
-        imgv.y = c ? og.y + (og.h - h) / 2 : g.contains('t') ? og.y + og.h - h : og.y;
-        imgv.w = w;
-        imgv.h = h;
+        else {
+            let w2 = l ? w + (x - cc.x) :    cc.x - x;
+            let h2 = t ? h + (y - cc.y) :    cc.y - y;
+            w2 = Math.max(w2, MIN_IMG_SIZE);
+            h2 = Math.max(h2, MIN_IMG_SIZE);
+            if (imgv.mod_keep_ratio) {
+                if (w2 / h2 > imgv.ratio) {
+                    w2 = Math.max(h2 * imgv.ratio, MIN_IMG_SIZE);
+                    h2 = w2 / imgv.ratio;
+                }
+                else {
+                    h2 = Math.max(w2 / imgv.ratio, MIN_IMG_SIZE);
+                    w2 = h2 * imgv.ratio;
+                }
+            }
+            const         center = imgv.mod_resize_centered();
+            imgv.x = x + (center ? (w - w2) / 2 :   l ? w - w2 :   0);
+            imgv.y = y + (center ? (h - h2) / 2 :   t ? h - h2 :   0);
+            imgv.w = w2;
+            imgv.h = h2;
+        }
     }
     else return;
     placing_image_RENDER();
@@ -803,6 +882,12 @@ function imgv_hflip() {
     imgv.hflip = !imgv.hflip;
     placing_image_RENDER();
 }
+function imgv_rotate(deg) {
+    const rad = deg / 180 * Math.PI;
+    imgv.rotate = (imgv.rotate + rad) % (2 * Math.PI);
+    imgv_sel.style.transform = `rotate(${imgv.rotate}rad)`;
+    placing_image_RENDER();
+}
 function SETUP_IMAGE_PLACING() {
     butt_s1_imgv.onclick = imgv_resize_true_scale;
     butt_s2_imgv.onclick = imgv_resize_stretch;
@@ -819,6 +904,8 @@ function SETUP_IMAGE_PLACING() {
             else if (key_is(e, '2^a')) bind(e, butt_s2_imgv, imgv_resize_stretch);
             else if (key_is(e, 'w'  )) bind(e, butt_vf_imgv, imgv_vflip);
             else if (key_is(e, 'd'  )) bind(e, butt_hf_imgv, imgv_hflip);
+            else if (key_is(e, 'q^S')) bind(e, butt_rl_imgv, () => imgv_rotate(e.shiftKey ? -15 : -90));
+            else if (key_is(e, 'e^S')) bind(e, butt_rr_imgv, () => imgv_rotate(e.shiftKey ? +15 : +90));
         }
     });
 }
@@ -957,6 +1044,22 @@ function db_set(key, value) {
 }
 // endregion
 
+// region DEBUG
+
+const ci_ctx = canvas_info.getContext('2d');
+const debug_points = [];
+
+function debug_point_push(p, color) {
+    debug_points.push({p, color});
+}
+function debug_point_at(p, color) {
+    ci_ctx.fillStyle = color;
+    ci_ctx.beginPath();
+    ci_ctx.arc(p.x, p.y, 15 / 2, 0, 2 * Math.PI);
+    ci_ctx.fill();
+}
+// endregion
+
 // region HACKS
 
 const mouse = { x: 0, y: 0 };
@@ -1045,6 +1148,16 @@ function el_is_text_input(el) {
         || (el.tagName === 'INPUT' && text_input_types.has(el.type)));
 }
 const text_input_types = new Set(['text', 'number']);
+
+function math_rotate_point(p, pivot, radians) {
+    const dx = p.x - pivot.x;
+    const dy = p.y - pivot.y;
+    const cos = Math.cos(radians);
+    const sin = Math.sin(radians);
+    const x = pivot.x + dx * cos + dy * sin;
+    const y = pivot.y - dx * sin + dy * cos;
+    return { x, y };
+}
 // endregion
 
 // region INIT

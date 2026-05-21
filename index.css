@@ -148,7 +148,7 @@ kbd {
         &.drawing    { cursor: none; }
         &.eyedropper { cursor: copy; }
     }
-    & #canvas-over {
+    & #canvas-over, #canvas-info {
         pointer-events: none;
     }
     &.fx-copied {
@@ -168,15 +168,15 @@ kbd {
             background: white;
             border: 1px solid black;
             pointer-events: all;
+            &.tl { cursor: nwse-resize; }
+            &.tr { cursor: nesw-resize; }
+            &.bl { cursor: nesw-resize; }
+            &.br { cursor: nwse-resize; }
+            &.l { left:   var(--offset); }
+            &.r { right:  var(--offset); }
+            &.t { top:    var(--offset); }
+            &.b { bottom: var(--offset); }
         }
-        & .handle.tl { cursor: nwse-resize; }
-        & .handle.tr { cursor: nesw-resize; }
-        & .handle.bl { cursor: nesw-resize; }
-        & .handle.br { cursor: nwse-resize; }
-        & .handle.l { left:   var(--offset); }
-        & .handle.r { right:  var(--offset); }
-        & .handle.t { top:    var(--offset); }
-        & .handle.b { bottom: var(--offset); }
     }
 }
 #brush_cursor {
