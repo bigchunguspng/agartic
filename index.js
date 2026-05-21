@@ -610,14 +610,6 @@ const MIN_IMG_SIZE = 10;
 
 const co_ctx = canvas_over.getContext('2d');
 
-const class_from_handle = new Map();
-{
-    class_from_handle.set(handle_tl, 'resizing-tl');
-    class_from_handle.set(handle_tr, 'resizing-tr');
-    class_from_handle.set(handle_bl, 'resizing-bl');
-    class_from_handle.set(handle_br, 'resizing-br');
-}
-
 let imgv = null;
 
 function placing_image_start(img) {
@@ -650,6 +642,7 @@ function placing_image_start(img) {
     };
     tool_activate(tool_imgv);
     placing_image_RENDER();
+    imgv_handles_reset_style();
     tips_imgv   .classList.remove('hide');
     imgv_wrapper.classList.remove('hide');
     vp.classList.add('img-draggable');
@@ -685,8 +678,9 @@ function imgv_draw_image(ctx_2D) {
         const py = y + h / 2;
         const sx = hflip ? -1 : 1;
         const sy = vflip ? -1 : 1;
-        const cos = Math.cos(rotate);
-        const sin = Math.sin(rotate);
+        const rad = math_rad_from_deg(rotate);
+        const cos = Math.cos(rad);
+        const sin = Math.sin(rad);
         ctx_2D.setTransform(
             cos *  sx,
             sin *  sx,
@@ -705,7 +699,7 @@ function imgv_interaction_start(e) {
     if (imgv) {
         if (imgv.grabbed_handle = e.target.closest('.handle')) {
             imgv.is_resizing = true;
-            vp.classList.add(class_from_handle.get(imgv.grabbed_handle));
+            vp.dataset.cursor = imgv.grabbed_handle.dataset.cursor;
         }
         else if (imgv.mod_drag_canvas) {
             cw_drag_enable();
@@ -774,14 +768,15 @@ function imgv_interact() {
         let l = imgv.grabbed_handle.classList.contains('l');
         let t = imgv.grabbed_handle.classList.contains('t');
         if (imgv.rotate) {
+            const rad = math_rad_from_deg(imgv.rotate);
             debug_points.length = 0;
             const pp = imgv.pivot_point();
             let oc = { // opposite corner
                 x: l ? x + w : x,
                 y: t ? y + h : y
             };
-            oc = math_rotate_point(oc, pp, -imgv.rotate);
-            cc = math_rotate_point(cc, oc,  imgv.rotate);
+            oc = math_rotate_point(oc, pp, -rad);
+            cc = math_rotate_point(cc, oc,  rad);
 
             let w2 = Math.abs(cc.x - oc.x);
             let h2 = Math.abs(cc.y - oc.y); // todo abs -> proper formula for t/l
@@ -808,7 +803,7 @@ function imgv_interact() {
 
             // center of image image placed at nx,ny
             const center_new = { x: nx + w2 / 2, y: ny + h2 / 2 };
-            const center_rotated = centered ? pp : math_rotate_point(center_new, oc, -imgv.rotate);
+            const center_rotated = centered ? pp : math_rotate_point(center_new, oc, -rad);
             // ^ centered ? pp : center rotated back around oc
             debug_point_push(center_new, 'orange');
             debug_point_push(center_rotated, 'gold');
@@ -851,12 +846,11 @@ function imgv_interact() {
 }
 function imgv_interaction_stop() {
     if (imgv) {
-        const resizing_class = class_from_handle.get(imgv.grabbed_handle);
         imgv.is_dragging = false;
         imgv.is_resizing = false;
         imgv.grabbed_handle = null;
         vp.classList.remove('img-dragging');
-        vp.classList.remove(resizing_class);
+        vp.dataset.cursor = '';
         if (imgv.mod_drag_canvas) cw_drag_disable();
     }
 }
@@ -883,11 +877,36 @@ function imgv_hflip() {
     placing_image_RENDER();
 }
 function imgv_rotate(deg) {
-    const rad = deg / 180 * Math.PI;
-    imgv.rotate = (imgv.rotate + rad) % (2 * Math.PI);
-    imgv_sel.style.transform = `rotate(${imgv.rotate}rad)`;
+    imgv.rotate = (360 + imgv.rotate + deg) % 360; // [0,360)
+    imgv_sel.style.transform = `rotate(${imgv.rotate}deg)`;
     placing_image_RENDER();
+    imgv_handles_restyle();
 }
+
+const handles = [ handle_tl, handle_tr, handle_br, handle_bl ];
+const handle_cursors_90 = [ 'nw', 'ne', 'nw', 'ne' ];
+const handle_cursors_45 = [ 'ns', 'ew', 'ns', 'ew' ];
+
+function imgv_handles_restyle() {
+    const r90 =  imgv.rotate       % 90;
+    const r45 = (imgv.rotate + 45) % 90;
+    const angle_90_like = Math.min(r90, 90 - r90);
+    const angle_45_like = Math.min(r45, 90 - r45);
+    const     like90 = angle_90_like < angle_45_like;
+    const j = like90
+        ? Math.round((imgv.rotate     ) / 90)
+        : Math.round((imgv.rotate + 45) / 90) - 1;
+    const handle_cursors = like90
+        ? handle_cursors_90
+        : handle_cursors_45;
+    for (let i = 0; i < 4; i++)
+        handles[(4 + i - j) % 4].dataset.cursor = handle_cursors[i];
+}
+function imgv_handles_reset_style() {
+    for (let i = 0; i < 4; i++)
+        handles[i].dataset.cursor = handle_cursors_90[i];
+}
+
 function SETUP_IMAGE_PLACING() {
     butt_s1_imgv.onclick = imgv_resize_true_scale;
     butt_s2_imgv.onclick = imgv_resize_stretch;
@@ -1149,6 +1168,9 @@ function el_is_text_input(el) {
 }
 const text_input_types = new Set(['text', 'number']);
 
+function math_rad_from_deg(deg) {
+    return deg / 180 * Math.PI;
+}
 function math_rotate_point(p, pivot, radians) {
     const dx = p.x - pivot.x;
     const dy = p.y - pivot.y;

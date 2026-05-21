@@ -51,10 +51,13 @@ kbd {
     &.dragging, &.img-dragging {
         cursor: grabbing;
     }
-    &.resizing-tl { cursor: nwse-resize; }
-    &.resizing-tr { cursor: nesw-resize; }
-    &.resizing-bl { cursor: nesw-resize; }
-    &.resizing-br { cursor: nwse-resize; }
+}
+
+#viewport, .handle {
+    &[data-cursor="ew"] { cursor: ew-resize; }
+    &[data-cursor="ns"] { cursor: ns-resize; }
+    &[data-cursor="nw"] { cursor: nwse-resize; }
+    &[data-cursor="ne"] { cursor: nesw-resize; }
 }
 
 /* TIPS */
@@ -168,10 +171,6 @@ kbd {
             background: white;
             border: 1px solid black;
             pointer-events: all;
-            &.tl { cursor: nwse-resize; }
-            &.tr { cursor: nesw-resize; }
-            &.bl { cursor: nesw-resize; }
-            &.br { cursor: nwse-resize; }
             &.l { left:   var(--offset); }
             &.r { right:  var(--offset); }
             &.t { top:    var(--offset); }
