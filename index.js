@@ -665,10 +665,11 @@ function placing_image_RENDER() {
     imgv_sel.style.top    = `${imgv.y}px`;
     imgv_sel.style.width  = `${imgv.w}px`;
     imgv_sel.style.height = `${imgv.h}px`;
-    // DEBUG
     if (debug_points.length) {
         ci_ctx.clearRect(0, 0, canvas_over.width, canvas_over.height);
-        debug_points.forEach(x => debug_point_at(x.p, x.color));
+        if (DEBUG) {
+            debug_points.forEach(x => debug_point_at(x.p, x.color));
+        }
     }
 }
 function imgv_draw_image(ctx_2D) {
@@ -712,6 +713,17 @@ function imgv_interaction_start(e) {
             imgv.drag_x = cc.x - imgv.x;
             imgv.drag_y = cc.y - imgv.y;
         }
+    }
+}
+function imgv_interaction_stop() {
+    if (imgv) {
+        imgv.is_dragging = false;
+        imgv.is_resizing = false;
+        imgv.grabbed_handle = null;
+        vp.classList.remove('img-dragging');
+        vp.dataset.cursor = '';
+        if (imgv.mod_drag_canvas)
+            cw_drag_disable();
     }
 }
 function imgv_interaction_apply_mods(e) {
@@ -771,10 +783,10 @@ function imgv_interact() {
             const rad = math_rad_from_deg(imgv.rotate);
             debug_points.length = 0;
             const pp = imgv.pivot_point();
-            let oc = { // opposite corner
+            let oc = {
                 x: l ? x + w : x,
                 y: t ? y + h : y
-            };
+            }; // opposite corner (opposite to grabbed handle)
             oc = math_rotate_point(oc, pp, -rad);
             cc = math_rotate_point(cc, oc,  rad);
 
@@ -788,36 +800,30 @@ function imgv_interact() {
                 else
                     h2 = w2 / imgv.ratio;
             }
-
             const    centered = imgv.mod_resize_centered();
             let nx = centered ? pp.x - w2 / 2 :   l ? oc.x - w2 :   oc.x;
             let ny = centered ? pp.y - h2 / 2 :   t ? oc.y - h2 :   oc.y;
             // ^ tl-corner of image rotated around { centered ? pp : oc }
-            debug_point_push({ x: nx,      y: ny      }, 'lime');
-            debug_point_push({ x: nx,      y: ny + h2 }, 'green');
-            debug_point_push({ x: nx + w2, y: ny      }, 'green');
-            debug_point_push({ x: nx + w2, y: ny + h2 }, 'green');
-            debug_point_push(pp, 'red');
-            debug_point_push(oc, 'black');
-            debug_point_push(cc, 'blue');
-
             // center of image image placed at nx,ny
             const center_new = { x: nx + w2 / 2, y: ny + h2 / 2 };
-            const center_rotated = centered ? pp : math_rotate_point(center_new, oc, -rad);
+            const center_rot = centered ? pp : math_rotate_point(center_new, oc, -rad);
             // ^ centered ? pp : center rotated back around oc
-            debug_point_push(center_new, 'orange');
-            debug_point_push(center_rotated, 'gold');
-
-            imgv.x = center_rotated.x - w2 / 2;
-            imgv.y = center_rotated.y - h2 / 2;
+            if (DEBUG) {
+                debug_point_push({ x: nx,      y: ny      }, 'lime');
+                debug_point_push({ x: nx,      y: ny + h2 }, 'green');
+                debug_point_push({ x: nx + w2, y: ny      }, 'green');
+                debug_point_push({ x: nx + w2, y: ny + h2 }, 'green');
+                debug_point_push(pp, 'red');
+                debug_point_push(oc, 'black');
+                debug_point_push(cc, 'blue');
+                debug_point_push(center_new, 'orange');
+                debug_point_push(center_rot, 'gold');
+            }
+            imgv.x = center_rot.x - w2 / 2;
+            imgv.y = center_rot.y - h2 / 2;
             imgv.w = w2;
             imgv.h = h2;
-
             // todo fix - oppo corner shakes a bit
-            // todo add style to sel based on rotation value to adjust cursors
-            // todo fix resizing style stuck when lag happens
-            // ^ conditions: img rotated, debug enabled
-            // todo pivot resize at center when mod_resize_centered
         }
         else {
             let w2 = l ? w + (x - cc.x) :    cc.x - x;
@@ -1067,6 +1073,8 @@ function db_set(key, value) {
 
 const ci_ctx = canvas_info.getContext('2d');
 const debug_points = [];
+
+let DEBUG = false;
 
 function debug_point_push(p, color) {
     debug_points.push({p, color});
