@@ -440,7 +440,9 @@ function cd_draw_pasted_image(e, paste_another_img) {
     imgv_draw_image(cd_ctx);
     if (!paste_another_img) placing_image_exit();
 
-    history_write({ type: 1, data: canvas_draw.toDataURL('image/webp', 0.95) });
+    canvas_draw.toBlob((blob) => {
+        history_write({ type: 1, data: blob });
+    }, 'image/webp', 0.95);
 }
 function cd_apply_history_pen(pen, path) {
     if (path.length > 1) {
@@ -461,8 +463,10 @@ function cd_apply_history_img(data) {
         const image = new Image();
         image.onload = () => resolve(image);
         image.onerror = reject;
-        image.src = data;
-    }).then(img => { cd_ctx.drawImage(img, 0, 0); });
+        image.src = data instanceof Blob
+            ? URL.createObjectURL(data)
+            : data; // base64, legacy v1 support
+    }).then(img => cd_ctx.drawImage(img, 0, 0));
 }
 function set_thickness(value) {
     thickness = Math.min(Math.max(value, 1), 999);
