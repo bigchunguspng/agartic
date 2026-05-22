@@ -38,6 +38,7 @@ const butt_nuke     = document.getElementById('button_nuke');
 
 const butt_bs_less  = document.getElementById('button_thickness_less');
 const butt_bs_more  = document.getElementById('button_thickness_more');
+const butt_inv_col  = document.getElementById('button_invert_color');
 
 const butt_ok_imgv  = document.getElementById('button_ok_imgv');
 const butt_no_imgv  = document.getElementById('button_no_imgv');
@@ -51,7 +52,6 @@ const butt_rr_imgv  = document.getElementById('button_rot_r_imgv');
 const butt_re_imgv  = document.getElementById('button_restore_imgv');
 const butt_c_imgv   = document.getElementById('button_crop_mode_imgv');
 const butt_x_imgv   = document.getElementById('button_drag_mode_imgv');
-
 
 const brush_cursor  = document.getElementById('brush_cursor');
 const in_thickness  = document.getElementById('input_thickness');
@@ -1189,8 +1189,19 @@ function string_to_color(str) {
     const b =  rgb        & 0xff;
     return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
 }
+function invert_color() {
+    let hex = cp_input_col.value.replace('#', '');
+    if (hex.length === 3)
+        hex = hex.split('').map(c => c + c).join('');
+    const r = 255 - parseInt(hex.slice(0, 2), 16);
+    const g = 255 - parseInt(hex.slice(2, 4), 16);
+    const b = 255 - parseInt(hex.slice(4, 6), 16);
+    const inverted = `#${[r, g, b].map(v => v.toString(16).padStart(2, '0')).join('')}`;
+    cp_apply_color(inverted)
+}
 function SETUP_COLOR_PICKER() {
     butt_no_cp.onclick = () => cp_apply_color_and_exit(color);
+    butt_inv_col.onclick = invert_color;
     cp_input_col.addEventListener('input',  () => cp_apply_color                (cp_input_col.value));
     cp_input_col.addEventListener('change', () => cp_apply_color_and_exit       (cp_input_col.value));
     cp_input_txt.addEventListener('input',  () => input_color_update(valid_color(cp_input_txt.value)));
@@ -1219,6 +1230,7 @@ function SETUP_COLOR_PICKER() {
         if (cp || drawing_enabled) {
             if      (key_is(e, 'c^s')) fx_click(color_inputs, 1) || cp_input_txt.focus() || e.preventDefault();
             else if (key_is(e, 'x^s')) fx_click(color_inputs, 0) || cp_input_col.click();
+            else if (key_is(e, 'v'  )) bind(e, butt_inv_col, invert_color);
         }
         if (cp && key_is(e, 'Escape')) cp_apply_color_and_exit(color); // esc -> exit cp
     });
