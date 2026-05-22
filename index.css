@@ -128,7 +128,7 @@ kbd {
 
 /* CANVAS */
 #canvas-wrapper {
-    image-rendering: auto; /* todo configurable auto|pixelated */
+    image-rendering: auto;
     width: 1280px;
     height: 720px;
     position: absolute;
@@ -140,6 +140,9 @@ kbd {
     box-shadow:
        0 3px 0 rgba(0, 0, 0, .25),
        0 0 5px rgba(0, 0, 0, .25);
+    &.pixelated {
+        image-rendering: pixelated;
+    }
     & canvas,
     & #imgv-wrapper {
         position: absolute;

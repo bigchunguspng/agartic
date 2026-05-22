@@ -118,6 +118,8 @@ let cw_true_h = 720;
 
 let cw_x, cw_y, cw_scale = 1;
 
+let cw_pixelated = false;
+
 const MIN_CW_SCALE = 0.05;
 const MAX_CW_SCALE = 20;
 const CW_ZOOM_FACTOR_DEFAULT = 1.1;
@@ -167,6 +169,10 @@ function cw_setup_size() {
     canvas_info.width  = cw_true_w;
     canvas_info.height = cw_true_h;
 }
+function cw_pixelated_toggle() {
+    cw_pixelated = !cw_pixelated;
+    cw.classList.toggle('pixelated', cw_pixelated); // todo butt, tip
+}
 function SETUP_CW_ZOOM() {
     vp.addEventListener('wheel', e => {
         e.preventDefault();
@@ -185,6 +191,7 @@ function SETUP_CW_ZOOM() {
     window.addEventListener('keydown', e => {
         if      (key_is(e, '1^c')) bind(e, butt_zoom_1, cw_resize_true_scale);
         else if (key_is(e, '2^c')) bind(e, butt_zoom_2, cw_resize_fit_screen);
+        else if (key_is(e, 'F1' )) cw_pixelated_toggle() || e.preventDefault();
     });
     window.addEventListener('resize', () => {
         // keep canvas position relative to center
