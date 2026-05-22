@@ -102,6 +102,11 @@ kbd {
         margin: 0;
         transform: translate(-50%, -50%);
     }
+    &.e {
+        left: 20px;
+        bottom: 25px;
+        transform: rotate(3deg);
+    }
     &.draw {
         left: 600px;
         top: 15px;

@@ -171,7 +171,7 @@ function cw_setup_size() {
 }
 function cw_pixelated_toggle() {
     cw_pixelated = !cw_pixelated;
-    cw.classList.toggle('pixelated', cw_pixelated); // todo butt, tip
+    cw.classList.toggle('pixelated', cw_pixelated);
 }
 function SETUP_CW_ZOOM() {
     vp.addEventListener('wheel', e => {
