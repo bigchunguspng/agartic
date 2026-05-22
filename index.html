@@ -136,33 +136,45 @@
             <kbd class="y w">Tab</kbd>
         </div>
         <!-- PLACING IMAGE -->
+        <button id="button_drag_mode_imgv"
+                data-mode="drag_mode"
+                class="tool_imgv mode_drag">
+            <kbd>x</kbd>
+            <span>drag</span>
+        </button>
+        <button id="button_crop_mode_imgv"
+                data-mode="crop_mode"
+                class="tool_imgv mode_crop">
+            <kbd>c</kbd>
+            <span>crop</span>
+        </button>
         <button id="button_zoom_1_imgv"
-                class="tool_imgv">
+                class="tool_imgv modal drag_mode">
             <kbd class="w">A-1</kbd>
             <img src="img/icons/zoom-original.png">
         </button>
         <button id="button_zoom_2_imgv"
-                class="tool_imgv">
+                class="tool_imgv modal drag_mode">
             <kbd class="w">A-2</kbd>
             <img src="img/icons/zoom-fit-best.png">
         </button>
         <button id="button_vflip_imgv"
-                class="tool_imgv">
+                class="tool_imgv modal drag_mode">
             <kbd>w</kbd>
             <img src="img/icons/object-flip-vertical.png">
         </button>
         <button id="button_hflip_imgv"
-                class="tool_imgv">
+                class="tool_imgv modal drag_mode">
             <kbd>d</kbd>
             <img src="img/icons/object-flip-horizontal.png">
         </button>
         <button id="button_rot_l_imgv"
-                class="tool_imgv">
+                class="tool_imgv modal drag_mode">
             <kbd>q</kbd>
             <img src="img/icons/object-rotate-left.png">
         </button>
         <button id="button_rot_r_imgv"
-                class="tool_imgv">
+                class="tool_imgv modal drag_mode">
             <kbd>e</kbd>
             <img src="img/icons/object-rotate-right.png">
         </button>
@@ -171,7 +183,7 @@
             <kbd>r</kbd>
             <img src="img/icons/view-refresh.png" style="transform: scaleX(-1)">
         </button>
-        <div id="inputs_imgv" class="tool_imgv">
+        <div id="inputs_imgv" class="tool_imgv modal drag_mode">
             <img src="img/icons/view-refresh.png">
             <kbd class="w">A-q</kbd>
             <div class="deg">
