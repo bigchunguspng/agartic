@@ -257,15 +257,22 @@ const history_channel = new BroadcastChannel('history_sync');
 let history = [], history_len = 0;
 
 async function history_load() {
-    history     = await db_get('history')     ?? [];
-    history_len = await db_get('history_len') ?? 0;
+    history = [];
+    history_len = await db_get('state', 'history_len') ?? 0;
+    const db = await db_open();
+    const tx = db.transaction('history', 'readonly');
+    const store = tx.objectStore('history');
+    await new Promise((resolve, reject) => {
+        const request = store.openCursor();
+        request.onerror = reject;
+        request.onsuccess = e => {
+            const cursor = e.target.result;
+            if  (!cursor) return resolve();
+            history[cursor.key] = cursor.value;
+            cursor.continue();
+        };
+    });
     history_draw();
-}
-async function history_save() {
-    await db_set('history',     history);
-    await db_set('history_len', history_len);
-    history_channel.postMessage({ key: 'history',     value: history     });
-    history_channel.postMessage({ key: 'history_len', value: history_len });
 }
 function history_draw() {
     const i_last_image = history_get_last_image_index() ?? -1;
@@ -285,41 +292,63 @@ function history_draw_pen_from(offset) {
         cd_apply_history_pen(item.pen, item.path);
     }
 }
-function history_write(item) {
-    history[history_len++] = item;
-    history.length = history_len;
-    history_save();
+async function history_write(item) {
+    const id = history.length = history_len; // (discard any pending items)
+    history[id] = item;
+    history_len++;
+    await db_set('history', id, item);
+    await db_set('state', 'history_len', history_len);
+    history_channel.postMessage({ type: 'append', id });
 }
-function history_undo() {
+async function history_undo() {
     if (imgv) return placing_image_exit();
     if (history_len) {
         history_len--;
-        history_draw();
-        history_save();
+        await history_move();
     }
 }
-function history_redo() {
+async function history_redo() {
     if (history_len < history.length) {
         history_len++;
-        history_draw();
-        history_save();
+        await history_move();
     }
 }
-function history_clear() {
+async function history_move() {
+    history_draw();
+    await db_set('state', 'history_len', history_len);
+    history_channel.postMessage({ type: 'cursor', value: history_len, });
+}
+async function history_clear() {
     if (confirm('😳 NUKE THE WHOLE THING!?')) {
         history = [];
         history_len = 0;
         cd_clear();
-        history_save();
+        const db = await db_open();
+        {
+            const tx = db.transaction(['state', 'history'], 'readwrite');
+            tx.objectStore('state').put(0, 'history_len');
+            tx.objectStore('history').clear();
+        }
+        history_channel.postMessage({ type: 'clear' });
     }
 }
 function SETUP_HISTORY_SYNC() {
-    history_channel.onmessage = (e) => {
-        const { key, value } = e.data;
-        if      (key === 'history')     history     = value;
-        else if (key === 'history_len') history_len = value;
-        else return;
-        history_draw();
+    history_channel.onmessage = async (e) => {
+        const    message = e.data;
+        if      (message.type === 'append') {
+            history[message.id] = await db_get('history', message.id);
+            history_len = message.id + 1;
+            history_draw();
+        }
+        else if (message.type === 'cursor') {
+            history_len = message.value;
+            history_draw();
+        }
+        else if (message.type === 'clear') {
+            history = [];
+            history_len = 0;
+            cd_clear();
+        }
     };
 }
 function SETUP_HISTORY_CTL() {
@@ -1187,40 +1216,58 @@ function SETUP_COLOR_PICKER() {
 
 // region DB
 
-const DB_NAME = 'db_agartic', DB_VERSION = 1, DB_STORE_NAME = 'kv';
+const DB_NAME = 'db_agartic', DB_VERSION = 2;
 
-function db_open() {
-    return new Promise((resolve, reject) => {
+let db;
+
+async function db_open() {
+    if    (db) return db;
+    return db = await new Promise((resolve, reject) => {
         const request = indexedDB.open(DB_NAME, DB_VERSION);
         request.onupgradeneeded = e => {
             const db = request.result;
-            switch (e.oldVersion) {
-                case 0:
-                    db.createObjectStore(DB_STORE_NAME);
+            if (e.oldVersion === 0) {
+                db.createObjectStore('state');
+                db.createObjectStore('history');
+                console.log('AGARTIC [DB MIGRATION] v0 -> v2');
+            }
+            if (e.oldVersion === 1) {
+                const tx = request.transaction;
+                const kv = tx.objectStore('kv');
+                const state   = db.createObjectStore('state');
+                const history = db.createObjectStore('history');
+                const req_his = kv.get('history');
+                const req_len = kv.get('history_len');
+                req_len.onsuccess = () => state.put(req_len.result ?? 0, 'history_len');
+                req_his.onsuccess = () => {
+                    const old = req_his.result ?? [];
+                    for (let i = 0; i < old.length; i++)
+                        history.put(old[i], i);
+                };
+                db.deleteObjectStore('kv');
+                console.log('AGARTIC [DB MIGRATION] v1 -> v2');
             }
         };
         request.onsuccess = () => resolve(request.result);
         request.onerror   = () => reject (request.error);
     });
 }
-function db_get(key) {
-    return db_open().then((db) => {
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(DB_STORE_NAME, 'readonly');
-            const request = tx.objectStore(DB_STORE_NAME).get(key);
-            request.onsuccess = () => resolve(request.result);
-            request.onerror   = () => reject (request.error);
-        });
+async function db_get(store, key) {
+    const db = await db_open();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(store, 'readonly');
+        const request = tx.objectStore(store).get(key);
+        request.onsuccess = () => resolve(request.result);
+        request.onerror   = () => reject (request.error);
     });
 }
-function db_set(key, value) {
-    return db_open().then((db) => {
-        return new Promise((resolve, reject) => {
-            const tx = db.transaction(DB_STORE_NAME, 'readwrite');
-            const request = tx.objectStore(DB_STORE_NAME).put(value, key);
-            request.onsuccess = () => resolve();
-            request.onerror   = () => reject (request.error);
-        });
+async function db_set(store, key, value) {
+    const db = await db_open();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction(store, 'readwrite');
+        const request = tx.objectStore(store).put(value, key);
+        request.onsuccess = () => resolve();
+        request.onerror   = () => reject (request.error);
     });
 }
 // endregion
