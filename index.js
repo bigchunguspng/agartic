@@ -682,6 +682,7 @@ const MIN_IMG_SIZE = 10;
 const co_ctx = canvas_over.getContext('2d');
 
 let imgv = null;
+let imgv_pixelated = false;
 
 function placing_image_start(img) {
     imgv = {
@@ -1073,6 +1074,12 @@ function imgv_set_mode() {
         .filter (x => x.classList.contains('tool_imgv') && x.classList.contains('modal'))
         .forEach(x => x.classList.toggle('hide', !x.classList.contains(active.dataset.mode)));
 }
+function imgv_pixelated_toggle() {
+    imgv_pixelated = !imgv_pixelated;
+    cd_ctx.imageSmoothingEnabled = !imgv_pixelated;
+    co_ctx.imageSmoothingEnabled = !imgv_pixelated;
+    placing_image_RENDER();
+}
 
 const handles = [ handle_tl, handle_tr, handle_br, handle_bl ];
 const handle_cursors_90 = [ 'nw', 'ne', 'nw', 'ne' ];
@@ -1125,6 +1132,7 @@ function SETUP_IMAGE_PLACING() {
             else if (key_is(e, 'q^S')) bind(e, butt_rl_imgv, () => imgv_rotate(e.shiftKey ? -15 : -90));
             else if (key_is(e, 'e^S')) bind(e, butt_rr_imgv, () => imgv_rotate(e.shiftKey ? +15 : +90));
             else if (key_is(e, 'q^a')) fx_click(imgv_inputs, 0) || in_imgv_rot.focus() || e.preventDefault();
+            else if (key_is(e, 'F2' )) imgv_pixelated_toggle() || e.preventDefault();
         }
     });
     in_imgv_rot.addEventListener('keydown', e => {

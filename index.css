@@ -83,6 +83,13 @@ kbd {
         border: 1px solid #93897c;
         box-shadow: 0 2px 0 #776c60;
     }
+    & hr {
+        border-style: dashed;
+        border-color: #7c7367;
+        border-bottom: none;
+        max-width: 128px;
+        margin-left: 32px;
+    }
     &.a {
         transform: rotate(-15deg);
     }
