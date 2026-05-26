@@ -1033,6 +1033,7 @@ function imgv_restore() {
         imgv.vflip  = imgv.hflip        = false;
         imgv.rotate = in_imgv_rot.value = 0;
         imgv_sel.style.transform = '';
+        imgv_handles_restyle();
     }
     placing_image_RENDER();
 }
