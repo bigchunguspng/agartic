@@ -699,8 +699,8 @@ function placing_image_start(img) {
         mod_drag_canvas:    false, //   alt
         mod_resize_centered: () => imgv.mod_drag_canvas,
         pivot_point: () => {
-            const x = imgv.x + imgv.w / 2;
-            const y = imgv.y + imgv.h / 2;
+            const x = ((imgv.x + imgv.crop.l) + (imgv.x + imgv.w - imgv.crop.r)) / 2;
+            const y = ((imgv.y + imgv.crop.t) + (imgv.y + imgv.h - imgv.crop.b)) / 2;
             return { x, y };
         },
     };
@@ -739,10 +739,9 @@ function placing_image_RENDER() {
     }
 }
 function imgv_draw_image(ctx_2D) {
-    const { x, y, w, h, hflip, vflip, rotate } = imgv;
+    const { hflip, vflip, rotate } = imgv;
     if (vflip || hflip || rotate) {
-        const px = x + w / 2;
-        const py = y + h / 2;
+        const pp = imgv.pivot_point();
         const sx = hflip ? -1 : 1;
         const sy = vflip ? -1 : 1;
         const rad = math_rad_from_deg(rotate);
@@ -753,13 +752,10 @@ function imgv_draw_image(ctx_2D) {
             sin *  sx,
             sin * -sy, // bau 😭😂👌💔
             cos *  sy,
-            px - (cos * sx) * px - (sin * -sy) * py,
-            py - (sin * sx) * px - (cos *  sy) * py
+            pp.x - (cos * sx) * pp.x - (sin * -sy) * pp.y,
+            pp.y - (sin * sx) * pp.x - (cos *  sy) * pp.y
         );
-        // todo fix - center image on cropped center when rotating
         // todo fix resizing cropped image
-        // todo fix croped selection overlay when image is flipped
-        // ^ try moving pivot point to cropped center
         imgv_draw_image_internal(ctx_2D);
         ctx_2D.setTransform(1, 0, 0, 1, 0, 0);
     }
