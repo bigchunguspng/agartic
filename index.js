@@ -300,12 +300,25 @@ function history_draw_pen_from(offset) {
     }
 }
 async function history_write(item) {
-    const id = history.length = history_len; // (discard any pending items)
+    if (history.length > history_len) await history_discard_pending();
+    const id = history.length = history_len;
     history[id] = item;
     history_len++;
     await db_set('history', id, item);
     await db_set('state', 'history_len', history_len);
     history_channel.postMessage({ type: 'append', id });
+}
+async function history_discard_pending() {
+    console.log('discard');
+    const db = await db_open();
+    return new Promise((resolve, reject) => {
+        const tx = db.transaction('history', 'readwrite');
+        const store = tx.objectStore('history');
+        const request = store.delete(IDBKeyRange.lowerBound(history_len));
+        request.onerror = () => reject(request.error);
+        tx.oncomplete = () => resolve();
+        tx.onerror    = () => reject(tx.error);
+    });
 }
 async function history_undo() {
     if (imgv) return placing_image_exit();
