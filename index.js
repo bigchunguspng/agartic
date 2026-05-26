@@ -387,7 +387,7 @@ function SETUP_HISTORY_CTL() {
 
 // region DRAWING
 
-const cd_ctx = canvas_draw.getContext('2d', { willReadFrequently: true });
+const cd_ctx = canvas_draw.getContext('2d');
 
 let drawing_enabled = false;
 let drawing_now     = false;
