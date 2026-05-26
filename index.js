@@ -382,6 +382,7 @@ let pen_path = [];
 let pen;
 let color = 'black';
 let thickness = 3;
+let thickness_temp;
 
 function drawing_enable() {
     brush_cursor.classList.add('drawing');
@@ -543,6 +544,7 @@ function SETUP_DRAWING() {
         else if (key_is(e, 'z^s')) fx_click(brush_inputs, 0) || in_thickness.focus() || e.preventDefault();
     });
     in_thickness.addEventListener('focus', () => {
+        thickness_temp = thickness;
         tips_bs.classList.remove('hide');
         tips_draw.classList.add('move');
     });
@@ -557,7 +559,7 @@ function SETUP_DRAWING() {
         }
         else if (key_is(e, 'Escape')) {
             fx_click(brush_inputs, 1);
-            in_thickness.value = thickness;
+            set_thickness(thickness_temp);
         }
         else return;
         // leave input field
