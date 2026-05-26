@@ -199,10 +199,10 @@ function SETUP_CW_ZOOM() {
         cw_y -= (window.h - window.innerHeight) / 2;
         cw_transform();
     });
-    butt_zoom_1   .addEventListener('click', cw_resize_true_scale);
-    butt_zoom_2   .addEventListener('click', cw_resize_fit_screen);
-    butt_zoom_in  .addEventListener('click', e => cw_zoom(e, false, true));
-    butt_zoom_out .addEventListener('click', e => cw_zoom(e, true, true));
+    butt_zoom_1  .onclick = cw_resize_true_scale;
+    butt_zoom_2  .onclick = cw_resize_fit_screen;
+    butt_zoom_in .onclick = e => cw_zoom(e, false, true);
+    butt_zoom_out.onclick = e => cw_zoom(e, true,  true);
 }
 // endregion
 
@@ -1252,7 +1252,7 @@ async function db_open() {
             if (e.oldVersion === 0) {
                 db.createObjectStore('state');
                 db.createObjectStore('history');
-                console.log('AGARTIC [DB MIGRATION] v0 -> v2');
+                console.info('AGARTIC [DB MIGRATION] v0 -> v2');
             }
             if (e.oldVersion === 1) {
                 const tx = request.transaction;
@@ -1268,7 +1268,7 @@ async function db_open() {
                         history.put(old[i], i);
                 };
                 db.deleteObjectStore('kv');
-                console.log('AGARTIC [DB MIGRATION] v1 -> v2');
+                console.info('AGARTIC [DB MIGRATION] v1 -> v2');
             }
         };
         request.onsuccess = () => resolve(request.result);
