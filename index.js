@@ -156,7 +156,7 @@ function cw_zoom(e, out, centered) {
     const y = centered ? window.h / 2 : mouse.y;
     const cw_true_x = (x - cw_x) / cw_scale;
     const cw_true_y = (y - cw_y) / cw_scale;
-    cw_scale = Math.max(MIN_CW_SCALE, Math.min(MAX_CW_SCALE, cw_scale * factor));
+    cw_scale = math_clamp(MIN_CW_SCALE, MAX_CW_SCALE, cw_scale * factor);
     cw_x = x - cw_true_x * cw_scale;
     cw_y = y - cw_true_y * cw_scale;
     cw_transform();
@@ -490,7 +490,7 @@ function cd_apply_history_img(data) {
     }).then(img => cd_ctx.drawImage(img, 0, 0));
 }
 function set_thickness(value) {
-    thickness = Math.min(Math.max(value, 1), 999);
+    thickness = math_clamp(1, 999, value);
     in_thickness.value = thickness;
     if (brush_cursor.style.display !== 'none')
         brush_cursor_RENDER();
@@ -914,13 +914,14 @@ function imgv_interact() {
                 w2 = Math.max(w2, MIN_IMG_SIZE);
                 h2 = Math.max(h2, MIN_IMG_SIZE);
                 if (imgv.mod_keep_ratio) {
-                    if (w2 / h2 > imgv.ratio) {
-                        w2 = Math.max(h2 * imgv.ratio, MIN_IMG_SIZE);
-                        h2 = w2 / imgv.ratio;
+                    const ratio = imgv.w / imgv.h;
+                    if (w2 / h2 > ratio) {
+                        w2 = Math.max(h2 * ratio, MIN_IMG_SIZE);
+                        h2 = w2 / ratio;
                     }
                     else {
-                        h2 = Math.max(w2 / imgv.ratio, MIN_IMG_SIZE);
-                        w2 = h2 * imgv.ratio;
+                        h2 = Math.max(w2 / ratio, MIN_IMG_SIZE);
+                        w2 = h2 * ratio;
                     }
                 }
                 const           center = imgv.mod_resize_centered();
@@ -928,10 +929,12 @@ function imgv_interact() {
                 const iy = y + (center ? (h - h2) / 2 :   th ? h - h2 :   0);
                 const iw = w2;
                 const ih = h2; // cropped image i{xywh}
-                imgv.crop.x = Math.max(0, Math.min(1,    (ix - imgv.x) / imgv.w));
-                imgv.crop.y = Math.max(0, Math.min(1,    (iy - imgv.y) / imgv.h));
-                imgv.crop.w = Math.max(0, Math.min(1 - imgv.crop.x, iw / imgv.w));
-                imgv.crop.h = Math.max(0, Math.min(1 - imgv.crop.y, ih / imgv.h));
+                const nx = (ix - imgv.x) / imgv.w;
+                const ny = (iy - imgv.y) / imgv.h;
+                imgv.crop.x = math_clamp(0, 1, nx);
+                imgv.crop.y = math_clamp(0, 1, ny);
+                imgv.crop.w = math_clamp(0, 1 - imgv.crop.x, (iw / imgv.w - imgv.crop.x + nx));
+                imgv.crop.h = math_clamp(0, 1 - imgv.crop.y, (ih / imgv.h - imgv.crop.y + ny));
             }
         }
         else if (imgv.rotate) {
@@ -1412,6 +1415,9 @@ function el_is_text_input(el) {
 }
 const text_input_types = new Set(['text', 'number']);
 
+function math_clamp(min, max, value) {
+    return Math.max(min, Math.min(max, value));
+}
 function math_rad_from_deg(deg) {
     return deg / 180 * Math.PI;
 }
