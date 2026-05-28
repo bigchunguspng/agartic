@@ -191,6 +191,12 @@ kbd {
             &.r { right:  var(--offset); }
             &.t { top:    var(--offset); }
             &.b { bottom: var(--offset); }
+            &.v { right: calc(50% + var(--offset) / 2); }
+            &.h { top:   calc(50% + var(--offset) / 2); }
+            &.tt, &.rr, &.bb, &.ll {
+                --offset: -15px;
+                transform: rotate(45deg);
+            }
         }
     }
 }

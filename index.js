@@ -9,10 +9,14 @@ const canvas_over   = document.getElementById('canvas-over');
 const canvas_info   = document.getElementById('canvas-info');
 const imgv_wrapper  = document.getElementById('imgv-wrapper');
 const imgv_sel      = document.getElementById('imgv_sel');
-const handle_tl     = document.getElementById('handle_tl');
-const handle_tr     = document.getElementById('handle_tr');
-const handle_bl     = document.getElementById('handle_bl');
-const handle_br     = document.getElementById('handle_br');
+const hand_tl     = document.getElementById('handle_tl');
+const hand_tt     = document.getElementById('handle_tt');
+const hand_tr     = document.getElementById('handle_tr');
+const hand_rr     = document.getElementById('handle_rr');
+const hand_br     = document.getElementById('handle_br');
+const hand_bb     = document.getElementById('handle_bb');
+const hand_bl     = document.getElementById('handle_bl');
+const hand_ll     = document.getElementById('handle_ll');
 
 const panel_main    = document.getElementById('panel-main');
 const panel_aux     = document.getElementById('panel-aux');
@@ -911,6 +915,8 @@ function imgv_interact() {
         let { x, y, w, h } = imgv.curr;
         let lh = imgv.grabbed_handle.classList.contains('l');
         let th = imgv.grabbed_handle.classList.contains('t');
+        let vh = imgv.grabbed_handle.classList.contains('v');
+        let hh = imgv.grabbed_handle.classList.contains('h');
         if (imgv.in_crop_mode) {
             if (imgv.rotate) {
                 // todo
@@ -920,8 +926,8 @@ function imgv_interact() {
                 y = h * imgv.crop.y + y;
                 w = w * imgv.crop.w;
                 h = h * imgv.crop.h;
-                let w2 = lh ? w + (x - cc.x) :    cc.x - x;
-                let h2 = th ? h + (y - cc.y) :    cc.y - y;
+                let w2 = vh ? w :   lh ? w + (x - cc.x) :   cc.x - x;
+                let h2 = hh ? h :   th ? h + (y - cc.y) :   cc.y - y;
                 w2 = Math.max(w2, MIN_IMG_SIZE);
                 h2 = Math.max(h2, MIN_IMG_SIZE);
                 if (imgv.mod_keep_ratio) {
@@ -995,8 +1001,8 @@ function imgv_interact() {
             // todo fix - oppo corner shakes a bit
         }
         else {
-            let w2 = lh ? w + (x - cc.x) :    cc.x - x;
-            let h2 = th ? h + (y - cc.y) :    cc.y - y;
+            let w2 = vh ? w :   lh ? w + (x - cc.x) :   cc.x - x;
+            let h2 = hh ? h :   th ? h + (y - cc.y) :   cc.y - y;
             w2 = Math.max(w2, MIN_IMG_SIZE);
             h2 = Math.max(h2, MIN_IMG_SIZE);
             if (imgv.mod_keep_ratio) {
@@ -1083,28 +1089,17 @@ function imgv_pixelated_toggle() {
     placing_image_RENDER();
 }
 
-const handles = [ handle_tl, handle_tr, handle_br, handle_bl ];
-const handle_cursors_90 = [ 'nw', 'ne', 'nw', 'ne' ];
-const handle_cursors_45 = [ 'ns', 'ew', 'ns', 'ew' ];
+const handles = [ hand_tl, hand_tt, hand_tr, hand_rr, hand_br, hand_bb, hand_bl, hand_ll ];
+const handle_cursors = [ 'nw', 'ns', 'ne', 'ew', 'nw', 'ns', 'ne', 'ew' ];
 
 function imgv_handles_restyle() {
-    const r90 =  imgv.rotate       % 90;
-    const r45 = (imgv.rotate + 45) % 90;
-    const angle_90_like = Math.min(r90, 90 - r90);
-    const angle_45_like = Math.min(r45, 90 - r45);
-    const     like90 = angle_90_like < angle_45_like;
-    const j = like90
-        ? Math.round((imgv.rotate     ) / 90)
-        : Math.round((imgv.rotate + 45) / 90) - 1;
-    const handle_cursors = like90
-        ? handle_cursors_90
-        : handle_cursors_45;
-    for (let i = 0; i < 4; i++)
-        handles[(4 + i - j) % 4].dataset.cursor = handle_cursors[i];
+    const j = Math.floor((imgv.rotate + 22.5) / 45);
+    for (let i = 0; i < 8; i++)
+        handles[(8 + i - j) % 8].dataset.cursor = handle_cursors[i];
 }
 function imgv_handles_reset_style() {
-    for (let i = 0; i < 4; i++)
-        handles[i].dataset.cursor = handle_cursors_90[i];
+    for (let i = 0; i < 8; i++)
+        handles[i].dataset.cursor = handle_cursors[i];
 }
 
 function SETUP_IMAGE_PLACING() {
