@@ -867,7 +867,7 @@ function imgv_interaction_apply_mods(e) {
         imgv.mod_keep_ratio     = e.shiftKey;
         imgv.mod_drag_by_handle = e. ctrlKey;
         imgv.mod_drag_canvas    = e.  altKey;
-        imgv_interact(); // todo or call simplified version imgv_update()
+        imgv_interact();
     }
 }
 function imgv_interact() {
@@ -902,16 +902,11 @@ function imgv_interact_move_mode() { // IMAGE
                 x: vh ? x + w / 2 :   lh ? x + w :   x,
                 y: hh ? y + h / 2 :   th ? y + h :   y
             }; // opposite corner (opposite to grabbed handle)
-            {
-                DEBUG = true;
-                debug_points.length = 0;
-                debug_point_push(oc, 'pink');
-            }
             oc = math_rotate_point(oc, pp, -rad);
             cc = math_rotate_point(cc, oc,  rad);
 
-            let w2 = Math.abs(cc.x - oc.x);
-            let h2 = Math.abs(cc.y - oc.y); // todo abs -> proper formula for t/l
+            let w2 = vh ? w :   Math.abs(cc.x - oc.x);
+            let h2 = hh ? h :   Math.abs(cc.y - oc.y); // todo abs -> proper formula for t/l
             w2 = Math.max(w2, MIN_IMG_SIZE);
             h2 = Math.max(h2, MIN_IMG_SIZE);
             if (imgv.mod_keep_ratio) {
@@ -921,8 +916,8 @@ function imgv_interact_move_mode() { // IMAGE
                     h2 = w2 / imgv.ratio;
             }
             const    centered = imgv.mod_resize_centered();
-            let nx = centered ? pp.x - w2 / 2 :   lh ? oc.x - w2 :   oc.x;
-            let ny = centered ? pp.y - h2 / 2 :   th ? oc.y - h2 :   oc.y; // todo make it work with side handles
+            let nx = centered ? pp.x - w2 / 2 :   vh ? oc.x - w / 2 :   lh ? oc.x - w2 :   oc.x;
+            let ny = centered ? pp.y - h2 / 2 :   hh ? oc.y - h / 2 :   th ? oc.y - h2 :   oc.y;
             // ^ tl-corner of image rotated around { centered ? pp : oc }
             // center of image image placed at nx,ny
             const center_new = { x: nx + w2 / 2, y: ny + h2 / 2 };
@@ -954,7 +949,7 @@ function imgv_interact_move_mode() { // IMAGE
 function imgv_interact_crop_mode() { // CROP
     let cc = getCanvasCursorXY();
     if (imgv.is_dragging) {
-        // todo handle rotated / flipped image
+        // todo handle rotated / flipped image ★
         const { x, y, w, h } = imgv.crop;
         if (x > 0.0 || y > 0.0 || w < 1.0 || h < 1.0) {
             const cc_dx = cc.x - imgv.drag_ci.x - imgv.curr.x;
@@ -974,11 +969,11 @@ function imgv_interact_crop_mode() { // CROP
     }
     else if (imgv.is_resizing) {
         if (imgv.mod_drag_by_handle) {
-            // todo
+            // todo ★
         }
         const { x, y, w, h } = imgv.crop_real_c();
         if (imgv.rotate) {
-            // todo
+            // todo ★★★
         }
         else {
             const ratio = imgv.curr.w / imgv.curr.h;
