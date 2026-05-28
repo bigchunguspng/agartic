@@ -871,97 +871,42 @@ function imgv_interaction_apply_mods(e) {
     }
 }
 function imgv_interact() {
-    if (!imgv) return;
-
+    if (imgv) {
+        if (imgv.is_dragging && imgv.mod_drag_canvas)
+            return cw_drag();
+        const render = imgv.in_crop_mode
+            ? imgv_interact_crop_mode()
+            : imgv_interact_move_mode();
+        if (render) placing_image_RENDER();
+    }
+}
+function imgv_interact_move_mode() { // IMAGE
     let cc = getCanvasCursorXY();
-
     if (imgv.is_dragging) {
-        if (imgv.mod_drag_canvas) {
-            cw_drag();
-        }
-        else if (imgv.in_crop_mode) {
-            // todo handle rotated / flipped image
-            const { x, y, w, h } = imgv.crop;
-            if (x > 0.0 || y > 0.0 || w < 1.0 || h < 1.0) {
-                const cc_dx = cc.x - imgv.drag_ci.x - imgv.curr.x;
-                const cc_dy = cc.y - imgv.drag_ci.y - imgv.curr.y; // cursor difference
-                imgv.crop.x = imgv.drag_crop.x + cc_dx / imgv.curr.w;
-                imgv.crop.y = imgv.drag_crop.y + cc_dy / imgv.curr.h;
-                if (imgv.crop.x < 0.0)
-                    imgv.crop.x = 0.0;
-                if (imgv.crop.x > 1.0 - imgv.crop.w)
-                    imgv.crop.x = 1.0 - imgv.crop.w;
-                if (imgv.crop.y < 0.0)
-                    imgv.crop.y = 0.0;
-                if (imgv.crop.y > 1.0 - imgv.crop.h)
-                    imgv.crop.y = 1.0 - imgv.crop.h;
-            }
-        }
-        else { // drag image
-            imgv.curr.x = cc.x - imgv.drag_ci.x;
-            imgv.curr.y = cc.y - imgv.drag_ci.y;
-        }
+        imgv.curr.x = cc.x - imgv.drag_ci.x;
+        imgv.curr.y = cc.y - imgv.drag_ci.y;
+        return true;
     }
     else if (imgv.is_resizing) {
         if (imgv.mod_drag_by_handle) {
-            if (imgv.in_crop_mode) {
-                // todo
-            }
-            else {
-                imgv.curr.x = cc.x - imgv.drag_ci.x;
-                imgv.curr.y = cc.y - imgv.drag_ci.y;
-            }
+            imgv.curr.x = cc.x - imgv.drag_ci.x;
+            imgv.curr.y = cc.y - imgv.drag_ci.y;
         }
-        let { x, y, w, h } = imgv.curr;
-        let lh = imgv.grabbed_handle.classList.contains('l');
-        let th = imgv.grabbed_handle.classList.contains('t');
-        let vh = imgv.grabbed_handle.classList.contains('v');
-        let hh = imgv.grabbed_handle.classList.contains('h');
-        if (imgv.in_crop_mode) {
-            if (imgv.rotate) {
-                // todo
-            }
-            else {
-                x = w * imgv.crop.x + x;
-                y = h * imgv.crop.y + y;
-                w = w * imgv.crop.w;
-                h = h * imgv.crop.h;
-                let w2 = vh ? w :   lh ? w + (x - cc.x) :   cc.x - x;
-                let h2 = hh ? h :   th ? h + (y - cc.y) :   cc.y - y;
-                w2 = Math.max(w2, MIN_IMG_SIZE);
-                h2 = Math.max(h2, MIN_IMG_SIZE);
-                if (imgv.mod_keep_ratio) {
-                    const ratio = imgv.curr.w / imgv.curr.h;
-                    if (w2 / h2 > ratio) {
-                        w2 = Math.max(h2 * ratio, MIN_IMG_SIZE);
-                        h2 = w2 / ratio;
-                    }
-                    else {
-                        h2 = Math.max(w2 / ratio, MIN_IMG_SIZE);
-                        w2 = h2 * ratio;
-                    }
-                }
-                const           center = imgv.mod_resize_centered();
-                const ix = x + (center ? (w - w2) / 2 :   lh ? w - w2 :   0);
-                const iy = y + (center ? (h - h2) / 2 :   th ? h - h2 :   0);
-                const iw = w2;
-                const ih = h2; // cropped image i{xywh}
-                const nx = (ix - imgv.curr.x) / imgv.curr.w;
-                const ny = (iy - imgv.curr.y) / imgv.curr.h;
-                imgv.crop.x = math_clamp(0, 1, nx);
-                imgv.crop.y = math_clamp(0, 1, ny);
-                imgv.crop.w = math_clamp(0, 1 - imgv.crop.x, (iw / imgv.curr.w - imgv.crop.x + nx));
-                imgv.crop.h = math_clamp(0, 1 - imgv.crop.y, (ih / imgv.curr.h - imgv.crop.y + ny));
-            }
-        }
-        else if (imgv.rotate) {
+        const { x, y, w, h } = imgv.curr;
+        if (imgv.rotate) {
             const rad = math_rad_from_deg(imgv.rotate);
             debug_points.length = 0;
             const pp = imgv.pivot_point();
+            const { lh, th, vh, hh } = imgv_analyze_handles();
             let oc = {
-                x: lh ? x + w : x,
-                y: th ? y + h : y
+                x: vh ? x + w / 2 :   lh ? x + w :   x,
+                y: hh ? y + h / 2 :   th ? y + h :   y
             }; // opposite corner (opposite to grabbed handle)
+            {
+                DEBUG = true;
+                debug_points.length = 0;
+                debug_point_push(oc, 'pink');
+            }
             oc = math_rotate_point(oc, pp, -rad);
             cc = math_rotate_point(cc, oc,  rad);
 
@@ -977,7 +922,7 @@ function imgv_interact() {
             }
             const    centered = imgv.mod_resize_centered();
             let nx = centered ? pp.x - w2 / 2 :   lh ? oc.x - w2 :   oc.x;
-            let ny = centered ? pp.y - h2 / 2 :   th ? oc.y - h2 :   oc.y;
+            let ny = centered ? pp.y - h2 / 2 :   th ? oc.y - h2 :   oc.y; // todo make it work with side handles
             // ^ tl-corner of image rotated around { centered ? pp : oc }
             // center of image image placed at nx,ny
             const center_new = { x: nx + w2 / 2, y: ny + h2 / 2 };
@@ -1001,29 +946,84 @@ function imgv_interact() {
             // todo fix - oppo corner shakes a bit
         }
         else {
-            let w2 = vh ? w :   lh ? w + (x - cc.x) :   cc.x - x;
-            let h2 = hh ? h :   th ? h + (y - cc.y) :   cc.y - y;
-            w2 = Math.max(w2, MIN_IMG_SIZE);
-            h2 = Math.max(h2, MIN_IMG_SIZE);
-            if (imgv.mod_keep_ratio) {
-                if (w2 / h2 > imgv.ratio) {
-                    w2 = Math.max(h2 * imgv.ratio, MIN_IMG_SIZE);
-                    h2 = w2 / imgv.ratio;
-                }
-                else {
-                    h2 = Math.max(w2 / imgv.ratio, MIN_IMG_SIZE);
-                    w2 = h2 * imgv.ratio;
-                }
-            }
-            const         center = imgv.mod_resize_centered();
-            imgv.curr.x = x + (center ? (w - w2) / 2 :   lh ? w - w2 :   0);
-            imgv.curr.y = y + (center ? (h - h2) / 2 :   th ? h - h2 :   0);
-            imgv.curr.w = w2;
-            imgv.curr.h = h2;
+            imgv.curr = imgv_interact_resize_straight(cc, x, y, w, h, imgv.ratio);
+        }
+        return true;
+    }
+}
+function imgv_interact_crop_mode() { // CROP
+    let cc = getCanvasCursorXY();
+    if (imgv.is_dragging) {
+        // todo handle rotated / flipped image
+        const { x, y, w, h } = imgv.crop;
+        if (x > 0.0 || y > 0.0 || w < 1.0 || h < 1.0) {
+            const cc_dx = cc.x - imgv.drag_ci.x - imgv.curr.x;
+            const cc_dy = cc.y - imgv.drag_ci.y - imgv.curr.y; // cursor difference
+            imgv.crop.x = imgv.drag_crop.x + cc_dx / imgv.curr.w;
+            imgv.crop.y = imgv.drag_crop.y + cc_dy / imgv.curr.h;
+            if (imgv.crop.x < 0.0)
+                imgv.crop.x = 0.0;
+            if (imgv.crop.x > 1.0 - imgv.crop.w)
+                imgv.crop.x = 1.0 - imgv.crop.w;
+            if (imgv.crop.y < 0.0)
+                imgv.crop.y = 0.0;
+            if (imgv.crop.y > 1.0 - imgv.crop.h)
+                imgv.crop.y = 1.0 - imgv.crop.h;
+        }
+        return true;
+    }
+    else if (imgv.is_resizing) {
+        if (imgv.mod_drag_by_handle) {
+            // todo
+        }
+        const { x, y, w, h } = imgv.crop_real_c();
+        if (imgv.rotate) {
+            // todo
+        }
+        else {
+            const ratio = imgv.curr.w / imgv.curr.h;
+            const cr = imgv_interact_resize_straight(cc, x, y, w, h, ratio); // crop resized
+            const nx = (cr.x - imgv.curr.x) / imgv.curr.w;
+            const ny = (cr.y - imgv.curr.y) / imgv.curr.h;
+            imgv.crop.x = math_clamp(0, 1, nx);
+            imgv.crop.y = math_clamp(0, 1, ny);
+            imgv.crop.w = math_clamp(0, 1 - imgv.crop.x, (cr.w / imgv.curr.w - imgv.crop.x + nx));
+            imgv.crop.h = math_clamp(0, 1 - imgv.crop.y, (cr.h / imgv.curr.h - imgv.crop.y + ny));
+        }
+        return true;
+    }
+}
+function imgv_interact_resize_straight(cc, x, y, w, h, ratio) {
+    const { lh, th, vh, hh } = imgv_analyze_handles();
+    let nw = vh ? w :   lh ? w + (x - cc.x) :   cc.x - x;
+    let nh = hh ? h :   th ? h + (y - cc.y) :   cc.y - y; // n = new
+    nw = Math.max(nw, MIN_IMG_SIZE);
+    nh = Math.max(nh, MIN_IMG_SIZE);
+    if (imgv.mod_keep_ratio) {
+        if (nw / nh > ratio) {
+            nw = Math.max(nh * ratio, MIN_IMG_SIZE);
+            nh = nw / ratio;
+        }
+        else {
+            nh = Math.max(nw / ratio, MIN_IMG_SIZE);
+            nw = nh * ratio;
         }
     }
-    else return;
-    placing_image_RENDER();
+    const           center = imgv.mod_resize_centered();
+    const rx = x + (center ? (w - nw) / 2 :   lh ? w - nw :   0);
+    const ry = y + (center ? (h - nh) / 2 :   th ? h - nh :   0);
+    const rw = nw;
+    const rh = nh; // r = result
+    return new Rekt(rx, ry, rw, rh);
+}
+function imgv_analyze_handles() {
+    const classList = imgv.grabbed_handle.classList;
+    return {
+        lh: classList.contains('l'),
+        th: classList.contains('t'),
+        vh: classList.contains('v'),
+        hh: classList.contains('h'),
+    };
 }
 function imgv_resize_true_scale() {
     imgv.curr.x = imgv.curr.x + Math.floor((imgv.curr.w - imgv.og.w) / 2);
