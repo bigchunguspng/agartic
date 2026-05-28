@@ -898,46 +898,42 @@ function imgv_interact_move_mode() { // IMAGE
             debug_points.length = 0;
             const pp = imgv.pivot_point();
             const { lh, th, vh, hh } = imgv_analyze_handles();
-            let oc = {
-                x: vh ? x + w / 2 :   lh ? x + w :   x,
-                y: hh ? y + h / 2 :   th ? y + h :   y
-            }; // opposite corner (opposite to grabbed handle)
+            let oc = imgv_opposite_corner(x, y, w, h, lh, th, vh, hh);
             oc = math_rotate_point(oc, pp, -rad);
             cc = math_rotate_point(cc, oc,  rad);
 
-            let w2 = vh ? w :   Math.abs(cc.x - oc.x);
-            let h2 = hh ? h :   Math.abs(cc.y - oc.y); // todo abs -> proper formula for t/l
-            w2 = Math.max(w2, MIN_IMG_SIZE);
-            h2 = Math.max(h2, MIN_IMG_SIZE);
+            let nw = vh ? w :   Math.abs(cc.x - oc.x);
+            let nh = hh ? h :   Math.abs(cc.y - oc.y); // todo abs -> proper formula for t/l
+            nw = Math.max(nw, MIN_IMG_SIZE);
+            nh = Math.max(nh, MIN_IMG_SIZE);
             if (imgv.mod_keep_ratio) {
-                if (w2 / h2 > imgv.ratio)
-                    w2 = h2 * imgv.ratio;
-                else
-                    h2 = w2 / imgv.ratio;
+                const { w, h } = imgv_keep_ratio(cc, oc, nw, nh, vh, hh, imgv.ratio);
+                nw = w;
+                nh = h;
             }
             const    centered = imgv.mod_resize_centered();
-            let nx = centered ? pp.x - w2 / 2 :   vh ? oc.x - w / 2 :   lh ? oc.x - w2 :   oc.x;
-            let ny = centered ? pp.y - h2 / 2 :   hh ? oc.y - h / 2 :   th ? oc.y - h2 :   oc.y;
+            let nx = centered ? pp.x - nw / 2 :   vh ? oc.x - nw / 2 :   lh ? oc.x - nw :   oc.x;
+            let ny = centered ? pp.y - nh / 2 :   hh ? oc.y - nh / 2 :   th ? oc.y - nh :   oc.y;
             // ^ tl-corner of image rotated around { centered ? pp : oc }
             // center of image image placed at nx,ny
-            const center_new = { x: nx + w2 / 2, y: ny + h2 / 2 };
+            const center_new = { x: nx + nw / 2, y: ny + nh / 2 };
             const center_rot = centered ? pp : math_rotate_point(center_new, oc, -rad);
             // ^ centered ? pp : center rotated back around oc
             if (DEBUG) {
                 debug_point_push({ x: nx,      y: ny      }, 'lime');
-                debug_point_push({ x: nx,      y: ny + h2 }, 'green');
-                debug_point_push({ x: nx + w2, y: ny      }, 'green');
-                debug_point_push({ x: nx + w2, y: ny + h2 }, 'green');
+                debug_point_push({ x: nx,      y: ny + nh }, 'green');
+                debug_point_push({ x: nx + nw, y: ny      }, 'green');
+                debug_point_push({ x: nx + nw, y: ny + nh }, 'green');
                 debug_point_push(pp, 'red');
                 debug_point_push(oc, 'black');
                 debug_point_push(cc, 'blue');
                 debug_point_push(center_new, 'orange');
                 debug_point_push(center_rot, 'gold');
             }
-            imgv.curr.x = center_rot.x - w2 / 2;
-            imgv.curr.y = center_rot.y - h2 / 2;
-            imgv.curr.w = w2;
-            imgv.curr.h = h2;
+            imgv.curr.x = center_rot.x - nw / 2;
+            imgv.curr.y = center_rot.y - nh / 2;
+            imgv.curr.w = nw;
+            imgv.curr.h = nh;
             // todo fix - oppo corner shakes a bit
         }
         else {
@@ -990,26 +986,55 @@ function imgv_interact_crop_mode() { // CROP
 }
 function imgv_interact_resize_straight(cc, x, y, w, h, ratio) {
     const { lh, th, vh, hh } = imgv_analyze_handles();
+    let oc = imgv_opposite_corner(x, y, w, h, lh, th, vh, hh);
     let nw = vh ? w :   lh ? w + (x - cc.x) :   cc.x - x;
     let nh = hh ? h :   th ? h + (y - cc.y) :   cc.y - y; // n = new
     nw = Math.max(nw, MIN_IMG_SIZE);
     nh = Math.max(nh, MIN_IMG_SIZE);
     if (imgv.mod_keep_ratio) {
-        if (nw / nh > ratio) {
-            nw = Math.max(nh * ratio, MIN_IMG_SIZE);
-            nh = nw / ratio;
-        }
-        else {
-            nh = Math.max(nw / ratio, MIN_IMG_SIZE);
-            nw = nh * ratio;
-        }
+        const { w, h } = imgv_keep_ratio(cc, oc, nw, nh, vh, hh, ratio);
+        nw = w;
+        nh = h;
     }
-    const           center = imgv.mod_resize_centered();
-    const rx = x + (center ? (w - nw) / 2 :   lh ? w - nw :   0);
-    const ry = y + (center ? (h - nh) / 2 :   th ? h - nh :   0);
+    const      center = imgv.mod_resize_centered();
+    const rx = center ? x + (w - nw) / 2 :   vh ? oc.x - nw / 2 :   lh ? oc.x - nw :   x;
+    const ry = center ? y + (h - nh) / 2 :   hh ? oc.y - nh / 2 :   th ? oc.y - nh :   y;
     const rw = nw;
     const rh = nh; // r = result
     return new Rekt(rx, ry, rw, rh);
+}
+function imgv_keep_ratio(cc, oc, w, h, vh, hh, ratio) {
+    const d2 = Math.pow(cc.x - oc.x, 2) + Math.pow(cc.y - oc.y, 2);
+    // todo check direction, don't treat it like abs
+    if (hh) {
+        w = Math.pow(d2, 0.5); // distance cc <-> oc = w
+        h = w / ratio;
+    }
+    else if (vh) {
+        h = Math.pow(d2, 0.5); // distance cc <-> oc = h
+        w = h * ratio;
+    }
+    else {
+        const ratio2 = Math.pow(ratio, 2); // = w2 / h2
+        const w2_to_wh_sum2 = ratio2 / (1 + ratio2); // = w2 / (h2 + w2)
+        const w2 = d2 * w2_to_wh_sum2;
+        w = Math.pow(w2, 0.5); // distance cc <-> oc = diagonal
+        h = w / ratio;
+    }
+    if (ratio < 1) {
+        w = Math.max(w, MIN_IMG_SIZE);
+        h = w / ratio; // tall
+    }
+    else {
+        h = Math.max(h, MIN_IMG_SIZE);
+        w = h * ratio; // wide
+    }
+    return new Size(w, h);
+}
+function imgv_opposite_corner(x, y, w, h, lh, th, vh, hh){
+    let oc_x = vh ? x + w / 2 :   lh ? x + w :   x;
+    let oc_y = hh ? y + h / 2 :   th ? y + h :   y;
+    return new Vek2(oc_x, oc_y); // opposite to grabbed handle
 }
 function imgv_analyze_handles() {
     const classList = imgv.grabbed_handle.classList;
