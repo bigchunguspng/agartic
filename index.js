@@ -818,13 +818,7 @@ function imgv_interaction_start(e) {
         else { // image drag
             imgv.is_dragging = true;
             vp.classList.add('img-dragging');
-            const cc = getCanvasCursorXY();
-            imgv.drag_ci.x = cc.x - imgv.curr.x;
-            imgv.drag_ci.y = cc.y - imgv.curr.y;
-            imgv.drag_crop.x = imgv.crop.x;
-            imgv.drag_crop.y = imgv.crop.y;
-            imgv.drag_crop.w = imgv.crop.w;
-            imgv.drag_crop.h = imgv.crop.h;
+            imgv_make_mousedown_snapshots();
         }
     }
 }
@@ -849,13 +843,7 @@ function imgv_interaction_apply_mods(e) {
         }
         if (!imgv.mod_drag_by_handle && e.ctrlKey) {
             if (imgv.is_resizing) {
-                const cc = getCanvasCursorXY();
-                imgv.drag_ci.x = cc.x - imgv.curr.x;
-                imgv.drag_ci.y = cc.y - imgv.curr.y;
-                imgv.drag_crop.x = imgv.crop.x;
-                imgv.drag_crop.y = imgv.crop.y;
-                imgv.drag_crop.w = imgv.crop.w;
-                imgv.drag_crop.h = imgv.crop.h;
+                imgv_make_mousedown_snapshots();
             }
         }
         else if (imgv.mod_drag_by_handle && !e.ctrlKey) {
@@ -873,6 +861,15 @@ function imgv_interaction_apply_mods(e) {
         imgv.mod_drag_canvas    = e.  altKey;
         imgv_interact();
     }
+}
+function imgv_make_mousedown_snapshots() {
+    const cc = getCanvasCursorXY();
+    imgv.drag_ci.x = cc.x - imgv.curr.x;
+    imgv.drag_ci.y = cc.y - imgv.curr.y;
+    imgv.drag_crop.x = imgv.crop.x;
+    imgv.drag_crop.y = imgv.crop.y;
+    imgv.drag_crop.w = imgv.crop.w;
+    imgv.drag_crop.h = imgv.crop.h;
 }
 function imgv_interact() {
     if (imgv) {
@@ -956,18 +953,18 @@ function imgv_interact_crop_mode() { // CROP
         }
         const { x, y, w, h } = imgv.crop_real_c();
         if (imgv.rotate) {
-            // todo ★★★
+            const rad = math_rad_from_deg(imgv.rotate);
+            const pp = imgv.pivot_point();
+            cc = math_rotate_point(cc, pp, rad);
         }
-        else {
-            const ratio = imgv.curr.w / imgv.curr.h;
-            const cr = imgv_interact_resize_straight(cc, x, y, w, h, ratio); // crop resized
-            const nx = (cr.x - imgv.curr.x) / imgv.curr.w;
-            const ny = (cr.y - imgv.curr.y) / imgv.curr.h;
-            imgv.crop.x = math_clamp(0, 1, nx);
-            imgv.crop.y = math_clamp(0, 1, ny);
-            imgv.crop.w = math_clamp(0, 1 - imgv.crop.x, (cr.w / imgv.curr.w - imgv.crop.x + nx));
-            imgv.crop.h = math_clamp(0, 1 - imgv.crop.y, (cr.h / imgv.curr.h - imgv.crop.y + ny));
-        }
+        const ratio = imgv.curr.w / imgv.curr.h;
+        const cr = imgv_interact_resize_straight(cc, x, y, w, h, ratio); // crop resized
+        const nx = (cr.x - imgv.curr.x) / imgv.curr.w;
+        const ny = (cr.y - imgv.curr.y) / imgv.curr.h;
+        imgv.crop.x = math_clamp(0, 1, nx);
+        imgv.crop.y = math_clamp(0, 1, ny);
+        imgv.crop.w = math_clamp(0, 1 - imgv.crop.x, (cr.w / imgv.curr.w - imgv.crop.x + nx));
+        imgv.crop.h = math_clamp(0, 1 - imgv.crop.y, (cr.h / imgv.curr.h - imgv.crop.y + ny));
         return true;
     }
 }
