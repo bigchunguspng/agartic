@@ -9,14 +9,14 @@ const canvas_over   = document.getElementById('canvas-over');
 const canvas_info   = document.getElementById('canvas-info');
 const imgv_wrapper  = document.getElementById('imgv-wrapper');
 const imgv_sel      = document.getElementById('imgv_sel');
-const hand_tl     = document.getElementById('handle_tl');
-const hand_tt     = document.getElementById('handle_tt');
-const hand_tr     = document.getElementById('handle_tr');
-const hand_rr     = document.getElementById('handle_rr');
-const hand_br     = document.getElementById('handle_br');
-const hand_bb     = document.getElementById('handle_bb');
-const hand_bl     = document.getElementById('handle_bl');
-const hand_ll     = document.getElementById('handle_ll');
+const hand_tl       = document.getElementById('handle_tl');
+const hand_tt       = document.getElementById('handle_tt');
+const hand_tr       = document.getElementById('handle_tr');
+const hand_rr       = document.getElementById('handle_rr');
+const hand_br       = document.getElementById('handle_br');
+const hand_bb       = document.getElementById('handle_bb');
+const hand_bl       = document.getElementById('handle_bl');
+const hand_ll       = document.getElementById('handle_ll');
 
 const panel_main    = document.getElementById('panel-main');
 const panel_aux     = document.getElementById('panel-aux');
@@ -641,21 +641,21 @@ function SETUP_IMAGE_COPY() {
 // endregion
 
 // region IMAGE PASTE
-function image_paste(e) {
+function image_paste__kbd(e) {
     const items = Array.from(e.clipboardData?.items);
     const item  = items.find(i => i.type.startsWith('image'));
-    if   (item) loadPastedImage(item.getAsFile());
+    if   (item) image_paste(item.getAsFile());
 }
-function image_paste_button() {
+function image_paste__button() {
     navigator.clipboard.read().then(items => {
         const item  = items.find(i => i.types.some(t => t.startsWith('image')));
         if   (item) {
             const type = item.types.find(t => t.startsWith('image'));
-            item.getType(type).then(blob => loadPastedImage(blob));
+            item.getType(type).then(blob => image_paste(blob));
         }
     });
 }
-function loadPastedImage(blob) {
+function image_paste(blob) {
     if (imgv) cd_draw_pasted_image(null, true);
 
     const url = URL.createObjectURL(blob);
@@ -667,11 +667,11 @@ function loadPastedImage(blob) {
     img.src = url;
 }
 function SETUP_IMAGE_PASTE() {
-    butt_paste  .onclick = image_paste_button;
+    butt_paste  .onclick = image_paste__button;
     butt_ok_imgv.onclick = cd_draw_pasted_image;
     butt_no_imgv.onclick = placing_image_exit;
     document.addEventListener('paste', function (e) {
-        if (!anyInp()) fx_click(butt_paste) || image_paste(e);
+        if (!anyInp()) fx_click(butt_paste) || image_paste__kbd(e);
     });
     document.addEventListener('keydown', e => {
         if (imgv && !anySel()) {
@@ -824,7 +824,7 @@ function imgv_interaction_start(e) {
         else { // image drag
             imgv.is_dragging = true;
             vp.classList.add('img-dragging');
-            imgv_make_mousedown_snapshots();
+            imgv_save_drag_snapshots();
         }
     }
 }
@@ -849,7 +849,7 @@ function imgv_interaction_apply_mods(e) {
         }
         if (!imgv.mod_drag_by_handle && e.ctrlKey) {
             if (imgv.is_resizing) {
-                imgv_make_mousedown_snapshots();
+                imgv_save_drag_snapshots();
             }
         }
         else if (imgv.mod_drag_by_handle && !e.ctrlKey) {
@@ -868,7 +868,7 @@ function imgv_interaction_apply_mods(e) {
         imgv_interact();
     }
 }
-function imgv_make_mousedown_snapshots() {
+function imgv_save_drag_snapshots() {
     const cc = getCanvasCursorXY();
     imgv.drag_ci.x = cc.x - imgv.curr.x;
     imgv.drag_ci.y = cc.y - imgv.curr.y;
@@ -905,8 +905,8 @@ function imgv_interact_move_mode() { // IMAGE
             const rad = math_rad_from_deg(imgv.rotate);
             debug_points.length = 0;
             const pp = imgv.pivot_point();
-            const { lh, th, vh, hh } = imgv_analyze_handles();
-            let oc = imgv_opposite_corner(x, y, w, h, lh, th, vh, hh);
+            const { lh, th, vh, hh } = imgv_AnalyzeHandle();
+            let oc = imgv_OppositeCornerXY(x, y, w, h, lh, th, vh, hh);
             oc = math_rotate_point(oc, pp, -rad);
             cc = math_rotate_point(cc, oc,  rad);
 
@@ -915,7 +915,7 @@ function imgv_interact_move_mode() { // IMAGE
             nw = Math.max(nw, MIN_IMG_SIZE);
             nh = Math.max(nh, MIN_IMG_SIZE);
             if (imgv.mod_keep_ratio) {
-                const { w, h } = imgv_keep_ratio(cc, oc, nw, nh, vh, hh, imgv.ratio);
+                const { w, h } = imgv_KeepRatio(cc, oc, nw, nh, vh, hh, imgv.ratio);
                 nw = w;
                 nh = h;
             }
@@ -1000,14 +1000,14 @@ function imgv_interact_drag_cropping(cc) {
     }
 }
 function imgv_interact_resize_straight(cc, x, y, w, h, ratio) {
-    const { lh, th, vh, hh } = imgv_analyze_handles();
-    let oc = imgv_opposite_corner(x, y, w, h, lh, th, vh, hh);
+    const { lh, th, vh, hh } = imgv_AnalyzeHandle();
+    let oc = imgv_OppositeCornerXY(x, y, w, h, lh, th, vh, hh);
     let nw = vh ? w :   lh ? w + (x - cc.x) :   cc.x - x;
     let nh = hh ? h :   th ? h + (y - cc.y) :   cc.y - y; // n = new
     nw = Math.max(nw, MIN_IMG_SIZE);
     nh = Math.max(nh, MIN_IMG_SIZE);
     if (imgv.mod_keep_ratio) {
-        const { w, h } = imgv_keep_ratio(cc, oc, nw, nh, vh, hh, ratio);
+        const { w, h } = imgv_KeepRatio(cc, oc, nw, nh, vh, hh, ratio);
         nw = w;
         nh = h;
     }
@@ -1018,7 +1018,7 @@ function imgv_interact_resize_straight(cc, x, y, w, h, ratio) {
     const rh = nh; // r = result
     return new Rekt(rx, ry, rw, rh);
 }
-function imgv_keep_ratio(cc, oc, w, h, vh, hh, ratio) {
+function imgv_KeepRatio(cc, oc, w, h, vh, hh, ratio) {
     const d2 = Math.pow(cc.x - oc.x, 2) + Math.pow(cc.y - oc.y, 2);
     // todo check direction, don't treat it like abs
     if (hh) {
@@ -1046,12 +1046,12 @@ function imgv_keep_ratio(cc, oc, w, h, vh, hh, ratio) {
     }
     return new Size(w, h);
 }
-function imgv_opposite_corner(x, y, w, h, lh, th, vh, hh){
+function imgv_OppositeCornerXY(x, y, w, h, lh, th, vh, hh){
     let oc_x = vh ? x + w / 2 :   lh ? x + w :   x;
     let oc_y = hh ? y + h / 2 :   th ? y + h :   y;
     return new Vek2(oc_x, oc_y); // opposite to grabbed handle
 }
-function imgv_analyze_handles() {
+function imgv_AnalyzeHandle() {
     const classList = imgv.grabbed_handle.classList;
     return {
         lh: classList.contains('l'),
