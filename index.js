@@ -21,10 +21,10 @@ const hand_ll       = document.getElementById('handle_ll');
 const panel_main    = document.getElementById('panel-main');
 const panel_aux     = document.getElementById('panel-aux');
 
-const butt_zoom_1   = document.getElementById('button_zoom_1');
-const butt_zoom_2   = document.getElementById('button_zoom_2');
-const butt_zoom_in  = document.getElementById('button_zoom_in');
-const butt_zoom_out = document.getElementById('button_zoom_out');
+const butt_zoom_1   = document.getElementById('butt_zoom_1');
+const butt_zoom_2   = document.getElementById('butt_zoom_2');
+const butt_zoom_in  = document.getElementById('butt_zoom_in');
+const butt_zoom_out = document.getElementById('butt_zoom_out');
 
 const tool_pick     = document.getElementById('tool_pick');
 const tool_drag     = document.getElementById('tool_drag');
@@ -33,43 +33,43 @@ const tool_rect     = document.getElementById('tool_rect');
 const tool_laso     = document.getElementById('tool_laso');
 const tool_imgv     = document.getElementById('tool_imgv');
 
-const butt_undo     = document.getElementById('button_undo');
-const butt_redo     = document.getElementById('button_redo');
-const butt_copy     = document.getElementById('button_copy');
-const butt_paste    = document.getElementById('button_paste');
-const butt_save     = document.getElementById('button_save');
-const butt_nuke     = document.getElementById('button_nuke');
+const butt_undo     = document.getElementById('butt_undo');
+const butt_redo     = document.getElementById('butt_redo');
+const butt_copy     = document.getElementById('butt_copy');
+const butt_paste    = document.getElementById('butt_paste');
+const butt_save     = document.getElementById('butt_save');
+const butt_nuke     = document.getElementById('butt_nuke');
 
-const butt_bs_less  = document.getElementById('button_thickness_less');
-const butt_bs_more  = document.getElementById('button_thickness_more');
-const butt_inv_col  = document.getElementById('button_invert_color');
+const butt_bs_less  = document.getElementById('butt_bs_less');
+const butt_bs_more  = document.getElementById('butt_bs_more');
+const butt_inv_col  = document.getElementById('butt_inv_color');
+const butt_cp_no    = document.getElementById('butt_cp_no');
 
-const butt_ok_imgv  = document.getElementById('button_ok_imgv');
-const butt_no_imgv  = document.getElementById('button_no_imgv');
-const butt_no_cp    = document.getElementById('button_no_cp');
-const butt_s1_imgv  = document.getElementById('button_zoom_1_imgv');
-const butt_s2_imgv  = document.getElementById('button_zoom_2_imgv');
-const butt_vf_imgv  = document.getElementById('button_vflip_imgv');
-const butt_hf_imgv  = document.getElementById('button_hflip_imgv');
-const butt_rl_imgv  = document.getElementById('button_rot_l_imgv');
-const butt_rr_imgv  = document.getElementById('button_rot_r_imgv');
-const butt_re_imgv  = document.getElementById('button_restore_imgv');
-const butt_c_imgv   = document.getElementById('button_crop_mode_imgv');
-const butt_x_imgv   = document.getElementById('button_drag_mode_imgv');
+const butt_imgv_ok  = document.getElementById('butt_imgv_ok');
+const butt_imgv_no  = document.getElementById('butt_imgv_no');
+const butt_imgv_s1  = document.getElementById('butt_imgv_zoom_1');
+const butt_imgv_s2  = document.getElementById('butt_imgv_zoom_2');
+const butt_imgv_vf  = document.getElementById('butt_imgv_vflip');
+const butt_imgv_hf  = document.getElementById('butt_imgv_hflip');
+const butt_imgv_rl  = document.getElementById('butt_imgv_rot_l');
+const butt_imgv_rr  = document.getElementById('butt_imgv_rot_r');
+const butt_imgv_re  = document.getElementById('butt_imgv_restore');
+const butt_imgv_c   = document.getElementById('butt_imgv_m_crop');
+const butt_imgv_x   = document.getElementById('butt_imgv_m_drag');
 
 const brush_cursor  = document.getElementById('brush_cursor');
 const in_thickness  = document.getElementById('input_thickness');
-const cp_input_col  = document.getElementById('input_cp_col');
-const cp_input_txt  = document.getElementById('input_cp_txt');
+const input_cp_col  = document.getElementById('input_cp_col');
+const input_cp_txt  = document.getElementById('input_cp_txt');
 const in_imgv_rot   = document.getElementById('input_rotate');
 
 const tips_imgv     = document.getElementById('tips_imgv');
 const tips_draw     = document.getElementById('tips_draw');
 const tips_bs       = document.getElementById('tips_bs');
 
-const brush_inputs  = document.getElementById('inputs_brush');
-const color_inputs  = document.getElementById('inputs_color');
-const imgv_inputs   = document.getElementById('inputs_imgv');
+const inputs_brush  = document.getElementById('inputs_brush');
+const inputs_color  = document.getElementById('inputs_color');
+const inputs_imgv   = document.getElementById('inputs_imgv');
 
 // endregion
 
@@ -563,7 +563,7 @@ function SETUP_DRAWING() {
         if (!drawing_enabled || anyInp()) return;
         if      (key_is(e, 'w^S')) bind(e, butt_bs_more, () => thickness_more(e));
         else if (key_is(e, 's^S')) bind(e, butt_bs_less, () => thickness_less(e));
-        else if (key_is(e, 'z^s')) fx_click(brush_inputs, 0) || in_thickness.focus() || e.preventDefault();
+        else if (key_is(e, 'z^s')) fx_click(inputs_brush, 0) || in_thickness.focus() || e.preventDefault();
     });
     in_thickness.addEventListener('focus', () => {
         thickness_temp = thickness;
@@ -576,11 +576,11 @@ function SETUP_DRAWING() {
     });
     in_thickness.addEventListener('keydown', e => {
         if (key_is(e, 'Tab') || key_is(e, 'Enter')) {
-            fx_click(brush_inputs, 2);
+            fx_click(inputs_brush, 2);
             set_thickness(in_thickness.value);
         }
         else if (key_is(e, 'Escape')) {
-            fx_click(brush_inputs, 1);
+            fx_click(inputs_brush, 1);
             set_thickness(thickness_temp);
         }
         else return;
@@ -668,8 +668,8 @@ function image_paste(blob) {
 }
 function SETUP_IMAGE_PASTE() {
     butt_paste  .onclick = image_paste__button;
-    butt_ok_imgv.onclick = cd_draw_pasted_image;
-    butt_no_imgv.onclick = placing_image_exit;
+    butt_imgv_ok.onclick = cd_draw_pasted_image;
+    butt_imgv_no.onclick = placing_image_exit;
     document.addEventListener('paste', function (e) {
         if (!anyInp()) fx_click(butt_paste) || image_paste__kbd(e);
     });
@@ -1110,9 +1110,9 @@ function imgv_enter_drag_mode() {
     imgv_set_mode();
 }
 function imgv_set_mode() {
-    butt_c_imgv.classList.remove('active')
-    butt_x_imgv.classList.remove('active')
-    const active = imgv.in_crop_mode ? butt_c_imgv : butt_x_imgv;
+    butt_imgv_c.classList.remove('active')
+    butt_imgv_x.classList.remove('active')
+    const active = imgv.in_crop_mode ? butt_imgv_c : butt_imgv_x;
     active.classList.add('active');
     panel_aux_items
         .filter (x => x.classList.contains('tool_imgv') && x.classList.contains('modal'))
@@ -1139,15 +1139,15 @@ function imgv_handles_reset_style() {
 }
 
 function SETUP_IMAGE_PLACING() {
-    butt_s1_imgv.onclick = imgv_resize_true_scale;
-    butt_s2_imgv.onclick = imgv_resize_stretch;
-    butt_vf_imgv.onclick = imgv_vflip;
-    butt_hf_imgv.onclick = imgv_hflip;
-    butt_rl_imgv.onclick = e => imgv_rotate(e.shiftKey ? -15 : -90);
-    butt_rr_imgv.onclick = e => imgv_rotate(e.shiftKey ? +15 : +90);
-    butt_re_imgv.onclick = imgv_restore;
-    butt_c_imgv .onclick = imgv_enter_crop_mode;
-    butt_x_imgv .onclick = imgv_enter_drag_mode;
+    butt_imgv_s1.onclick = imgv_resize_true_scale;
+    butt_imgv_s2.onclick = imgv_resize_stretch;
+    butt_imgv_vf.onclick = imgv_vflip;
+    butt_imgv_hf.onclick = imgv_hflip;
+    butt_imgv_rl.onclick = e => imgv_rotate(e.shiftKey ? -15 : -90);
+    butt_imgv_rr.onclick = e => imgv_rotate(e.shiftKey ? +15 : +90);
+    butt_imgv_re.onclick = imgv_restore;
+    butt_imgv_c .onclick = imgv_enter_crop_mode;
+    butt_imgv_x .onclick = imgv_enter_drag_mode;
     document.addEventListener('pointerdown', imgv_interaction_start);
     document.addEventListener('pointermove', imgv_interact);
     document.addEventListener('pointerup',   imgv_interaction_stop);
@@ -1155,26 +1155,26 @@ function SETUP_IMAGE_PLACING() {
     document.addEventListener('keyup',       imgv_interaction_apply_mods);
     document.addEventListener('keydown', e => {
         if (imgv && !anySel()) {
-            if      (key_is(e, '1^a')) bind(e, butt_s1_imgv, imgv_resize_true_scale);
-            else if (key_is(e, '2^a')) bind(e, butt_s2_imgv, imgv_resize_stretch);
-            else if (key_is(e, 'w'  )) bind(e, butt_vf_imgv, imgv_vflip);
-            else if (key_is(e, 'd'  )) bind(e, butt_hf_imgv, imgv_hflip);
-            else if (key_is(e, 'r'  )) bind(e, butt_re_imgv, imgv_restore);
-            else if (key_is(e, 'c'  )) bind(e, butt_c_imgv, imgv_enter_crop_mode);
-            else if (key_is(e, 'x'  )) bind(e, butt_x_imgv, imgv_enter_drag_mode);
-            else if (key_is(e, 'q^S')) bind(e, butt_rl_imgv, () => imgv_rotate(e.shiftKey ? -15 : -90));
-            else if (key_is(e, 'e^S')) bind(e, butt_rr_imgv, () => imgv_rotate(e.shiftKey ? +15 : +90));
-            else if (key_is(e, 'q^a')) fx_click(imgv_inputs, 0) || in_imgv_rot.focus() || e.preventDefault();
+            if      (key_is(e, '1^a')) bind(e, butt_imgv_s1, imgv_resize_true_scale);
+            else if (key_is(e, '2^a')) bind(e, butt_imgv_s2, imgv_resize_stretch);
+            else if (key_is(e, 'w'  )) bind(e, butt_imgv_vf, imgv_vflip);
+            else if (key_is(e, 'd'  )) bind(e, butt_imgv_hf, imgv_hflip);
+            else if (key_is(e, 'r'  )) bind(e, butt_imgv_re, imgv_restore);
+            else if (key_is(e, 'c'  )) bind(e, butt_imgv_c, imgv_enter_crop_mode);
+            else if (key_is(e, 'x'  )) bind(e, butt_imgv_x, imgv_enter_drag_mode);
+            else if (key_is(e, 'q^S')) bind(e, butt_imgv_rl, () => imgv_rotate(e.shiftKey ? -15 : -90));
+            else if (key_is(e, 'e^S')) bind(e, butt_imgv_rr, () => imgv_rotate(e.shiftKey ? +15 : +90));
+            else if (key_is(e, 'q^a')) fx_click(inputs_imgv, 0) || in_imgv_rot.focus() || e.preventDefault();
             else if (key_is(e, 'F2' )) imgv_pixelated_toggle() || e.preventDefault();
         }
     });
     in_imgv_rot.addEventListener('keydown', e => {
         if (key_is(e, 'Tab') || key_is(e, 'Enter')) {
-            fx_click(imgv_inputs, 2);
+            fx_click(inputs_imgv, 2);
             imgv_rotate(in_imgv_rot.value - imgv.rotate);
         }
         else if (key_is(e, 'Escape')) {
-            fx_click(imgv_inputs, 1);
+            fx_click(inputs_imgv, 1);
         }
         else return;
         // leave input field
@@ -1202,7 +1202,7 @@ function cp_pick_from_canvas() {
         const { x, y } = getCanvasCursorXY();
         const [r, g, b] = cd_ctx.getImageData(x, y, 1, 1).data;
         const hex = ((r << 16) + (g << 8) + b).toString(16).padStart(6, '0');
-        input_color_update(cp_input_txt.value = '#' + hex);
+        input_color_update(input_cp_txt.value = '#' + hex);
     }
 }
 function cp_apply_color_and_exit(value) {
@@ -1219,11 +1219,11 @@ function cp_apply_color(value) {
 }
 function cp_color_inputs_update_both(value) {
     input_color_update(value);
-    cp_input_txt.value = value;
+    input_cp_txt.value = value;
 }
 function input_color_update(value) {
-    cp_input_col.value = value;
-    cp_input_col.style.setProperty('--color', value);
+    input_cp_col.value = value;
+    input_cp_col.style.setProperty('--color', value);
 }
 function valid_color(input) {
     const style = new Option().style;
@@ -1243,7 +1243,7 @@ function string_to_color(str) {
     return '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
 }
 function invert_color() {
-    let hex = cp_input_col.value.replace('#', '');
+    let hex = input_cp_col.value.replace('#', '');
     if (hex.length === 3)
         hex = hex.split('').map(c => c + c).join('');
     const r = 255 - parseInt(hex.slice(0, 2), 16);
@@ -1253,36 +1253,36 @@ function invert_color() {
     cp_apply_color(inverted)
 }
 function SETUP_COLOR_PICKER() {
-    butt_no_cp.onclick = () => cp_apply_color_and_exit(color);
+    butt_cp_no.onclick = () => cp_apply_color_and_exit(color);
     butt_inv_col.onclick = invert_color;
-    cp_input_col.addEventListener('input',  () => cp_apply_color                (cp_input_col.value));
-    cp_input_col.addEventListener('change', () => cp_apply_color_and_exit       (cp_input_col.value));
-    cp_input_txt.addEventListener('input',  () => input_color_update(valid_color(cp_input_txt.value)));
-    cp_input_txt.addEventListener('keydown', e => {
+    input_cp_col.addEventListener('input',  () => cp_apply_color                (input_cp_col.value));
+    input_cp_col.addEventListener('change', () => cp_apply_color_and_exit       (input_cp_col.value));
+    input_cp_txt.addEventListener('input',  () => input_color_update(valid_color(input_cp_txt.value)));
+    input_cp_txt.addEventListener('keydown', e => {
         if (key_is(e, 'Tab') || key_is(e, 'Enter')) {
-            const new_color = valid_color(cp_input_txt.value);
-            fx_click(color_inputs, 3);
+            const new_color = valid_color(input_cp_txt.value);
+            fx_click(inputs_color, 3);
             cp
                 ? cp_apply_color_and_exit(new_color)  // cp -> exit
                 : cp_apply_color         (new_color); // drawing/…
         }
         else if (key_is(e, 'Escape')) {
-            fx_click(color_inputs, 2);
+            fx_click(inputs_color, 2);
             cp_apply_color(color); // reset
         }
         else return;
         // leave input field
-        cp_input_txt.blur();
+        input_cp_txt.blur();
         e.preventDefault();
     });
-    cp_input_txt.addEventListener('blur', () => cp_apply_color(color)); // reset
+    input_cp_txt.addEventListener('blur', () => cp_apply_color(color)); // reset
     canvas_draw.addEventListener('pointermove', cp_pick_from_canvas);
-    canvas_draw.addEventListener('click', () => cp_apply_color_and_exit(cp_input_col.value));
+    canvas_draw.addEventListener('click', () => cp_apply_color_and_exit(input_cp_col.value));
     document.addEventListener('keydown', e => {
         if (anySel()) return;
         if (cp || drawing_enabled) {
-            if      (key_is(e, 'c^s')) fx_click(color_inputs, 1) || cp_input_txt.focus() || e.preventDefault();
-            else if (key_is(e, 'x^s')) fx_click(color_inputs, 0) || cp_input_col.click();
+            if      (key_is(e, 'c^s')) fx_click(inputs_color, 1) || input_cp_txt.focus() || e.preventDefault();
+            else if (key_is(e, 'x^s')) fx_click(inputs_color, 0) || input_cp_col.click();
             else if (key_is(e, 'v'  )) bind(e, butt_inv_col, invert_color);
         }
         if (cp && key_is(e, 'Escape')) cp_apply_color_and_exit(color); // esc -> exit cp

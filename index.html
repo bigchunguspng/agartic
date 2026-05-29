@@ -22,18 +22,10 @@
             <p>Scroll holding <kbd>Ctrl</kbd> and <kbd>Shift</kbd> to zoom faster</p>
             <p>Hold <kbd>Shift</kbd> to scroll ←horizontally→</p>
         </div>
-        <div class="b">
-            <p>Both <kbd>C-Z</kbd> and <kbd>C-y</kbd> work as <i>redo</i></p>
-        </div>
-        <div class="c">
-            <p>Both <kbd>c</kbd> and <kbd>e</kbd> activate <i>color picker</i></p>
-        </div>
-        <div class="d">
-            <p><kbd>Tab</kbd> = <kbd>Enter</kbd></p>
-        </div>
-        <div class="e">
-            <p><kbd>F1</kbd> toggles canvas interpolation mode</p>
-        </div>
+        <div class="b"><p>Both <kbd>C-Z</kbd> and <kbd>C-y</kbd> work as <i>redo</i></p></div>
+        <div class="c"><p>Both <kbd>c</kbd> and <kbd>e</kbd> activate <i>color picker</i></p></div>
+        <div class="d"><p><kbd>Tab</kbd> = <kbd>Enter</kbd></p></div>
+        <div class="e"><p><kbd>F1</kbd> toggles canvas interpolation mode</p></div>
         <div class="draw hide fast" id="tips_draw">
             <p>Hold <kbd>Shift</kbd> to resize brush faster</p>
         </div>
@@ -71,153 +63,67 @@
         </div>
     </div>
 
-    <!-- PANEL (MAIN)-->
+    <!-- BOTTOM PANEL (MAIN)-->
     <div id="panel-main" class="panel">
-        <button id="button_zoom_1"> <kbd class="w">C-1</kbd>
-            <img src="img/icons/zoom-original.png">
-        </button>
-        <button id="button_zoom_2"> <kbd class="w">C-2</kbd>
-            <img src="img/icons/zoom-fit-best.png">
-        </button>
-        <button id="button_zoom_out">
-            <img src="img/icons/zoom-out.png">
-        </button>
-        <button id="button_zoom_in">
-            <img src="img/icons/zoom-in.png">
-        </button>
-        <button id="button_undo">   <kbd class="w">C-z</kbd>  <img src="img/icons/view-refresh.png" style="transform: scaleX(-1)"></button>
-        <button id="button_redo">   <kbd class="w">C-Z</kbd>  <img src="img/icons/view-refresh.png"></button>
-        <button id="button_info">   <kbd>`</kbd>    <span>info  </span></button>
-        <button id="tool_pick">     <kbd>c</kbd>    <span>color </span></button>
-        <button id="button_fill">   <kbd>f</kbd>    <span>fill  </span></button>
-        <button id="tool_drag">     <kbd>x</kbd>    <span>move  </span></button>
-        <button id="tool_draw">     <kbd>d</kbd>    <span>draw  </span></button>
-        <button id="tool_rect">     <kbd>r</kbd>    <span>rect  </span></button>
-        <button id="tool_laso">     <kbd>q</kbd>    <span>laso  </span></button>
+        <button id="butt_zoom_1"> <kbd class="w">C-1</kbd>  <img src="img/icons/zoom-original.png"></button>
+        <button id="butt_zoom_2"> <kbd class="w">C-2</kbd>  <img src="img/icons/zoom-fit-best.png"></button>
+        <button id="butt_zoom_out">                         <img src="img/icons/zoom-out.png"></button>
+        <button id="butt_zoom_in">                          <img src="img/icons/zoom-in.png"></button>
+        <button id="butt_undo">   <kbd class="w">C-z</kbd>  <img src="img/icons/view-refresh.png" class="flip"></button>
+        <button id="butt_redo">   <kbd class="w">C-Z</kbd>  <img src="img/icons/view-refresh.png"></button>
+        <button id="butt_info">   <kbd>`</kbd>    <span>info  </span></button>
+        <button id="tool_pick">   <kbd>c</kbd>    <span>color </span></button>
+        <button id="butt_fill">   <kbd>f</kbd>    <span>fill  </span></button>
+        <button id="tool_drag">   <kbd>x</kbd>    <span>move  </span></button>
+        <button id="tool_draw">   <kbd>d</kbd>    <span>draw  </span></button>
+        <button id="tool_rect">   <kbd>r</kbd>    <span>rect  </span></button>
+        <button id="tool_laso">   <kbd>q</kbd>    <span>laso  </span></button>
         <button id="tool_imgv" class="hide">HOLY SHIT!! SECRET BUTTON!?</button>
-        <button id="button_copy">   <kbd class="w">C-c</kbd>
-            <img src="img/icons/edit-copy.png">
-        </button>
-        <button id="button_paste">  <kbd class="w"><abbr title="Use shortcut to paste files!">C-v</abbr></kbd>
-            <img src="img/icons/edit-paste.png">
-        </button>
-        <button id="button_save">   <kbd class="w">C-s</kbd>
-            <img src="img/icons/media-floppy.png">
-        </button>
-        <button id="button_nuke">   <kbd class="w">C-d</kbd>
-            <img src="img/icons/user-trash-full-2.png">
-        </button>
+        <button id="butt_copy">   <kbd class="w">C-c</kbd>  <img src="img/icons/edit-copy.png"></button>
+        <button id="butt_paste">  <kbd class="w"><abbr title="Use shortcut to paste files!">C-v</abbr></kbd>
+                                                            <img src="img/icons/edit-paste.png"></button>
+        <button id="butt_save">   <kbd class="w">C-s</kbd>  <img src="img/icons/media-floppy.png"></button>
+        <button id="butt_nuke">   <kbd class="w">C-d</kbd>  <img src="img/icons/user-trash-full-2.png"></button>
     </div>
 
-    <!-- PANEL (TOOL-SPECIFIC)-->
+    <!-- TOP PANEL (TOOL-SPECIFIC)-->
     <div id="panel-aux" class="panel">
 
         <!-- DRAW, COLOR -->
-        <button id="button_no_cp"
-                class="tool_pick">
-            <kbd class="w">Esc</kbd>
-            <img src="img/icons/dialog-error.png">
-        </button>
-        <button id="button_thickness_less"
-                class="tool_draw">
-            <kbd>s</kbd>
-            <img src="img/icons/list-remove.png">
-        </button>
-        <button id="button_thickness_more"
-                class="tool_draw">
-            <kbd>w</kbd>
-            <img src="img/icons/list-add.png">
-        </button>
-        <div id="inputs_brush" class="tool_draw">
+        <button id="butt_cp_no"    class="tool_pick"> <kbd class="w">Esc</kbd> <img src="img/icons/dialog-error.png"></button>
+        <button id="butt_bs_less"  class="tool_draw"> <kbd>s</kbd>             <img src="img/icons/list-remove.png"></button>
+        <button id="butt_bs_more"  class="tool_draw"> <kbd>w</kbd>             <img src="img/icons/list-add.png"></button>
+        <div id="inputs_brush"     class="tool_draw">
             <img src="img/icons/media-record.png">
-            <kbd class="w">S-z</kbd>
-            <input type="number" id="input_thickness">
-            <kbd class="n w">Esc</kbd>
-            <kbd class="y w">Tab</kbd>
+            <kbd class="w">S-z</kbd> <input type="number" id="input_thickness">
+            <kbd class="n w">Esc</kbd><kbd class="y w">Tab</kbd>
         </div>
-        <div id="inputs_color" class="tool_draw tool_pick">
+        <div id="inputs_color"     class="tool_draw tool_pick">
             <img src="img/icons/applications-graphics.png">
-            <kbd class="w">S-x</kbd>
-            <input type="color" id="input_cp_col">
+            <kbd class="w">S-x</kbd> <input type="color"  id="input_cp_col">
             <div class="divider"></div>
-            <kbd class="w">S-c</kbd>
-            <input type="text" id="input_cp_txt">
-            <kbd class="n w">Esc</kbd>
-            <kbd class="y w">Tab</kbd>
+            <kbd class="w">S-c</kbd> <input type="text"   id="input_cp_txt">
+            <kbd class="n w">Esc</kbd><kbd class="y w">Tab</kbd>
         </div>
-        <button id="button_invert_color"
-                class="tool_draw tool_pick">
-            <kbd>v</kbd>
-            <img src="img/icons/media-playlist-shuffle.png">
-        </button>
+        <button id="butt_inv_color"    class="tool_draw tool_pick"><kbd>v</kbd><img src="img/icons/media-playlist-shuffle.png"></button>
 
         <!-- PLACING IMAGE -->
-        <button id="button_drag_mode_imgv"
-                data-mode="drag_mode"
-                class="tool_imgv mode_drag">
-            <kbd>x</kbd>
-            <span>move</span>
-        </button>
-        <button id="button_crop_mode_imgv"
-                data-mode="crop_mode"
-                class="tool_imgv mode_crop">
-            <kbd>c</kbd>
-            <span>crop</span>
-        </button>
-        <button id="button_zoom_1_imgv"
-                class="tool_imgv modal drag_mode">
-            <kbd class="w">A-1</kbd>
-            <img src="img/icons/zoom-original.png">
-        </button>
-        <button id="button_zoom_2_imgv"
-                class="tool_imgv modal drag_mode">
-            <kbd class="w">A-2</kbd>
-            <img src="img/icons/zoom-fit-best.png">
-        </button>
-        <button id="button_vflip_imgv"
-                class="tool_imgv modal drag_mode">
-            <kbd>w</kbd>
-            <img src="img/icons/object-flip-vertical.png">
-        </button>
-        <button id="button_hflip_imgv"
-                class="tool_imgv modal drag_mode">
-            <kbd>d</kbd>
-            <img src="img/icons/object-flip-horizontal.png">
-        </button>
-        <button id="button_rot_l_imgv"
-                class="tool_imgv modal drag_mode">
-            <kbd>q</kbd>
-            <img src="img/icons/object-rotate-left.png">
-        </button>
-        <button id="button_rot_r_imgv"
-                class="tool_imgv modal drag_mode">
-            <kbd>e</kbd>
-            <img src="img/icons/object-rotate-right.png">
-        </button>
-        <button id="button_restore_imgv"
-                class="tool_imgv">
-            <kbd>r</kbd>
-            <img src="img/icons/view-refresh.png" style="transform: scaleX(-1)">
-        </button>
-        <div id="inputs_imgv" class="tool_imgv modal drag_mode">
+        <button id="butt_imgv_m_drag"  class="tool_imgv mode_drag" data-mode="drag_mode"> <kbd>x</kbd> <span>move</span></button>
+        <button id="butt_imgv_m_crop"  class="tool_imgv mode_crop" data-mode="crop_mode"> <kbd>c</kbd> <span>crop</span></button>
+        <button id="butt_imgv_zoom_1"  class="tool_imgv modal drag_mode"> <kbd class="w">A-1</kbd> <img src="img/icons/zoom-original.png"></button>
+        <button id="butt_imgv_zoom_2"  class="tool_imgv modal drag_mode"> <kbd class="w">A-2</kbd> <img src="img/icons/zoom-fit-best.png"></button>
+        <button id="butt_imgv_vflip"   class="tool_imgv modal drag_mode"> <kbd>w</kbd> <img src="img/icons/object-flip-vertical.png"></button>
+        <button id="butt_imgv_hflip"   class="tool_imgv modal drag_mode"> <kbd>d</kbd> <img src="img/icons/object-flip-horizontal.png"></button>
+        <button id="butt_imgv_rot_l"   class="tool_imgv modal drag_mode"> <kbd>q</kbd> <img src="img/icons/object-rotate-left.png"></button>
+        <button id="butt_imgv_rot_r"   class="tool_imgv modal drag_mode"> <kbd>e</kbd> <img src="img/icons/object-rotate-right.png"></button>
+        <button id="butt_imgv_restore" class="tool_imgv">                 <kbd>r</kbd> <img src="img/icons/view-refresh.png" class="flip"></button>
+        <div id="inputs_imgv"          class="tool_imgv modal drag_mode">
             <img src="img/icons/view-refresh.png">
-            <kbd class="w">A-q</kbd>
-            <div class="deg">
-                <input type="number" id="input_rotate">
-            </div>
-            <kbd class="n w">Esc</kbd>
-            <kbd class="y w">Tab</kbd>
+            <kbd class="w">A-q</kbd> <div class="deg"><input type="number" id="input_rotate"></div>
+            <kbd class="n w">Esc</kbd><kbd class="y w">Tab</kbd>
         </div>
-        <button id="button_no_imgv"
-                class="tool_imgv">
-            <kbd class="w">Esc</kbd>
-            <img src="img/icons/dialog-error.png">
-        </button>
-        <button id="button_ok_imgv"
-                class="tool_imgv">
-            <kbd class="w">Tab</kbd>
-            <img src="img/icons/emblem-default.png">
-        </button>
+        <button id="butt_imgv_no"      class="tool_imgv"> <kbd class="w">Esc</kbd> <img src="img/icons/dialog-error.png"></button>
+        <button id="butt_imgv_ok"      class="tool_imgv"> <kbd class="w">Tab</kbd> <img src="img/icons/emblem-default.png"></button>
 
         <!-- ... -->
     </div>

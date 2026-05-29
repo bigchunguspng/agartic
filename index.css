@@ -309,6 +309,9 @@ kbd {
         width: 24px;
         height: 24px;
         image-rendering: auto;
+        &.flip {
+            transform: scaleX(-1);
+        }
     }
     & kbd {
         width: 16px;
