@@ -810,6 +810,7 @@ function imgv_draw_image_internal(ctx_2D) {
         c.h,
     );
 }
+
 function imgv_interaction_start(e) {
     if (imgv) {
         if (imgv.grabbed_handle = e.target.closest('.handle')) {
@@ -876,6 +877,7 @@ function imgv_make_mousedown_snapshots() {
     imgv.drag_crop.w = imgv.crop.w;
     imgv.drag_crop.h = imgv.crop.h;
 }
+
 function imgv_interact() {
     if (imgv) {
         if (imgv.is_dragging && imgv.mod_drag_canvas)
@@ -1058,6 +1060,7 @@ function imgv_analyze_handles() {
         hh: classList.contains('h'),
     };
 }
+
 function imgv_resize_true_scale() {
     imgv.curr.x = imgv.curr.x + Math.floor((imgv.curr.w - imgv.og.w) / 2);
     imgv.curr.y = imgv.curr.y + Math.floor((imgv.curr.h - imgv.og.h) / 2);
