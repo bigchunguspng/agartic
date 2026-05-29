@@ -852,6 +852,10 @@ function imgv_interaction_apply_mods(e) {
                 const cc = getCanvasCursorXY();
                 imgv.drag_ci.x = cc.x - imgv.curr.x;
                 imgv.drag_ci.y = cc.y - imgv.curr.y;
+                imgv.drag_crop.x = imgv.crop.x;
+                imgv.drag_crop.y = imgv.crop.y;
+                imgv.drag_crop.w = imgv.crop.w;
+                imgv.drag_crop.h = imgv.crop.h;
             }
         }
         else if (imgv.mod_drag_by_handle && !e.ctrlKey) {
@@ -883,14 +887,12 @@ function imgv_interact() {
 function imgv_interact_move_mode() { // IMAGE
     let cc = getCanvasCursorXY();
     if (imgv.is_dragging) {
-        imgv.curr.x = cc.x - imgv.drag_ci.x;
-        imgv.curr.y = cc.y - imgv.drag_ci.y;
+        imgv_interact_drag_image(cc);
         return true;
     }
-    else if (imgv.is_resizing) {
+    else if (imgv.is_resizing) { // todo resize cropped image ★★
         if (imgv.mod_drag_by_handle) {
-            imgv.curr.x = cc.x - imgv.drag_ci.x;
-            imgv.curr.y = cc.y - imgv.drag_ci.y;
+            imgv_interact_drag_image(cc);
         }
         const { x, y, w, h } = imgv.curr;
         if (imgv.rotate) {
@@ -945,27 +947,12 @@ function imgv_interact_move_mode() { // IMAGE
 function imgv_interact_crop_mode() { // CROP
     let cc = getCanvasCursorXY();
     if (imgv.is_dragging) {
-        // todo handle rotated / flipped image ★
-        const { x, y, w, h } = imgv.crop;
-        if (x > 0.0 || y > 0.0 || w < 1.0 || h < 1.0) {
-            const cc_dx = cc.x - imgv.drag_ci.x - imgv.curr.x;
-            const cc_dy = cc.y - imgv.drag_ci.y - imgv.curr.y; // cursor difference
-            imgv.crop.x = imgv.drag_crop.x + cc_dx / imgv.curr.w;
-            imgv.crop.y = imgv.drag_crop.y + cc_dy / imgv.curr.h;
-            if (imgv.crop.x < 0.0)
-                imgv.crop.x = 0.0;
-            if (imgv.crop.x > 1.0 - imgv.crop.w)
-                imgv.crop.x = 1.0 - imgv.crop.w;
-            if (imgv.crop.y < 0.0)
-                imgv.crop.y = 0.0;
-            if (imgv.crop.y > 1.0 - imgv.crop.h)
-                imgv.crop.y = 1.0 - imgv.crop.h;
-        }
+        imgv_interact_drag_cropping(cc);
         return true;
     }
     else if (imgv.is_resizing) {
         if (imgv.mod_drag_by_handle) {
-            // todo ★
+            imgv_interact_drag_cropping(cc);
         }
         const { x, y, w, h } = imgv.crop_real_c();
         if (imgv.rotate) {
@@ -982,6 +969,28 @@ function imgv_interact_crop_mode() { // CROP
             imgv.crop.h = math_clamp(0, 1 - imgv.crop.y, (cr.h / imgv.curr.h - imgv.crop.y + ny));
         }
         return true;
+    }
+}
+function imgv_interact_drag_image(cc) {
+    imgv.curr.x = cc.x - imgv.drag_ci.x;
+    imgv.curr.y = cc.y - imgv.drag_ci.y;
+}
+function imgv_interact_drag_cropping(cc) {
+    // todo handle rotated / flipped image ★
+    const { x, y, w, h } = imgv.crop;
+    if (x > 0.0 || y > 0.0 || w < 1.0 || h < 1.0) {
+        const cc_dx = cc.x - imgv.drag_ci.x - imgv.curr.x;
+        const cc_dy = cc.y - imgv.drag_ci.y - imgv.curr.y; // cursor difference
+        imgv.crop.x = imgv.drag_crop.x + cc_dx / imgv.curr.w;
+        imgv.crop.y = imgv.drag_crop.y + cc_dy / imgv.curr.h;
+        if (imgv.crop.x < 0.0)
+            imgv.crop.x = 0.0;
+        if (imgv.crop.x > 1.0 - imgv.crop.w)
+            imgv.crop.x = 1.0 - imgv.crop.w;
+        if (imgv.crop.y < 0.0)
+            imgv.crop.y = 0.0;
+        if (imgv.crop.y > 1.0 - imgv.crop.h)
+            imgv.crop.y = 1.0 - imgv.crop.h;
     }
 }
 function imgv_interact_resize_straight(cc, x, y, w, h, ratio) {
