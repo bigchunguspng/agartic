@@ -180,8 +180,13 @@ function cw_pixelated_toggle() {
 function SETUP_CW_ZOOM() {
     vp.addEventListener('wheel', e => {
         e.preventDefault();
-        if (document.activeElement === in_thickness && in_thickness.matches(':focus-visible')) {
+        if      (input_active(in_thickness)) {
             e.deltaY > 0 ? thickness_less(e) : thickness_more(e);
+        }
+        else if (input_active(in_imgv_rot)) {
+            const mul1 = e.shiftKey   ?  5 : 1;
+            const mul2 = e.deltaY > 0 ? -1 : 1;
+            imgv_rotate(mul1 * mul2);
         }
         else if (e.ctrlKey) {
             cw_zoom(e, e.deltaY > 0);
@@ -888,6 +893,8 @@ function imgv_interact_move_mode() { // IMAGE
         return true;
     }
     else if (imgv.is_resizing) { // todo resize cropped image ★★
+        // actual   grabbed handle is treated as image    corner
+        // expected grabbed handle is treated as CROPPING corner
         if (imgv.mod_drag_by_handle) {
             imgv_interact_drag_image(cc);
         }
@@ -1429,6 +1436,9 @@ function fx_click(butt, index) {
 function temp_fx(el, css_class, time) {
     el.classList.add(css_class);
     setTimeout(() => el.classList.remove(css_class), time);
+}
+function input_active(el) {
+    return document.activeElement === el && el.matches(':focus-visible');
 }
 
 /** Check if anything is selected OR if any text input field is active. */
