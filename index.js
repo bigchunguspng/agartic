@@ -1,6 +1,6 @@
 'use strict';
 
-// region ELEMENTS
+// #region ELEMENTS
 
 const vp            = document.getElementById('viewport');
 const cw            = document.getElementById('canvas-wrapper');
@@ -71,9 +71,9 @@ const inputs_brush  = document.getElementById('inputs_brush');
 const inputs_color  = document.getElementById('inputs_color');
 const inputs_imgv   = document.getElementById('inputs_imgv');
 
-// endregion
+// #endregion
 
-// region TOOLS
+// #region TOOLS
 
 const tools = [tool_pick, tool_drag, tool_draw, tool_rect, tool_laso, tool_imgv];
 const panel_aux_items = Array.from(panel_aux.children);
@@ -116,9 +116,9 @@ function SETUP_TOOLS() {
     setup_yn_toggle(input_cp_txt, inputs_color, 1);
     setup_yn_toggle(in_imgv_rot,  inputs_imgv);
 }
-// endregion
+// #endregion
 
-// region CANVAS ZOOM
+// #region CANVAS ZOOM
 
 let cw_true_w = 1280;
 let cw_true_h = 720;
@@ -216,9 +216,9 @@ function SETUP_CW_ZOOM() {
     butt_zoom_in .onclick = e => cw_zoom(e, false, true);
     butt_zoom_out.onclick = e => cw_zoom(e, true,  true);
 }
-// endregion
+// #endregion
 
-// region CANVAS DRAG
+// #region CANVAS DRAG
 
 let   cw_draggable = false;
 let   cw_dragging  = false;
@@ -267,9 +267,9 @@ function SETUP_CW_DRAG() {
     window.addEventListener('pointermove', cw_drag);
     window.addEventListener('pointerup',   cw_drag_stop);
 }
-// endregion
+// #endregion
 
-// region HISTORY
+// #region HISTORY
 
 const history_channel = new BroadcastChannel('history_sync');
 
@@ -395,9 +395,9 @@ function SETUP_HISTORY_CTL() {
         else if (key_is(e, 'd^c' )) bind(e, butt_nuke, history_clear);
     });
 }
-// endregion
+// #endregion
 
-// region DRAWING
+// #region DRAWING
 
 const cd_ctx = canvas_draw.getContext('2d');
 
@@ -604,9 +604,9 @@ function SETUP_BRUSH_CURSOR() {
         brush_cursor_RENDER();
     });
 }
-// endregion
+// #endregion
 
-// region IMAGE SAVE
+// #region IMAGE SAVE
 function cd_save_image() {
     canvas_draw.toBlob((blob) => {
         const url = URL.createObjectURL(blob);
@@ -625,9 +625,9 @@ function SETUP_IMAGE_SAVE() {
         if (key_is(e, 's^c')) bind(e, butt_save, cd_save_image);
     });
 }
-// endregion
+// #endregion
 
-// region IMAGE COPY
+// #region IMAGE COPY
 function cd_copy_to_clipboard() {
     const callback = (blob) => {
         let item = new ClipboardItem({ 'image/png': blob });
@@ -641,9 +641,9 @@ function SETUP_IMAGE_COPY() {
         if (!anySel()) fx_click(butt_copy) || cd_copy_to_clipboard();
     });
 }
-// endregion
+// #endregion
 
-// region IMAGE PASTE
+// #region IMAGE PASTE
 function image_paste__kbd(e) {
     const items = Array.from(e.clipboardData?.items);
     const item  = items.find(i => i.type.startsWith('image'));
@@ -685,9 +685,9 @@ function SETUP_IMAGE_PASTE() {
         }
     });
 }
-// endregion
+// #endregion
 
-// region PLACING IMAGE
+// #region PLACING IMAGE
 
 const MIN_IMG_SIZE = 10;
 
@@ -1186,9 +1186,9 @@ function SETUP_IMAGE_PLACING() {
         e.stopPropagation(); // don't exit imgv
     });
 }
-// endregion
+// #endregion
 
-// region COLOR PICKER
+// #region COLOR PICKER
 
 let cp = false;
 
@@ -1292,9 +1292,9 @@ function SETUP_COLOR_PICKER() {
         if (cp && key_is(e, 'Escape')) cp_apply_color_and_exit(color); // esc -> exit cp
     });
 }
-// endregion
+// #endregion
 
-// region DB
+// #region DB
 
 const DB_NAME = 'db_agartic', DB_VERSION = 2;
 
@@ -1350,9 +1350,9 @@ async function db_set(store, key, value) {
         request.onerror   = () => reject (request.error);
     });
 }
-// endregion
+// #endregion
 
-// region DEBUG
+// #region DEBUG
 
 const ci_ctx = canvas_info.getContext('2d');
 const debug_points = [];
@@ -1368,9 +1368,9 @@ function debug_point_at(p, color) {
     ci_ctx.arc(p.x, p.y, 15 / 2, 0, 2 * Math.PI);
     ci_ctx.fill();
 }
-// endregion
+// #endregion
 
-// region HACKS
+// #region HACKS
 
 const mouse = { x: 0, y: 0 };
 
@@ -1409,9 +1409,9 @@ function SETUP_HOOKS_POST() {
         }
     });
 }
-// endregion
+// #endregion
 
-// region UTILS
+// #region UTILS
 
 /** Shortcut syntax: <key>[^mods].
  * <br/> [cas] - required mods (Ctrl, Alt, Shift).
@@ -1504,9 +1504,9 @@ function Rekt(x, y, w, h) {
     this.w = w ?? 0;
     this.h = h ?? 0;
 }
-// endregion
+// #endregion
 
-// region INIT
+// #region INIT
 SETUP_HOOKS_PRE();
 {
     SETUP_HISTORY_SYNC();
@@ -1530,6 +1530,6 @@ SETUP_HOOKS_POST();
     set_thickness(3);
     history_load();
 }
-// endregion
+// #endregion
 
 // ← line count
