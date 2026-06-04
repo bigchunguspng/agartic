@@ -462,3 +462,28 @@ input[type="color"] {
 #input_rotate {
     width: 64px;
 }
+
+#drop-overlay {
+    position: fixed;
+    inset: 0;
+    display: none;
+    background: rgba(0, 0, 0, 0.5);
+    &.active {
+        display: block;
+    }
+}
+#file-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+.drop-message {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: white;
+    font-size: 2rem;
+    pointer-events: none;
+}

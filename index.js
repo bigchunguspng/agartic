@@ -71,6 +71,8 @@ const inputs_brush  = document.getElementById('inputs_brush');
 const inputs_color  = document.getElementById('inputs_color');
 const inputs_imgv   = document.getElementById('inputs_imgv');
 
+const drop_overlay  = document.getElementById("drop-overlay");
+
 // #endregion
 
 // #region TOOLS
@@ -662,12 +664,33 @@ function image_paste(blob) {
     if (imgv) cd_draw_pasted_image(null, true);
 
     const url = URL.createObjectURL(blob);
+    image_init(url);
+}
+function image_read_input(file) {
+    if (imgv) cd_draw_pasted_image(null, true);
+
+    const reader = new FileReader();
+    reader.onload = () => {
+        const url = reader.result;
+        image_init(url);
+    };
+    reader.readAsDataURL(file);
+}
+function image_init(url) {
     const img = new Image();
     img.onload = () => {
         placing_image_start(img);
         URL.revokeObjectURL(url);
     };
     img.src = url;
+}
+
+let image_input_drag_counter = 0;
+
+function image_input_update() {
+    const b = image_input_drag_counter > 0;
+    if  (!b)  image_input_drag_counter = 0;
+    drop_overlay.classList.toggle("active", b);
 }
 function SETUP_IMAGE_PASTE() {
     butt_paste  .onclick = image_paste__button;
@@ -683,6 +706,21 @@ function SETUP_IMAGE_PASTE() {
             else if (key_is(e, 'Space' )) cd_draw_pasted_image();
             else if (key_is(e, 'Escape')) placing_image_exit();
         }
+    });
+    document.addEventListener("dragenter", () => {
+        image_input_drag_counter++;
+        image_input_update();
+    });
+    document.addEventListener("dragleave", () => {
+        image_input_drag_counter--;
+        image_input_update();
+    });
+    document.addEventListener("drop", e => {
+        image_input_drag_counter = 0;
+        image_input_update();
+        const file = e.dataTransfer.files?.[0];
+        if   (file?.type.startsWith("image/"))
+            image_read_input(file);
     });
 }
 // #endregion
