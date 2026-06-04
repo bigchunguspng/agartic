@@ -897,13 +897,11 @@ function imgv_interact_move_mode() { // IMAGE
         imgv_interact_drag_image(cc);
         return true;
     }
-    else if (imgv.is_resizing) { // todo resize cropped image ★★
-        // actual   grabbed handle is treated as image    corner
-        // expected grabbed handle is treated as CROPPING corner
+    else if (imgv.is_resizing) {
         if (imgv.mod_drag_by_handle) {
             imgv_interact_drag_image(cc);
         }
-        const { x, y, w, h } = imgv.curr;
+        const { x, y, w, h } = imgv.crop_real_c();
         if (imgv.rotate) {
             const rad = math_rad_from_deg(imgv.rotate);
             debug_points.length = 0;
@@ -941,17 +939,27 @@ function imgv_interact_move_mode() { // IMAGE
                 debug_point_push(center_new, 'orange');
                 debug_point_push(center_rot, 'gold');
             }
-            imgv.curr.x = center_rot.x - nw / 2;
-            imgv.curr.y = center_rot.y - nh / 2;
-            imgv.curr.w = nw;
-            imgv.curr.h = nh;
+            const c_new = new Rekt(
+                center_rot.x - nw / 2,
+                center_rot.y - nh / 2,
+                nw, nh
+            );
+            imgv.curr = imgv_curr_from_crop_real_c(c_new);
             // todo fix - oppo corner shakes a bit
         }
         else {
-            imgv.curr = imgv_interact_resize_straight(cc, x, y, w, h, imgv.ratio);
+            const c_new = imgv_interact_resize_straight(cc, x, y, w, h, imgv.ratio);
+            imgv.curr = imgv_curr_from_crop_real_c(c_new);
         }
         return true;
     }
+}
+function imgv_curr_from_crop_real_c(crop_real_c) {
+    const w = crop_real_c.w / imgv.crop.w;
+    const h = crop_real_c.h / imgv.crop.h;
+    const x = crop_real_c.x - imgv.crop.x * w;
+    const y = crop_real_c.y - imgv.crop.y * h;
+    return new Rekt(x, y, w, h);
 }
 function imgv_interact_crop_mode() { // CROP
     let cc = getCanvasCursorXY();
