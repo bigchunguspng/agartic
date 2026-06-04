@@ -338,7 +338,10 @@ kbd {
             transform: translateY(1px);
             box-shadow: 0 1px 0 var(--shadow);
         }
-        &.y {
+        &.y, &.n {
+            color: #bbb;
+        }
+        &.y.active {
             color: #f0fff9;
             background-image:
                linear-gradient(rgba(0, 127, 68, 0.15), rgba(0, 255, 136, 0.25)),
@@ -350,7 +353,7 @@ kbd {
             --shadow: #2D4A3C;
             /*https://meyerweb.com/eric/tools/color-blend/#00FF88:333333:8:hex*/
         }
-        &.n {
+        &.n.active {
             color: #fff2f8;
             background-image:
                linear-gradient(rgba(127, 0, 34, 0.15), rgba(255, 0, 68, 0.25)),

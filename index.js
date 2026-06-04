@@ -112,6 +112,9 @@ function SETUP_TOOLS() {
         else if (key_is(e, 'r')) bind(e, tool_rect, () => tool_activate(tool_rect));
         else if (key_is(e, 'q')) bind(e, tool_laso, () => tool_activate(tool_laso));
     });
+    setup_yn_toggle(in_thickness, inputs_brush);
+    setup_yn_toggle(input_cp_txt, inputs_color, 1);
+    setup_yn_toggle(in_imgv_rot,  inputs_imgv);
 }
 // endregion
 
@@ -1443,6 +1446,16 @@ function temp_fx(el, css_class, time) {
 }
 function input_active(el) {
     return document.activeElement === el && el.matches(':focus-visible');
+}
+function setup_yn_toggle(el_input, el_inputs, index) {
+    el_input.addEventListener('focus', () => yn_toggle_active(el_inputs, true,  index));
+    el_input.addEventListener('blur',  () => yn_toggle_active(el_inputs, false, index));
+}
+function yn_toggle_active(el_inputs, b, index) {
+    const yn = el_inputs.getElementsByTagName('kbd');
+    index ??= 0;
+    yn[index + 1].classList.toggle('active', b);
+    yn[index + 2].classList.toggle('active', b);
 }
 
 /** Check if anything is selected OR if any text input field is active. */
