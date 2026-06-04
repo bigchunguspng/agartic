@@ -205,6 +205,8 @@ function SETUP_CW_ZOOM() {
     window.addEventListener('keydown', e => {
         if      (key_is(e, '1^c')) bind(e, butt_zoom_1, cw_resize_true_scale);
         else if (key_is(e, '2^c')) bind(e, butt_zoom_2, cw_resize_fit_screen);
+        else if (key_is(e, '='  )) bind(e, butt_zoom_in,  () => cw_zoom(e, false, true));
+        else if (key_is(e, '-'  )) bind(e, butt_zoom_out, () => cw_zoom(e, true,  true));
         else if (key_is(e, 'F1' )) cw_pixelated_toggle() || e.preventDefault();
     });
     window.addEventListener('resize', () => {
