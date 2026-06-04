@@ -1192,6 +1192,7 @@ let cp = false;
 function cp_start() {
     canvas_draw.classList.add('eyedropper');
     cp = true;
+    cp_pick_from_canvas();
 }
 function cp_exit() {
     canvas_draw.classList.remove('eyedropper');
