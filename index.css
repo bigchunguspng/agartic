@@ -90,6 +90,9 @@ kbd {
         max-width: 128px;
         margin-left: 32px;
     }
+    & a {
+        color: #5b4e3e;
+    }
     &.a {
         transform: rotate(-15deg);
     }
@@ -113,6 +116,12 @@ kbd {
         left: 20px;
         bottom: 25px;
         transform: rotate(3deg);
+    }
+    &.g {
+        left: 50%;
+        bottom: 20%;
+        margin: 0;
+        transform: translateX(-50%);
     }
     &.draw {
         left: 600px;
