@@ -704,7 +704,6 @@ function placing_image_start(img) {
         crop: new Rekt(0, 0, 1, 1),
         /* drag start snapshot - cursor on image */ drag_ci:   new Vek2(),
         /* drag start snapshot - crop */            drag_crop: new Rekt(),
-        ratio: img.width / img.height,
         hflip: false,
         vflip: false,
         rotate: 0,
@@ -716,6 +715,10 @@ function placing_image_start(img) {
         /*   ctrl */ mod_drag_by_handle: false,
         /*    alt */ mod_drag_canvas:    false,
         /*    alt */ mod_resize_centered: () => imgv.mod_drag_canvas,
+        crop_real_ratio: () => { // + L + XXL + you're sus
+          return (imgv.og.w * imgv.crop.w)
+               / (imgv.og.h * imgv.crop.h);
+        },
         // selection frame on image, px
         crop_real_i: () => {
             const x = imgv.crop.x * imgv.curr.w;
@@ -916,7 +919,7 @@ function imgv_interact_move_mode() { // IMAGE
             nw = Math.max(nw, MIN_IMG_SIZE);
             nh = Math.max(nh, MIN_IMG_SIZE);
             if (imgv.mod_keep_ratio) {
-                const { w, h } = imgv_KeepRatio(cc, oc, nw, nh, vh, hh, imgv.ratio);
+                const { w, h } = imgv_KeepRatio(cc, oc, nw, nh, vh, hh, imgv.crop_real_ratio());
                 nw = w;
                 nh = h;
             }
@@ -948,7 +951,7 @@ function imgv_interact_move_mode() { // IMAGE
             // todo fix - oppo corner shakes a bit
         }
         else {
-            const c_new = imgv_interact_resize_straight(cc, x, y, w, h, imgv.ratio);
+            const c_new = imgv_interact_resize_straight(cc, x, y, w, h, imgv.crop_real_ratio());
             imgv.curr = imgv_curr_from_crop_real_c(c_new);
         }
         return true;
