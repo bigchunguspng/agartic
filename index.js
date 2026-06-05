@@ -312,7 +312,7 @@ function history_get_last_image_index() {
 function history_draw_pen_from(offset) {
     for (let i = offset; i < history_len; i++) {
         const item = history[i];
-        cd_apply_history_pen(item.pen, item.path);
+        cd_apply_history_pen(item.pen, item.path, item.type);
     }
 }
 async function history_write(item) {
@@ -403,6 +403,8 @@ function SETUP_HISTORY_CTL() {
 
 //#region DRAWING
 
+const HISTORY_BRUSH = 0, HISTORY_IMAGE = 1, HISTORY_PENCIL = 2;
+
 const cd_ctx = canvas_draw.getContext('2d');
 
 let drawing_enabled = false;
@@ -412,6 +414,7 @@ let pen;
 let color = 'black';
 let thickness = 3;
 let thickness_temp;
+let pencil_mode = false;
 
 function drawing_enable() {
     brush_cursor.classList.add('drawing');
@@ -439,7 +442,7 @@ function drawing_draw() {
         const prev = pen_path[pen_path.length - 1];
         const curr = getCanvasCursorXY();
         pen_path.push(curr);
-        cd_draw_segment(prev.x, prev.y, curr.x, curr.y, pen);
+        cd_draw_segment(prev.x, prev.y, curr.x, curr.y, pen, drawing_get_brush_type());
     }
 }
 function drawing_stop() {
@@ -447,52 +450,108 @@ function drawing_stop() {
         drawing_now = false;
         if (pen_path.length === 1) {
             const p = getCanvasCursorXY();
-            cd_draw_dot(p.x, p.y, pen);
+            cd_draw_dot(p.x, p.y, pen, drawing_get_brush_type());
         }
-        history_write({ type: 0, pen, path: pen_path });
+        history_write({ type: drawing_get_brush_type(), pen, path: pen_path });
     }
+}
+function drawing_get_brush_type() {
+    return pencil_mode ? HISTORY_PENCIL : HISTORY_BRUSH;
 }
 
 function cd_clear() {
     cd_ctx.fillStyle = 'white';
     cd_ctx.fillRect(0, 0, canvas_draw.width, canvas_draw.height);
 }
-function cd_draw_segment(x1, y1, x2, y2, pen) {
-    cd_ctx.globalCompositeOperation  = 'source-over'; // todo experiment with values
-    cd_ctx.lineJoin = cd_ctx.lineCap = 'round';
-    cd_ctx.strokeStyle = pen.color;
-    cd_ctx.lineWidth   = pen.size;
-    cd_ctx.beginPath();
-    cd_ctx.moveTo(x1, y1); // todo optimize?
-    cd_ctx.lineTo(x2, y2);
-    cd_ctx.stroke();
+function cd_draw_segment(x1, y1, x2, y2, pen, type) {
+    if (type === HISTORY_PENCIL) {
+        // TODO comprehend, refactor this pile of crap, and make sure it works correctly
+        cd_ctx.fillStyle = pen.color;
+        // find all points between
+        let steep = (Math.abs(y1 - y2) > Math.abs(x1 - x2)); // vertical > horizontal
+        if (steep){
+            let x = x2;
+            x2 = y2;
+            y2 = x;
+            let y = y1;
+            y1 = x1;
+            x1 = y;
+        }
+        if (x2 > x1) {
+            let x = x2;
+            x2 = x1;
+            x1 = x;
+            let y = y2;
+            y2 = y1;
+            y1 = y;
+        }
+        let dx = x1 - x2,
+            dy = Math.abs(y1 - y2),
+            error = 0,
+            de = dy / dx,
+            yStep = -1,
+            y = y2;
+        if (y2 < y1) {
+            yStep = 1;
+        }
+        for (let x = x2; x < x1; x++) {
+            const o = pen.size / 2;
+            if (steep) {
+                cd_ctx.fillRect(y - o, x - o, pen.size, pen.size);
+            } else {
+                cd_ctx.fillRect(x - o, y - o, pen.size, pen.size);
+            }
+            error += de;
+            if (error >= 0.5) {
+                y += yStep;
+                error -= 1.0;
+            }
+        }
+    }
+    else {
+        cd_ctx.globalCompositeOperation  = 'source-over'; // todo experiment with values
+        cd_ctx.lineJoin = cd_ctx.lineCap = 'round';
+        cd_ctx.strokeStyle = pen.color;
+        cd_ctx.lineWidth   = pen.size;
+        cd_ctx.beginPath();
+        cd_ctx.moveTo(x1, y1); // todo optimize?
+        cd_ctx.lineTo(x2, y2);
+        cd_ctx.stroke();
+    }
 }
-function cd_draw_dot(x, y, pen) {
-    cd_ctx.fillStyle = pen.color;
-    cd_ctx.beginPath();
-    cd_ctx.arc(x, y, pen.size / 2, 0, 2 * Math.PI);
-    cd_ctx.fill();
+function cd_draw_dot(x, y, pen, type) {
+    if (type === HISTORY_PENCIL) {
+        cd_ctx.fillStyle = pen.color;
+        const o = pen.size / 2;
+        cd_ctx.fillRect(x - o, y - o, pen.size, pen.size);
+    }
+    else {
+        cd_ctx.fillStyle = pen.color;
+        cd_ctx.beginPath();
+        cd_ctx.arc(x, y, pen.size / 2, 0, 2 * Math.PI);
+        cd_ctx.fill();
+    }
 }
 function cd_draw_pasted_image(e, paste_another_img) {
     imgv_draw_image(cd_ctx);
     if (!paste_another_img) placing_image_exit();
 
     canvas_draw.toBlob((blob) => {
-        history_write({ type: 1, data: blob });
+        history_write({ type: HISTORY_IMAGE, data: blob });
     }, 'image/webp', 0.95);
 }
-function cd_apply_history_pen(pen, path) {
+function cd_apply_history_pen(pen, path, type) {
     if (path.length > 1) {
         let prev = path[0];
         for (let i = 1; i < path.length; i++) {
             const curr = path[i];
-            cd_draw_segment(prev.x, prev.y, curr.x, curr.y, pen);
+            cd_draw_segment(prev.x, prev.y, curr.x, curr.y, pen, type);
             prev = curr;
         }
     }
     else {
         const p = path[0];
-        cd_draw_dot(p.x, p.y, pen);
+        cd_draw_dot(p.x, p.y, pen, type);
     }
 }
 function cd_apply_history_img(data) {
@@ -560,6 +619,13 @@ function brush_cursor_get_color() {
         return c < 120 ? 'white' : 'black';
     }
 }
+function drawing_toggle_pencil_mode() {
+    if (!drawing_now) {
+        pencil_mode = !pencil_mode;
+        brush_cursor.style.borderRadius = pencil_mode ? '0' : '50%';
+        // todo - offset by 0.5px tl when in pencil_mode and bs is odd
+    }
+}
 function SETUP_DRAWING() {
     butt_bs_less.onclick = thickness_less;
     butt_bs_more.onclick = thickness_more;
@@ -571,6 +637,8 @@ function SETUP_DRAWING() {
         if      (key_is(e, 'w^S')) bind(e, butt_bs_more, () => thickness_more(e));
         else if (key_is(e, 's^S')) bind(e, butt_bs_less, () => thickness_less(e));
         else if (key_is(e, 'z^s')) fx_click(inputs_brush, 0) || in_thickness.focus() || e.preventDefault();
+        else if (key_is(e, 'z'  )) drawing_toggle_pencil_mode();
+        // todo ^ add button
     });
     in_thickness.addEventListener('focus', () => {
         thickness_temp = thickness;
