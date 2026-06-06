@@ -305,6 +305,11 @@ kbd {
             outline: 1px dashed #babcc2;
             outline-offset: -3px;
         }
+        &.off {
+            & kbd {
+                color: #bbb;
+            }
+        }
         &.active {
             &[id^="tool"] span {
                 font-weight: bold;

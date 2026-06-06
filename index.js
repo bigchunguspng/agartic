@@ -436,6 +436,7 @@ function drawing_start() {
         pen = { color, size: thickness };
         pen_path = [];
         pen_path.push(getCanvasCursorXY());
+        butt_dw_mode.classList.add('off');
     }
 }
 function drawing_draw() {
@@ -454,6 +455,7 @@ function drawing_stop() {
             cd_draw_dot(p.x, p.y, pen, drawing_get_brush_type());
         }
         history_write({ type: drawing_get_brush_type(), pen, path: pen_path });
+        butt_dw_mode.classList.remove('off');
     }
 }
 function drawing_get_brush_type() {
