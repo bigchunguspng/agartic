@@ -478,9 +478,10 @@ function cd_draw_segment(x1, y1, x2, y2, pen, type) {
         const k  = steep ? dx / dy : dy / dx; // slope
         const c  = b1 - k * a1 // b-intercept
         const step = a1 < a2 ? 1 : -1;
+        const o1 = pen.size % 2 == 1 ? 0.5 : 0;
+        const o  = pen.size / 2 + o1;
         for (let a = a1; a != a2; a += step) {
-            const b = k * a + c;
-            const o = pen.size / 2;
+            const b = Math.round(k * a + c);
             const x = steep ? b : a;
             const y = steep ? a : b; // restore axes
             cd_ctx.fillRect(x - o, y - o, pen.size, pen.size);
@@ -500,7 +501,8 @@ function cd_draw_segment(x1, y1, x2, y2, pen, type) {
 function cd_draw_dot(x, y, pen, type) {
     if (type === HISTORY_PENCIL) {
         cd_ctx.fillStyle = pen.color;
-        const o = pen.size / 2;
+        const o1 = pen.size % 2 == 1 ? 0.5 : 0;
+        const o  = pen.size / 2 + o1;
         cd_ctx.fillRect(x - o, y - o, pen.size, pen.size);
     }
     else {
@@ -553,10 +555,11 @@ function thickness_more(e) { set_thickness(e.shiftKey ? Math.ceil (thickness * 1
 function brush_cursor_RENDER() {
     const cc = getCanvasCursorXY();
     const style  = brush_cursor.style;
+    const offset = pencil_mode && thickness % 2 == 1 ? 0.5 : 0;
     style.width  = `${Math.round(thickness * cw_scale)}px`;
     style.height = `${Math.round(thickness * cw_scale)}px`;
-    style.left = `${Math.round(cw_x + cc.x * cw_scale)}px`;
-    style.top  = `${Math.round(cw_y + cc.y * cw_scale)}px`;
+    style.left = `${Math.round(cw_x + cc.x * cw_scale - offset * cw_scale)}px`;
+    style.top  = `${Math.round(cw_y + cc.y * cw_scale - offset * cw_scale)}px`;
     brush_cursor.style.borderColor = brush_cursor_get_color();
 }
 function brush_cursor_get_color() {
@@ -601,7 +604,6 @@ function drawing_toggle_pencil_mode() {
     if (!drawing_now) {
         pencil_mode = !pencil_mode;
         brush_cursor.style.borderRadius = pencil_mode ? '0' : '50%';
-        // todo - offset by 0.5px tl when in pencil_mode and bs is odd
         const span = butt_dw_mode.getElementsByTagName('span')[0];
         span.innerText = pencil_mode ? 'square' : 'round';
     }
