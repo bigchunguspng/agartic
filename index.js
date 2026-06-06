@@ -44,6 +44,7 @@ const butt_bs_less  = document.getElementById('butt_bs_less');
 const butt_bs_more  = document.getElementById('butt_bs_more');
 const butt_inv_col  = document.getElementById('butt_inv_color');
 const butt_cp_no    = document.getElementById('butt_cp_no');
+const butt_dw_mode  = document.getElementById('butt_dw_mode');
 
 const butt_imgv_ok  = document.getElementById('butt_imgv_ok');
 const butt_imgv_no  = document.getElementById('butt_imgv_no');
@@ -601,6 +602,8 @@ function drawing_toggle_pencil_mode() {
         pencil_mode = !pencil_mode;
         brush_cursor.style.borderRadius = pencil_mode ? '0' : '50%';
         // todo - offset by 0.5px tl when in pencil_mode and bs is odd
+        const span = butt_dw_mode.getElementsByTagName('span')[0];
+        span.innerText = pencil_mode ? 'square' : 'round';
     }
 }
 function SETUP_DRAWING() {
@@ -614,8 +617,7 @@ function SETUP_DRAWING() {
         if      (key_is(e, 'w^S')) bind(e, butt_bs_more, () => thickness_more(e));
         else if (key_is(e, 's^S')) bind(e, butt_bs_less, () => thickness_less(e));
         else if (key_is(e, 'z^s')) fx_click(inputs_brush, 0) || in_thickness.focus() || e.preventDefault();
-        else if (key_is(e, 'z'  )) drawing_toggle_pencil_mode();
-        // todo ^ add button
+        else if (key_is(e, 'z'  )) bind(e, butt_dw_mode, drawing_toggle_pencil_mode);
     });
     in_thickness.addEventListener('focus', () => {
         thickness_temp = thickness;
