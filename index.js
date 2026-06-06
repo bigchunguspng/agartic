@@ -465,47 +465,24 @@ function cd_clear() {
 }
 function cd_draw_segment(x1, y1, x2, y2, pen, type) {
     if (type === HISTORY_PENCIL) {
-        // TODO comprehend, refactor this pile of crap, and make sure it works correctly
         cd_ctx.fillStyle = pen.color;
-        // find all points between
-        let steep = (Math.abs(y1 - y2) > Math.abs(x1 - x2)); // vertical > horizontal
-        if (steep){
-            let x = x2;
-            x2 = y2;
-            y2 = x;
-            let y = y1;
-            y1 = x1;
-            x1 = y;
-        }
-        if (x2 > x1) {
-            let x = x2;
-            x2 = x1;
-            x1 = x;
-            let y = y2;
-            y2 = y1;
-            y1 = y;
-        }
-        let dx = x1 - x2,
-            dy = Math.abs(y1 - y2),
-            error = 0,
-            de = dy / dx,
-            yStep = -1,
-            y = y2;
-        if (y2 < y1) {
-            yStep = 1;
-        }
-        for (let x = x2; x < x1; x++) {
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const steep = Math.abs(dy / dx) > 1; // vertival > horizontal
+        //    steep ? flip axes so one with longer range becomes x
+        const a1 = steep ? y1 : x1;
+        const a2 = steep ? y2 : x2; // a -   arg axis (like x)
+        const b1 = steep ? x1 : y1;
+        const b2 = steep ? x2 : y2; // b - value axis (like y)
+        const k  = steep ? dx / dy : dy / dx; // slope
+        const c  = b1 - k * a1 // b-intercept
+        const step = a1 < a2 ? 1 : -1;
+        for (let a = a1; a != a2; a += step) {
+            const b = k * a + c;
             const o = pen.size / 2;
-            if (steep) {
-                cd_ctx.fillRect(y - o, x - o, pen.size, pen.size);
-            } else {
-                cd_ctx.fillRect(x - o, y - o, pen.size, pen.size);
-            }
-            error += de;
-            if (error >= 0.5) {
-                y += yStep;
-                error -= 1.0;
-            }
+            const x = steep ? b : a;
+            const y = steep ? a : b; // restore axes
+            cd_ctx.fillRect(x - o, y - o, pen.size, pen.size);
         }
     }
     else {
@@ -514,7 +491,7 @@ function cd_draw_segment(x1, y1, x2, y2, pen, type) {
         cd_ctx.strokeStyle = pen.color;
         cd_ctx.lineWidth   = pen.size;
         cd_ctx.beginPath();
-        cd_ctx.moveTo(x1, y1); // todo optimize?
+        cd_ctx.moveTo(x1, y1);
         cd_ctx.lineTo(x2, y2);
         cd_ctx.stroke();
     }
