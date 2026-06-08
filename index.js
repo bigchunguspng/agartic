@@ -404,18 +404,18 @@ function SETUP_HISTORY_CTL() {
 
 //#region DRAWING
 
-const HISTORY_BRUSH = 0, HISTORY_IMAGE = 1, HISTORY_PENCIL = 2;
+const HIS_BRUSH = 0, HIS_IMAGE = 1, HIS_PENCIL = 2; // HIS = HISTORY
+const drawing_modes = [HIS_BRUSH, HIS_PENCIL];
 
 const cd_ctx = canvas_draw.getContext('2d');
 
 let drawing_enabled = false;
-let drawing_now     = false;
-let pen_path = [];
-let pen;
+let drawing = null;
 let color = 'black';
 let thickness = 3;
 let thickness_temp;
-let pencil_mode = false;
+let drawing_mode_i = 0;
+let drawing_mode = drawing_modes[drawing_mode_i];
 
 function drawing_enable() {
     brush_cursor.classList.add('drawing');
@@ -431,52 +431,50 @@ function drawing_disable() {
     drawing_stop();
 }
 function drawing_start() {
-    if (drawing_enabled && !drawing_now) {
-        drawing_now = true;
-        pen = { color, size: thickness };
-        pen_path = [];
-        pen_path.push(getCanvasCursorXY());
+    if (drawing_enabled && !drawing) {
+        drawing = {
+            pen: { color, size: thickness },
+            path: [],
+        };
+        drawing.path.push(getCanvasCursorXY());
         butt_dw_mode.classList.add('off');
     }
 }
 function drawing_draw() {
-    if (drawing_enabled && drawing_now) {
-        const prev = pen_path[pen_path.length - 1];
-        const curr = getCanvasCursorXY();
-        pen_path.push(curr);
-        cd_draw_segment(prev.x, prev.y, curr.x, curr.y, pen, drawing_get_brush_type());
+    if (drawing_enabled && drawing) {
+        const p1 = drawing.path.at(-1)
+        const p2 = getCanvasCursorXY();
+        drawing.path.push(p2);
+        cd_draw_segment(p1, p2, drawing.pen, drawing_mode);
     }
 }
 function drawing_stop() {
-    if (drawing_now) {
-        drawing_now = false;
-        if (pen_path.length === 1) {
+    if (drawing) {
+        if (drawing.path.length === 1) {
             const p = getCanvasCursorXY();
-            cd_draw_dot(p.x, p.y, pen, drawing_get_brush_type());
+            cd_draw_dot(p, drawing.pen, drawing_mode);
         }
-        history_write({ type: drawing_get_brush_type(), pen, path: pen_path });
+        history_write({ type: drawing_mode, pen: drawing.pen, path: drawing.path });
+        drawing = null;
         butt_dw_mode.classList.remove('off');
     }
-}
-function drawing_get_brush_type() {
-    return pencil_mode ? HISTORY_PENCIL : HISTORY_BRUSH;
 }
 
 function cd_clear() {
     cd_ctx.fillStyle = 'white';
     cd_ctx.fillRect(0, 0, canvas_draw.width, canvas_draw.height);
 }
-function cd_draw_segment(x1, y1, x2, y2, pen, type) {
-    if (type === HISTORY_PENCIL) {
+function cd_draw_segment(p1, p2, pen, type) {
+    if (type === HIS_PENCIL) {
         cd_ctx.fillStyle = pen.color;
-        const dx = x2 - x1;
-        const dy = y2 - y1;
-        const steep = Math.abs(dy / dx) > 1; // vertival > horizontal
+        const dx = p2.x - p1.x;
+        const dy = p2.y - p1.y;
+        const steep = Math.abs(dy / dx) > 1; // vertical > horizontal
         //    steep ? flip axes so one with longer range becomes x
-        const a1 = steep ? y1 : x1;
-        const a2 = steep ? y2 : x2; // a -   arg axis (like x)
-        const b1 = steep ? x1 : y1;
-        const b2 = steep ? x2 : y2; // b - value axis (like y)
+        const a1 = steep ? p1.y : p1.x;
+        const a2 = steep ? p2.y : p2.x; // a -   arg axis (like x)
+        const b1 = steep ? p1.x : p1.y;
+        const b2 = steep ? p2.x : p2.y; // b - value axis (like y)
         const k  = steep ? dx / dy : dy / dx; // slope
         const c  = b1 - k * a1 // b-intercept
         const step = a1 < a2 ? 1 : -1;
@@ -495,13 +493,14 @@ function cd_draw_segment(x1, y1, x2, y2, pen, type) {
         cd_ctx.strokeStyle = pen.color;
         cd_ctx.lineWidth   = pen.size;
         cd_ctx.beginPath();
-        cd_ctx.moveTo(x1, y1);
-        cd_ctx.lineTo(x2, y2);
+        cd_ctx.moveTo(p1.x, p1.y);
+        cd_ctx.lineTo(p2.x, p2.y);
         cd_ctx.stroke();
     }
 }
-function cd_draw_dot(x, y, pen, type) {
-    if (type === HISTORY_PENCIL) {
+function cd_draw_dot(point, pen, type) {
+    const { x, y } = point;
+    if (type === HIS_PENCIL) {
         cd_ctx.fillStyle = pen.color;
         const o1 = pen.size % 2 == 1 ? 0.5 : 0;
         const o  = pen.size / 2 + o1;
@@ -519,22 +518,20 @@ function cd_draw_pasted_image(e, paste_another_img) {
     if (!paste_another_img) placing_image_exit();
 
     canvas_draw.toBlob((blob) => {
-        history_write({ type: HISTORY_IMAGE, data: blob });
+        history_write({ type: HIS_IMAGE, data: blob });
     }, 'image/webp', 0.95);
 }
 function cd_apply_history_pen(pen, path, type) {
     if (path.length > 1) {
-        let prev = path[0];
+        let p1 = path[0];
         for (let i = 1; i < path.length; i++) {
-            const curr = path[i];
-            cd_draw_segment(prev.x, prev.y, curr.x, curr.y, pen, type);
-            prev = curr;
+            const p2 = path[i];
+            cd_draw_segment(p1, p2, pen, type);
+            p1 = p2;
         }
     }
-    else {
-        const p = path[0];
-        cd_draw_dot(p.x, p.y, pen, type);
-    }
+    else
+        cd_draw_dot(path[0], pen, type);
 }
 function cd_apply_history_img(data) {
     return new Promise((resolve, reject) => {
@@ -557,7 +554,7 @@ function thickness_more(e) { set_thickness(e.shiftKey ? Math.ceil (thickness * 1
 function brush_cursor_RENDER() {
     const cc = getCanvasCursorXY();
     const style  = brush_cursor.style;
-    const offset = pencil_mode && thickness % 2 == 1 ? 0.5 : 0;
+    const offset = drawing_mode === HIS_PENCIL && thickness % 2 == 1 ? 0.5 : 0;
     style.width  = `${Math.round(thickness * cw_scale)}px`;
     style.height = `${Math.round(thickness * cw_scale)}px`;
     style.left = `${Math.round(cw_x + cc.x * cw_scale - offset * cw_scale)}px`;
@@ -602,12 +599,14 @@ function brush_cursor_get_color() {
         return c < 120 ? 'white' : 'black';
     }
 }
-function drawing_toggle_pencil_mode() {
-    if (!drawing_now) {
-        pencil_mode = !pencil_mode;
-        brush_cursor.style.borderRadius = pencil_mode ? '0' : '50%';
+function drawing_toggle_mode() {
+    if (!drawing) {
+        drawing_mode_i = (drawing_mode + 1) % drawing_modes.length;
+        drawing_mode = drawing_modes[drawing_mode_i];
         const span = butt_dw_mode.getElementsByTagName('span')[0];
-        span.innerText = pencil_mode ? 'square' : 'round';
+        const pencil = drawing_mode === HIS_PENCIL;
+        brush_cursor.style.borderRadius = pencil ? '0'      : '50%';
+        span.innerText                  = pencil ? 'square' : 'round';
     }
 }
 function SETUP_DRAWING() {
@@ -621,7 +620,7 @@ function SETUP_DRAWING() {
         if      (key_is(e, 'w^S')) bind(e, butt_bs_more, () => thickness_more(e));
         else if (key_is(e, 's^S')) bind(e, butt_bs_less, () => thickness_less(e));
         else if (key_is(e, 'z^s')) fx_click(inputs_brush, 0) || in_thickness.focus() || e.preventDefault();
-        else if (key_is(e, 'z'  )) bind(e, butt_dw_mode, drawing_toggle_pencil_mode);
+        else if (key_is(e, 'z'  )) bind(e, butt_dw_mode, drawing_toggle_mode);
     });
     in_thickness.addEventListener('focus', () => {
         thickness_temp = thickness;
