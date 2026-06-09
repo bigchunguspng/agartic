@@ -407,13 +407,13 @@ function SETUP_HISTORY_CTL() {
 
 const HIS_BRUSH = 0, HIS_IMAGE = 1, HIS_PENCIL = 2; // HIS = HISTORY
 const drawing_modes = [HIS_BRUSH, HIS_PENCIL];
-
+const LOCK_X = 1, LOCK_Y = 2;
 const cd_ctx = canvas_draw.getContext('2d');
 
 let drawing_enabled = false;
 let drawing = null;
 let color = 'black';
-let thickness = 3;
+let thickness = 2;
 let thickness_temp;
 let drawing_mode_i = 0;
 let drawing_mode = drawing_modes[drawing_mode_i];
@@ -441,19 +441,47 @@ function drawing_start() {
         butt_dw_mode.classList.add('off');
     }
 }
-function drawing_draw() {
+function drawing_draw(e) {
     if (drawing_enabled && drawing) {
         const p1 = drawing.path.at(-1)
         const p2 = getCanvasCursorXY();
+        if (e.shiftKey || e.ctrlKey) { // draw along axis
+            // shift - lock axis on start, ctrl - pick axis each segment
+            const steep = e.shiftKey && drawing.lock
+                ? drawing.lock === LOCK_Y
+                : Math.abs(p2.y - p1.y) > Math.abs(p2.x - p1.x);
+            if   (steep) p2.x = p1.x;
+            else         p2.y = p1.y;
+            if (e.shiftKey) drawing.lock = steep ? LOCK_Y : LOCK_X;
+        }
+        else
+            drawing.lock = null;
         drawing.path.push(p2);
         cd_draw_segment(p1, p2, drawing.pen, drawing_mode);
     }
 }
-function drawing_stop() {
+function drawing_stop(e) {    
     if (drawing) {
         if (drawing.path.length === 1) {
             const p = getCanvasCursorXY();
             cd_draw_dot(p, drawing.pen, drawing_mode);
+        }
+        else if (e.altKey) { // close path
+            const p1 = drawing.path.at(-1);
+            const p2 = drawing.path[0];
+            if (e.shiftKey || e.ctrlKey) {
+                const p0 = drawing.path.at(-2)
+                const steep = Math.abs(p0.y - p1.y) > Math.abs(p0.x - p1.x);
+                const pm = steep ? new Vek2(p1.x, p2.y) : new Vek2(p2.x, p1.y); // mid-point
+                drawing.path.push(pm);
+                drawing.path.push(p2);
+                cd_draw_segment(p1, pm, drawing.pen, drawing_mode);
+                cd_draw_segment(pm, p2, drawing.pen, drawing_mode);
+            }
+            else {
+                drawing.path.push(p2);
+                cd_draw_segment(p1, p2, drawing.pen, drawing_mode);
+            }
         }
         history_write({ type: drawing_mode, pen: drawing.pen, path: drawing.path });
         drawing = null;
@@ -1641,7 +1669,7 @@ SETUP_HOOKS_POST();
     cw_setup_size();
     cw_resize_true_scale();
     cp_color_inputs_update_both(color);
-    set_thickness(3);
+    set_thickness(2);
     history_load();
 }
 //#endregion
