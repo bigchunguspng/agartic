@@ -128,8 +128,10 @@ let cw_true_w;
 let cw_true_h;
 
 function cw_init_size() {
-    cw_true_w = localStorage.getItem('cw_w') ?? 1280;
-    cw_true_h = localStorage.getItem('cw_h') ?? 720;
+    const stored_w = localStorage.getItem('cw_w');
+    const stored_h = localStorage.getItem('cw_h');
+    cw_true_w = stored_w ? parseInt(stored_w) : 1280;
+    cw_true_h = stored_h ? parseInt(stored_h) : 720;
     cw_set_size();
     cw_resize_true_scale();
 }
@@ -608,7 +610,10 @@ function cd_apply_history_img(data) {
         image.src = data instanceof Blob
             ? URL.createObjectURL(data)
             : data; // base64, legacy v1 support
-    }).then(img => cd_ctx.drawImage(img, 0, 0));
+    }).then(img => {
+        if (img.width < cw_true_w || img.height < cw_true_h) cd_clear();
+        cd_ctx.drawImage(img, 0, 0);
+    });
 }
 function set_thickness(value) {
     thickness = math_clamp(1, 999, value);
