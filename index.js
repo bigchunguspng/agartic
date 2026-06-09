@@ -670,10 +670,10 @@ function drawing_toggle_mode() {
     if (!drawing) {
         drawing_mode_i = (drawing_mode_i + 1) % drawing_modes.length;
         drawing_mode = drawing_modes[drawing_mode_i];
-        const span = butt_dw_mode.getElementsByTagName('span')[0];
+        const shape = butt_dw_mode.getElementsByTagName('div')[0];
         const pencil = drawing_mode === HIS_PENCIL;
-        brush_cursor.style.borderRadius = pencil ? '0'      : '50%';
-        span.innerText                  = pencil ? 'square' : 'round';
+        brush_cursor.style.borderRadius = pencil ? '0' : '50%';
+        shape.classList.toggle('round', !pencil);
     }
 }
 function SETUP_DRAWING() {
