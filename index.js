@@ -122,10 +122,62 @@ function SETUP_TOOLS() {
 }
 //#endregion
 
-//#region CANVAS ZOOM
+//#region CANVAS GENERAL
 
-let cw_true_w = 1280;
-let cw_true_h = 720;
+let cw_true_w;
+let cw_true_h;
+
+function cw_init_size() {
+    cw_true_w = localStorage.getItem('cw_w') ?? 1280;
+    cw_true_h = localStorage.getItem('cw_h') ?? 720;
+    cw_set_size();
+    cw_resize_true_scale();
+}
+function cw_change_true_size() {
+    const input = prompt('Change canvas size:', '1280 720');
+    const dims = input.split(' ').filter(Boolean); // ignore empty
+    const nw = parseInt(dims[0]);
+    const nh = parseInt(dims[1] ?? dims[0]);
+    if (nw && nh) {
+        cw_true_w = nw;
+        cw_true_h = nh;
+        localStorage.setItem('cw_w', cw_true_w);
+        localStorage.setItem('cw_h', cw_true_h);
+        cw_set_size();
+        cw_resize_true_scale();
+        history_draw();
+    }
+    else {
+        alert(`S-Sorry artist-kun, I... d-don't understand you...
+
+Type in two numbers separated by a whitespace.
+Or a single number to make canvas square.`);
+        cw_change_true_size();
+    }
+}
+function cw_set_size() {
+    cw.style.width  = `${cw_true_w}px`;
+    cw.style.height = `${cw_true_h}px`;
+    canvas_draw.width  = cw_true_w;
+    canvas_draw.height = cw_true_h;
+    canvas_over.width  = cw_true_w;
+    canvas_over.height = cw_true_h;
+    canvas_info.width  = cw_true_w;
+    canvas_info.height = cw_true_h;
+}
+function getCanvasCursorXY() {
+    const x = Math.floor((mouse.x - cw_x) / cw_scale);
+    const y = Math.floor((mouse.y - cw_y) / cw_scale);
+    return { x, y };
+}
+function SETUP_CW() {
+    document.addEventListener('keydown', e => {
+        if (key_is(e, 'F1^a' )) cw_change_true_size() || e.preventDefault();
+    });
+}
+//#endregion
+
+//#region CANVAS ZOOM
 
 let cw_x, cw_y, cw_scale = 1;
 
@@ -135,12 +187,6 @@ const MIN_CW_SCALE = 0.05;
 const MAX_CW_SCALE = 20;
 const CW_ZOOM_FACTOR_DEFAULT = 1.1;
 const CW_ZOOM_FACTOR_SHIFT   = 1.35;
-
-function getCanvasCursorXY() {
-    const x = Math.floor((mouse.x - cw_x) / cw_scale);
-    const y = Math.floor((mouse.y - cw_y) / cw_scale);
-    return { x, y };
-}
 
 function cw_transform() {
     cw.style.transform = `translate(${Math.floor(cw_x)}px, ${Math.floor(cw_y)}px) scale(${cw_scale})`;
@@ -172,14 +218,6 @@ function cw_zoom(e, out, centered) {
     cw_y = y - cw_true_y * cw_scale;
     cw_transform();
 }
-function cw_setup_size() {
-    canvas_draw.width  = cw_true_w;
-    canvas_draw.height = cw_true_h;
-    canvas_over.width  = cw_true_w;
-    canvas_over.height = cw_true_h;
-    canvas_info.width  = cw_true_w;
-    canvas_info.height = cw_true_h;
-}
 function cw_pixelated_toggle() {
     cw_pixelated = !cw_pixelated;
     cw.classList.toggle('pixelated', cw_pixelated);
@@ -187,10 +225,10 @@ function cw_pixelated_toggle() {
 function SETUP_CW_ZOOM() {
     vp.addEventListener('wheel', e => {
         e.preventDefault();
-        if      (input_active(in_thickness)) {
+        if      (input_active(in_thickness)) { // OFFTOP
             e.deltaY > 0 ? thickness_less(e) : thickness_more(e);
         }
-        else if (input_active(in_imgv_rot)) {
+        else if (input_active(in_imgv_rot)) {  // OFFTOP
             const mul1 = e.shiftKey   ?  5 : 1;
             const mul2 = e.deltaY > 0 ? -1 : 1;
             imgv_rotate(mul1 * mul2);
@@ -1654,6 +1692,7 @@ SETUP_HOOKS_PRE();
     SETUP_HISTORY_SYNC();
     SETUP_HISTORY_CTL();
     SETUP_TOOLS();
+    SETUP_CW();
     SETUP_CW_DRAG();
     SETUP_CW_ZOOM();
     SETUP_DRAWING();
@@ -1666,8 +1705,7 @@ SETUP_HOOKS_PRE();
 }
 SETUP_HOOKS_POST();
 {
-    cw_setup_size();
-    cw_resize_true_scale();
+    cw_init_size();
     cp_color_inputs_update_both(color);
     set_thickness(2);
     history_load();

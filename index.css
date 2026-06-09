@@ -117,6 +117,11 @@ kbd {
         bottom: 25px;
         transform: rotate(3deg);
     }
+    &.f {
+        left: 350px;
+        bottom: 25px;
+        transform: rotate(-3deg);
+    }
     &.g {
         left: 50%;
         bottom: 20%;
@@ -150,8 +155,6 @@ kbd {
 /* CANVAS */
 #canvas-wrapper {
     image-rendering: auto;
-    width: 1280px;
-    height: 720px;
     position: absolute;
     overflow: visible;
     left: 0;
