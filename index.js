@@ -127,6 +127,9 @@ function SETUP_TOOLS() {
 let cw_true_w;
 let cw_true_h;
 
+let cw_vflip, cw_hflip;
+// todo fix imgv changing cropper while ^ is active
+
 function cw_init_size() {
     const stored_w = localStorage.getItem('cw_w');
     const stored_h = localStorage.getItem('cw_h');
@@ -167,14 +170,28 @@ function cw_set_size() {
     canvas_info.width  = cw_true_w;
     canvas_info.height = cw_true_h;
 }
-function getCanvasCursorXY() {
-    const x = Math.floor((mouse.x - cw_x) / cw_scale);
-    const y = Math.floor((mouse.y - cw_y) / cw_scale);
+function cw_flip(v) {
+    if (v) cw_vflip = !cw_vflip;
+    else   cw_hflip = !cw_hflip;
+    const transform = `scale(${(cw_hflip ? -1 : 1)}, ${(cw_vflip ? -1 : 1)})`;
+    canvas_draw .style.transform = transform;
+    canvas_over .style.transform = transform;
+    canvas_info .style.transform = transform; // todo wrapper
+    imgv_wrapper.style.transform = transform;
+    if (imgv) placing_image_RENDER();
+}
+function getCanvasCursorXY(ignore_flip) {
+    let x = Math.floor((mouse.x - cw_x) / cw_scale);
+    let y = Math.floor((mouse.y - cw_y) / cw_scale);
+    if (!ignore_flip && cw_hflip) x = cw_true_w - x;
+    if (!ignore_flip && cw_vflip) y = cw_true_h - y;
     return { x, y };
 }
 function SETUP_CW() {
     document.addEventListener('keydown', e => {
-        if (key_is(e, 'F1^a' )) cw_change_true_size() || e.preventDefault();
+        if      (key_is(e, 'F1^a' )) cw_change_true_size() || e.preventDefault();
+        else if (key_is(e,  'w^a' )) cw_flip(true)  || e.preventDefault();
+        else if (key_is(e,  'd^a' )) cw_flip(false) || e.preventDefault();
     });
 }
 //#endregion
@@ -624,7 +641,7 @@ function set_thickness(value) {
 function thickness_less(e) { set_thickness(e.shiftKey ? Math.floor(thickness / 1.5) : thickness - 1); }
 function thickness_more(e) { set_thickness(e.shiftKey ? Math.ceil (thickness * 1.5) : thickness + 1); }
 function brush_cursor_RENDER() {
-    const cc = getCanvasCursorXY();
+    const cc = getCanvasCursorXY(true);
     const style  = brush_cursor.style;
     const offset = drawing_mode === HIS_PENCIL && thickness % 2 == 1 ? 0.5 : 0;
     style.width  = `${Math.round(thickness * cw_scale)}px`;
