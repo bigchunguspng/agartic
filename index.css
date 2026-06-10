@@ -128,6 +128,11 @@ kbd {
         margin: 0;
         transform: translateX(-50%);
     }
+    &.h {
+        right: 0px;
+        bottom: 300px;
+        transform: rotate(5deg);
+    }
     &.draw {
         left: 600px;
         top: 15px;
