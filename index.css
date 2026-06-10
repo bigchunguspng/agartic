@@ -168,6 +168,7 @@ kbd {
         image-rendering: pixelated;
     }
     & canvas,
+    & #canvas-wrapper-flip,
     & #imgv-wrapper {
         position: absolute;
         inset: 0;

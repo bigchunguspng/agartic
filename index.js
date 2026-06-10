@@ -4,6 +4,7 @@
 
 const vp            = document.getElementById('viewport');
 const cw            = document.getElementById('canvas-wrapper');
+const cwf           = document.getElementById('canvas-wrapper-flip');
 const canvas_draw   = document.getElementById('canvas-draw');
 const canvas_over   = document.getElementById('canvas-over');
 const canvas_info   = document.getElementById('canvas-info');
@@ -174,9 +175,7 @@ function cw_flip(v) {
     if (v) cw_vflip = !cw_vflip;
     else   cw_hflip = !cw_hflip;
     const transform = `scale(${(cw_hflip ? -1 : 1)}, ${(cw_vflip ? -1 : 1)})`;
-    canvas_draw .style.transform = transform;
-    canvas_over .style.transform = transform;
-    canvas_info .style.transform = transform; // todo wrapper
+    cwf         .style.transform = transform;
     imgv_wrapper.style.transform = transform;
     if (imgv) placing_image_RENDER();
 }
