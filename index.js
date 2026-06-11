@@ -129,7 +129,6 @@ let cw_true_w;
 let cw_true_h;
 
 let cw_vflip, cw_hflip;
-// todo fix imgv changing cropper while ^ is active
 
 function cw_init_size() {
     const stored_w = localStorage.getItem('cw_w');
@@ -573,7 +572,7 @@ function cd_draw_segment(p1, p2, pen, type) {
         }
     }
     else {
-        cd_ctx.globalCompositeOperation  = 'source-over'; // todo experiment with values
+        cd_ctx.globalCompositeOperation  = 'source-over';
         cd_ctx.lineJoin = cd_ctx.lineCap = 'round';
         cd_ctx.strokeStyle = pen.color;
         cd_ctx.lineWidth   = pen.size;
@@ -973,7 +972,6 @@ function imgv_draw_image(ctx_2D) {
             pp.x - (cos * sx) * pp.x - (sin * -sy) * pp.y,
             pp.y - (sin * sx) * pp.x - (cos *  sy) * pp.y
         );
-        // todo fix resizing cropped image
         imgv_draw_image_internal(ctx_2D);
         ctx_2D.setTransform(1, 0, 0, 1, 0, 0);
     }
