@@ -176,7 +176,10 @@ function cw_flip(v) {
     const transform = `scale(${(cw_hflip ? -1 : 1)}, ${(cw_vflip ? -1 : 1)})`;
     cwf         .style.transform = transform;
     imgv_wrapper.style.transform = transform;
-    if (imgv) placing_image_RENDER();
+    if (imgv) {
+        placing_image_RENDER();
+        imgv_handles_restyle();
+    }
 }
 function getCanvasCursorXY(ignore_flip) {
     let x = Math.floor((mouse.x - cw_x) / cw_scale);
@@ -922,7 +925,7 @@ function placing_image_start(img) {
     };
     tool_activate(tool_imgv);
     placing_image_RENDER();
-    imgv_handles_reset_style();
+    imgv_handles_restyle();
     imgv_enter_drag_mode();
     in_imgv_rot.value = 0;
     tips_imgv   .classList.remove('hide');
@@ -1326,16 +1329,14 @@ function imgv_pixelated_toggle() {
 }
 
 const handles = [ hand_tl, hand_tt, hand_tr, hand_rr, hand_br, hand_bb, hand_bl, hand_ll ];
-const handle_cursors = [ 'nw', 'ns', 'ne', 'ew', 'nw', 'ns', 'ne', 'ew' ];
+const handle_cursors = [ 'nw', 'ns', 'ne', 'ew' ];
 
 function imgv_handles_restyle() {
-    const j = Math.floor((imgv.rotate + 22.5) / 45);
+    const j = imgv.rotate ? Math.floor((imgv.rotate + 22.5) / 45) : 0; // 0..8
+    const o = cw_hflip !== cw_vflip ?  2 : 0;
+    const k = cw_hflip !== cw_vflip ? -1 : 1;
     for (let i = 0; i < 8; i++)
-        handles[(8 + i - j) % 8].dataset.cursor = handle_cursors[i];
-}
-function imgv_handles_reset_style() {
-    for (let i = 0; i < 8; i++)
-        handles[i].dataset.cursor = handle_cursors[i];
+        handles[(8 + o + i * k - j) % 8].dataset.cursor = handle_cursors[i % 4];
 }
 
 function SETUP_IMAGE_PLACING() {
