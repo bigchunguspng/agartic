@@ -390,7 +390,7 @@ async function history_write(item) {
     history_channel.postMessage({ type: 'append', id });
 }
 async function history_discard_pending() {
-    console.log('discard');
+    console.log('Timeline has been switched.');
     const db = await db_open();
     return new Promise((resolve, reject) => {
         const tx = db.transaction('history', 'readwrite');
