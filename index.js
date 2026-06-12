@@ -337,7 +337,7 @@ function SETUP_CW_DRAG() {
 
 const history_channel = new BroadcastChannel('history_sync');
 
-let history = [], history_len = 0;
+let history = [], history_len = 0; // history_len is shown history length & index of item to put
 
 async function history_load() {
     history = [];
@@ -358,7 +358,7 @@ async function history_load() {
     history_draw();
 }
 function history_draw() {
-    const i_last_image = history_get_last_image_index() ?? -1;
+    const i_last_image = history_get_last_visible_of_type_index(HIS_IMAGE) ?? -1;
     if   (i_last_image < 0) {
         cd_clear();
         history_draw_pen_from(0);
@@ -366,8 +366,13 @@ function history_draw() {
     else // start from the last image to avoid blinking
         cd_apply_history_img(history[i_last_image].data).then(() => history_draw_pen_from(i_last_image + 1));
 }
-function history_get_last_image_index() {
-    for (let i = history_len - 1; i >= 0; i--) if (history[i].type === 1) return i;
+function history_get_last_visible_of_type(type) {
+    for (let i = history_len - 1; i >= 0; i--)
+        if (history[i].type === type) return history[i];
+}
+function history_get_last_visible_of_type_index(type) {
+    for (let i = history_len - 1; i >= 0; i--)
+        if (history[i].type === type) return i;
 }
 function history_draw_pen_from(offset) {
     for (let i = offset; i < history_len; i++) {
@@ -521,8 +526,19 @@ function drawing_draw(e) {
 function drawing_stop(e) {    
     if (drawing) {
         if (drawing.path.length === 1) {
-            const p = getCanvasCursorXY();
-            cd_draw_dot(p, drawing.pen, drawing_mode);
+            const last_matching_brush_point = e.shiftKey
+                ? history_get_last_visible_of_type(drawing_mode)?.path?.at(-1)
+                : null;
+            if (last_matching_brush_point) {
+                const p1 = last_matching_brush_point;
+                const p2 = getCanvasCursorXY();
+                drawing.path.unshift(p1);
+                cd_draw_segment(p1, p2, drawing.pen, drawing_mode);
+            }
+            else {
+                const p = getCanvasCursorXY();
+                cd_draw_dot(p, drawing.pen, drawing_mode);
+            }
         }
         else if (e.altKey) { // close path
             const p1 = drawing.path.at(-1);
