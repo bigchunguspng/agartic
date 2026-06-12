@@ -265,8 +265,10 @@ function SETUP_CW_ZOOM() {
     window.addEventListener('keydown', e => {
         if      (key_is(e, '1^c')) bind(e, butt_zoom_1, cw_resize_true_scale);
         else if (key_is(e, '2^c')) bind(e, butt_zoom_2, cw_resize_fit_screen);
-        else if (key_is(e, '='  )) bind(e, butt_zoom_in,  () => cw_zoom(e, false, true));
-        else if (key_is(e, '-'  )) bind(e, butt_zoom_out, () => cw_zoom(e, true,  true));
+        else if (key_is(e, '+^S')) bind(e, butt_zoom_in,  () => cw_zoom(e, false, true));
+        else if (key_is(e, '=^S')) bind(e, butt_zoom_in,  () => cw_zoom(e, false, true));
+        else if (key_is(e, '-^S')) bind(e, butt_zoom_out, () => cw_zoom(e, true,  true));
+        else if (key_is(e, '_^S')) bind(e, butt_zoom_out, () => cw_zoom(e, true,  true));
         else if (key_is(e, 'F1' )) cw_pixelated_toggle() || e.preventDefault();
     });
     window.addEventListener('resize', () => {
@@ -1271,6 +1273,18 @@ function imgv_AnalyzeHandle() {
     };
 }
 
+function imgv_position_image(e, numpad_pos) {
+    const mod_move_crop = !(e.ctrlKey && e.altKey); // shift+numpad not working, ctrl and alt alone (+1..3) are taken
+    const rect = mod_move_crop ? imgv.crop_real_c() : imgv.curr;
+    const t =  numpad_pos >= 7;
+    const b =  numpad_pos <= 3;
+    const l = (numpad_pos) % 3 === 1;
+    const r = (numpad_pos) % 3 === 0;
+    rect.x = l ? 0 :   r ? Math.round(cw_true_w - rect.w) :   Math.round((cw_true_w - rect.w) / 2);
+    rect.y = t ? 0 :   b ? Math.round(cw_true_h - rect.h) :   Math.round((cw_true_h - rect.h) / 2);
+    if (mod_move_crop) imgv.curr = imgv_curr_from_crop_real_c(rect);
+    placing_image_RENDER();
+}
 function imgv_resize_true_scale() {
     imgv.curr.x = imgv.curr.x + Math.floor((imgv.curr.w - imgv.og.w) / 2);
     imgv.curr.y = imgv.curr.y + Math.floor((imgv.curr.h - imgv.og.h) / 2);
@@ -1385,6 +1399,15 @@ function SETUP_IMAGE_PLACING() {
             else if (key_is(e, 'e^S')) bind(e, butt_imgv_rr, () => imgv_rotate(e.shiftKey ? +15 : +90));
             else if (key_is(e, 'q^a')) fx_click(inputs_imgv, 0) || in_imgv_rot.focus() || e.preventDefault();
             else if (key_is(e, 'F2' )) imgv_pixelated_toggle() || e.preventDefault();
+            else if (key_is(e, '1^CA')) imgv_position_image(e, 1) || e.preventDefault();
+            else if (key_is(e, '2^CA')) imgv_position_image(e, 2) || e.preventDefault();
+            else if (key_is(e, '3^CA')) imgv_position_image(e, 3) || e.preventDefault();
+            else if (key_is(e, '4^CA')) imgv_position_image(e, 4) || e.preventDefault();
+            else if (key_is(e, '5^CA')) imgv_position_image(e, 5) || e.preventDefault();
+            else if (key_is(e, '6^CA')) imgv_position_image(e, 6) || e.preventDefault();
+            else if (key_is(e, '7^CA')) imgv_position_image(e, 7) || e.preventDefault();
+            else if (key_is(e, '8^CA')) imgv_position_image(e, 8) || e.preventDefault();
+            else if (key_is(e, '9^CA')) imgv_position_image(e, 9) || e.preventDefault();
         }
     });
     in_imgv_rot.addEventListener('keydown', e => {
