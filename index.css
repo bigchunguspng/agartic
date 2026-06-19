@@ -249,6 +249,7 @@ kbd {
         bottom: 0;
         margin-bottom: 8px;
     }
+    & .hide { display: none; }
     & > div {
         padding-inline: 6px;
     }

@@ -104,6 +104,22 @@
         <button id="butt_bs_less"  class="tool_draw"> <kbd>s</kbd>             <img src="img/icons/list-remove.png"></button>
         <button id="butt_bs_more"  class="tool_draw"> <kbd>w</kbd>             <img src="img/icons/list-add.png"></button>
         <button id="butt_dw_mode"  class="tool_draw"> <kbd>z</kbd>             <div class="brush-shape round"></div></button>
+        <button id="butt_smooth"   class="tool_draw"> <kbd class="w">A-s</kbd>
+            <svg id="img_raw" class="hide"
+                width="24" height="24" viewBox="0 0 24 24">
+                <circle cx="4" cy="18" r="1.2" fill="currentColor" />
+                <circle cx="12" cy="6" r="1.2" fill="currentColor" />
+                <circle cx="20" cy="18" r="1.2" fill="currentColor" />
+                <polyline points="4,18 12,6 20,18" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" />
+            </svg>
+            <svg id="img_smooth"
+                width="24" height="24" viewBox="0 0 24 24">
+                <circle cx="4" cy="18" r="1.2" fill="currentColor" />
+                <circle cx="12" cy="6" r="1.2" fill="currentColor" />
+                <circle cx="20" cy="18" r="1.2" fill="currentColor" />
+                <path d="M4 18 C8 8, 16 8, 20 18" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" />
+            </svg>
+        </button>
         <div id="inputs_brush"     class="tool_draw">
             <img src="img/icons/media-record.png">
             <kbd class="w">S-z</kbd> <input type="number" id="input_thickness">

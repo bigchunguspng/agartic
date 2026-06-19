@@ -46,6 +46,9 @@ const butt_bs_more  = document.getElementById('butt_bs_more');
 const butt_inv_col  = document.getElementById('butt_inv_color');
 const butt_cp_no    = document.getElementById('butt_cp_no');
 const butt_dw_mode  = document.getElementById('butt_dw_mode');
+const butt_smooth   = document.getElementById('butt_smooth');
+const img_raw       = document.getElementById('img_raw');
+const img_smooth    = document.getElementById('img_smooth');
 
 const butt_imgv_ok  = document.getElementById('butt_imgv_ok');
 const butt_imgv_no  = document.getElementById('butt_imgv_no');
@@ -482,6 +485,7 @@ let thickness = 2;
 let thickness_temp;
 let drawing_mode_i = 0;
 let drawing_mode = drawing_modes[drawing_mode_i];
+let drawing_smooth = true;
 
 function drawing_enable() {
     brush_cursor.classList.add('drawing');
@@ -499,124 +503,163 @@ function drawing_disable() {
 function drawing_start() {
     if (drawing_enabled && !drawing) {
         drawing = {
-            pen: { color, size: thickness },
+            pen: { color, size: thickness, smooth: drawing_smooth },
             path: [],
         };
         drawing.path.push(getCanvasCursorXY());
+        drawing_RENDER_temp();
         butt_dw_mode.classList.add('off');
     }
 }
 function drawing_draw(e) {
     if (drawing_enabled && drawing) {
-        const p1 = drawing.path.at(-1)
-        const p2 = getCanvasCursorXY();
+        const p = getCanvasCursorXY();
         if (e.shiftKey || e.ctrlKey) { // draw along axis
-            // shift - lock axis on start, ctrl - pick axis each segment
+            // shift - lock axis on start
+            // ctrl  - pick axis each segment
+            const pp = drawing.path.at(-1); // prev point
             const steep = e.shiftKey && drawing.lock
                 ? drawing.lock === LOCK_Y
-                : Math.abs(p2.y - p1.y) > Math.abs(p2.x - p1.x);
-            if   (steep) p2.x = p1.x;
-            else         p2.y = p1.y;
+                : Math.abs(p.y - pp.y) > Math.abs(p.x - pp.x);
+            if   (steep) p.x = pp.x;
+            else         p.y = pp.y;
             if (e.shiftKey) drawing.lock = steep ? LOCK_Y : LOCK_X;
         }
         else
             drawing.lock = null;
-        drawing.path.push(p2);
-        cd_draw_segment(p1, p2, drawing.pen, drawing_mode);
+        drawing.path.push(p);
+        drawing_RENDER_temp();
     }
 }
 function drawing_stop(e) {    
     if (drawing) {
         if (drawing.path.length === 1) {
-            const last_matching_brush_point = e.shiftKey
-                ? history_get_last_visible_of_type(drawing_mode)?.path?.at(-1)
-                : null;
-            if (last_matching_brush_point) {
-                const p1 = last_matching_brush_point;
-                const p2 = getCanvasCursorXY();
-                drawing.path.unshift(p1);
-                cd_draw_segment(p1, p2, drawing.pen, drawing_mode);
-            }
-            else {
-                const p = getCanvasCursorXY();
-                cd_draw_dot(p, drawing.pen, drawing_mode);
+            if (e.shiftKey) { // draw line from prev path last point
+                const item  = history_get_last_visible_of_type(drawing_mode);
+                const point = item?.path?.at(-1);
+                drawing.path.unshift(point);
             }
         }
         else if (e.altKey) { // close path
-            const p1 = drawing.path.at(-1);
-            const p2 = drawing.path[0];
-            if (e.shiftKey || e.ctrlKey) {
-                const p0 = drawing.path.at(-2)
-                const steep = Math.abs(p0.y - p1.y) > Math.abs(p0.x - p1.x);
-                const pm = steep ? new Vek2(p1.x, p2.y) : new Vek2(p2.x, p1.y); // mid-point
+            const pc = drawing.path[0]; // point close
+            if (e.shiftKey || e.ctrlKey) { // draw along axis ? use 2 axis aligned segments
+                const p1 = drawing.path.at(-1);
+                const p2 = drawing.path.at(-2); // last 2 points
+                const steep = Math.abs(p2.y - p1.y) > Math.abs(p2.x - p1.x);
+                const pm = steep
+                    ? new Vek2(p1.x, pc.y)
+                    : new Vek2(pc.x, p1.y); // mid-point
                 drawing.path.push(pm);
-                drawing.path.push(p2);
-                cd_draw_segment(p1, pm, drawing.pen, drawing_mode);
-                cd_draw_segment(pm, p2, drawing.pen, drawing_mode);
+                drawing.path.push(pc);
             }
-            else {
-                drawing.path.push(p2);
-                cd_draw_segment(p1, p2, drawing.pen, drawing_mode);
-            }
+            else
+                drawing.path.push(pc);
         }
+        co_ctx.clearRect(0, 0, cw_true_w, cw_true_h);
+        drawing_RENDER(drawing.path, drawing.pen, drawing_mode, cd_ctx);
         history_write({ type: drawing_mode, pen: drawing.pen, path: drawing.path });
         drawing = null;
         butt_dw_mode.classList.remove('off');
     }
 }
 
+function drawing_RENDER_temp() {
+    co_ctx.clearRect(0, 0, cw_true_w, cw_true_h);
+    drawing_RENDER(drawing.path, drawing.pen, drawing_mode, co_ctx);
+}
+function drawing_RENDER(path, pen, type, ctx) {
+    if (path.length === 1) {
+        const { x, y } = path[0];
+        if (type === HIS_PENCIL) {
+            ctx.fillStyle = pen.color;
+            const o1 = pen.size % 2 == 1 ? 0.5 : 0;
+            const o  = pen.size / 2 + o1;
+            ctx.fillRect(x - o, y - o, pen.size, pen.size);
+        }
+        else {
+            ctx.fillStyle = pen.color;
+            ctx.beginPath();
+            ctx.arc(x, y, pen.size / 2, 0, 2 * Math.PI);
+            ctx.fill();
+        }
+    }
+    else { // path.length > 1
+        if (type === HIS_PENCIL) {
+            ctx.fillStyle = pen.color;
+            for (let i = 1; i < path.length; i++) {
+                const p1 = path[i - 1];
+                const p2 = path[i];
+                const dx = p2.x - p1.x;
+                const dy = p2.y - p1.y;
+                const steep = Math.abs(dy / dx) > 1; // vertical > horizontal
+                //    steep ? flip axes so one with longer range becomes x
+                const a1 = steep ? p1.y : p1.x;
+                const a2 = steep ? p2.y : p2.x; // a -   arg axis (like x)
+                const b1 = steep ? p1.x : p1.y;
+                const b2 = steep ? p2.x : p2.y; // b - value axis (like y)
+                const k  = steep ? dx / dy : dy / dx; // slope
+                const c  = b1 - k * a1 // b-intercept
+                const step = a1 < a2 ? 1 : -1;
+                const o1 = pen.size % 2 == 1 ? 0.5 : 0;
+                const o  = pen.size / 2 + o1;
+                for (let a = a1; a != a2; a += step) {
+                    const b = Math.round(k * a + c);
+                    const x = steep ? b : a;
+                    const y = steep ? a : b; // restore axes
+                    ctx.fillRect(x - o, y - o, pen.size, pen.size);
+                }
+            }
+        }
+        else { // type === HIS_BRUSH
+            const p0 = path[0];
+            const pl = path.at(-1);
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.lineJoin = ctx.lineCap = 'round';
+            ctx.strokeStyle = pen.color;
+            ctx.lineWidth   = pen.size;
+            ctx.beginPath();
+            if (pen.smooth) {
+                const p1 = path[1];
+                const m1 = vek2_mid_point(p0, p1);
+                const closed = p0.x === pl.x && p0.y === pl.y;
+                if   (closed) {
+                    ctx.moveTo(m1.x, m1.y);
+                    connect_path_mid_points_smoothly();
+                    ctx.quadraticCurveTo(p0.x, p0.y, m1.x, m1.y);
+                }
+                else { // !closed // typical case
+                    ctx.moveTo(p0.x, p0.y);
+                    ctx.lineTo(m1.x, m1.y);
+                    connect_path_mid_points_smoothly();
+                    ctx.lineTo(pl.x, pl.y);
+                }
+
+                function connect_path_mid_points_smoothly() {
+                    for (let i = 2; i < path.length; i++) {
+                        const pa = path[i - 1];
+                        const pb = path[i];
+                        const mp = vek2_mid_point(pa, pb);
+                        ctx.quadraticCurveTo(pa.x, pa.y, mp.x, mp.y);
+                    }
+                }
+            }
+            else { // !pen.smooth
+                ctx.moveTo(p0.x, p0.y);
+                for (let i = 1; i < path.length; i++) {
+                    const p = path[i];
+                    ctx.lineTo(p.x, p.y);
+                }
+            }
+            ctx.stroke();
+            // ctx.fillStyle = 'red'; // DEBUG - show actual path points
+            // for (let i = 0; i < path.length; i++) ctx.fillRect(path[i].x, path[i].y, 1, 1);
+        }
+    }
+}
+
 function cd_clear() {
     cd_ctx.fillStyle = 'white';
     cd_ctx.fillRect(0, 0, canvas_draw.width, canvas_draw.height);
-}
-function cd_draw_segment(p1, p2, pen, type) {
-    if (type === HIS_PENCIL) {
-        cd_ctx.fillStyle = pen.color;
-        const dx = p2.x - p1.x;
-        const dy = p2.y - p1.y;
-        const steep = Math.abs(dy / dx) > 1; // vertical > horizontal
-        //    steep ? flip axes so one with longer range becomes x
-        const a1 = steep ? p1.y : p1.x;
-        const a2 = steep ? p2.y : p2.x; // a -   arg axis (like x)
-        const b1 = steep ? p1.x : p1.y;
-        const b2 = steep ? p2.x : p2.y; // b - value axis (like y)
-        const k  = steep ? dx / dy : dy / dx; // slope
-        const c  = b1 - k * a1 // b-intercept
-        const step = a1 < a2 ? 1 : -1;
-        const o1 = pen.size % 2 == 1 ? 0.5 : 0;
-        const o  = pen.size / 2 + o1;
-        for (let a = a1; a != a2; a += step) {
-            const b = Math.round(k * a + c);
-            const x = steep ? b : a;
-            const y = steep ? a : b; // restore axes
-            cd_ctx.fillRect(x - o, y - o, pen.size, pen.size);
-        }
-    }
-    else {
-        cd_ctx.globalCompositeOperation  = 'source-over';
-        cd_ctx.lineJoin = cd_ctx.lineCap = 'round';
-        cd_ctx.strokeStyle = pen.color;
-        cd_ctx.lineWidth   = pen.size;
-        cd_ctx.beginPath();
-        cd_ctx.moveTo(p1.x, p1.y);
-        cd_ctx.lineTo(p2.x, p2.y);
-        cd_ctx.stroke();
-    }
-}
-function cd_draw_dot(point, pen, type) {
-    const { x, y } = point;
-    if (type === HIS_PENCIL) {
-        cd_ctx.fillStyle = pen.color;
-        const o1 = pen.size % 2 == 1 ? 0.5 : 0;
-        const o  = pen.size / 2 + o1;
-        cd_ctx.fillRect(x - o, y - o, pen.size, pen.size);
-    }
-    else {
-        cd_ctx.fillStyle = pen.color;
-        cd_ctx.beginPath();
-        cd_ctx.arc(x, y, pen.size / 2, 0, 2 * Math.PI);
-        cd_ctx.fill();
-    }
 }
 function cd_draw_pasted_image(e, paste_another_img) {
     imgv_draw_image(cd_ctx);
@@ -627,16 +670,7 @@ function cd_draw_pasted_image(e, paste_another_img) {
     }, 'image/webp', 0.95);
 }
 function cd_apply_history_pen(pen, path, type) {
-    if (path.length > 1) {
-        let p1 = path[0];
-        for (let i = 1; i < path.length; i++) {
-            const p2 = path[i];
-            cd_draw_segment(p1, p2, pen, type);
-            p1 = p2;
-        }
-    }
-    else
-        cd_draw_dot(path[0], pen, type);
+    drawing_RENDER(path, pen, type, cd_ctx);
 }
 function cd_apply_history_img(data) {
     return new Promise((resolve, reject) => {
@@ -707,7 +741,7 @@ function brush_cursor_get_color() {
         return c < 120 ? 'white' : 'black';
     }
 }
-function drawing_toggle_mode() {
+function drawing_roll_drawing_mode() {
     if (!drawing) {
         drawing_mode_i = (drawing_mode_i + 1) % drawing_modes.length;
         drawing_mode = drawing_modes[drawing_mode_i];
@@ -715,12 +749,20 @@ function drawing_toggle_mode() {
         const pencil = drawing_mode === HIS_PENCIL;
         brush_cursor.style.borderRadius = pencil ? '0' : '50%';
         shape.classList.toggle('round', !pencil);
+        butt_smooth.classList.toggle('off', pencil); // smoothing only for brush now
+    }
+}
+function drawing_toggle_smoothing() {
+    if (drawing_mode === HIS_BRUSH) {
+        drawing_smooth = !drawing_smooth;
+        img_raw   .classList.toggle('hide',  drawing_smooth);
+        img_smooth.classList.toggle('hide', !drawing_smooth);
     }
 }
 function SETUP_DRAWING() {
     butt_bs_less.onclick = thickness_less;
     butt_bs_more.onclick = thickness_more;
-    butt_dw_mode.onclick = drawing_toggle_mode;
+    butt_dw_mode.onclick = drawing_roll_drawing_mode;
     canvas_draw.addEventListener('pointerdown', drawing_start);
     document.addEventListener('pointermove',    drawing_draw);
     document.addEventListener('pointerup',      drawing_stop);
@@ -729,7 +771,8 @@ function SETUP_DRAWING() {
         if      (key_is(e, 'w^S')) bind(e, butt_bs_more, () => thickness_more(e));
         else if (key_is(e, 's^S')) bind(e, butt_bs_less, () => thickness_less(e));
         else if (key_is(e, 'z^s')) fx_click(inputs_brush, 0) || in_thickness.focus() || e.preventDefault();
-        else if (key_is(e, 'z'  )) bind(e, butt_dw_mode, drawing_toggle_mode);
+        else if (key_is(e, 'z'  )) bind(e, butt_dw_mode, drawing_roll_drawing_mode);
+        else if (key_is(e, 's^A')) bind(e, butt_smooth,  drawing_toggle_smoothing);
     });
     in_thickness.addEventListener('focus', () => {
         thickness_temp = thickness;
@@ -1742,6 +1785,9 @@ function Rekt(x, y, w, h) {
     this.y = y ?? 0;
     this.w = w ?? 0;
     this.h = h ?? 0;
+}
+function vek2_mid_point(p1, p2) {
+    return new Vek2((p1.x + p2.x) * 0.5, (p1.y + p2.y) * 0.5);
 }
 //#endregion
 
