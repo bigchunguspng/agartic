@@ -1383,15 +1383,19 @@ function imgv_AnalyzeHandle() {
 }
 
 function imgv_position_image(e, numpad_pos) {
-    const mod_move_crop = !(e.ctrlKey && e.altKey); // shift+numpad not working, ctrl and alt alone (+1..3) are taken
-    const rect = mod_move_crop ? imgv.crop_real_c() : imgv.curr;
+    const ca_mods =  e.ctrlKey &&  e.altKey;
+    const no_mods = !e.ctrlKey && !e.altKey; // S-numpad not working, C-1..2 and A-1..3 are taken
+    if (!(ca_mods || no_mods)) return;
+    const rect = no_mods
+        ? imgv.crop_real_c() // work with visible selection frame
+        : imgv.curr;         // work with original rect (same when not cropped)
     const t =  numpad_pos >= 7;
     const b =  numpad_pos <= 3;
     const l = (numpad_pos) % 3 === 1;
     const r = (numpad_pos) % 3 === 0;
     rect.x = l ? 0 :   r ? Math.round(cw_true_w - rect.w) :   Math.round((cw_true_w - rect.w) / 2);
     rect.y = t ? 0 :   b ? Math.round(cw_true_h - rect.h) :   Math.round((cw_true_h - rect.h) / 2);
-    if (mod_move_crop) imgv.curr = imgv_curr_from_crop_real_c(rect);
+    if (no_mods) imgv.curr = imgv_curr_from_crop_real_c(rect);
     placing_image_RENDER();
 }
 function imgv_resize_true_scale() {
