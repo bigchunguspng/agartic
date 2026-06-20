@@ -371,14 +371,14 @@ function history_draw(increment) {
             cd_apply_history_pen(item.pen, item.path, item.type);
     }
     else { // undo / load
-    const i_last_image = history_get_last_visible_of_type_index(HIS_IMAGE) ?? -1;
-    if   (i_last_image < 0) {
-        cd_clear();
-        history_draw_pen_from(0);
+        const i_last_image = history_get_last_visible_of_type_index(HIS_IMAGE) ?? -1;
+        if   (i_last_image < 0) {
+            cd_clear();
+            history_draw_pen_from(0);
+        }
+        else // start from the last image to avoid blinking
+            cd_apply_history_img(history[i_last_image].data).then(() => history_draw_pen_from(i_last_image + 1));
     }
-    else // start from the last image to avoid blinking
-        cd_apply_history_img(history[i_last_image].data).then(() => history_draw_pen_from(i_last_image + 1));
-}
 }
 function history_get_last_visible_of_type(type) {
     for (let i = history_len - 1; i >= 0; i--)
@@ -596,8 +596,7 @@ function drawing_RENDER(path, pen, type, ctx) {
         if (type === HIS_PENCIL) {
             const o1 = pen.size % 2 == 1 ? 0.5 : 0;
             const o  = pen.size / 2 + o1;
-            ctx.fillStyle = pen.color;
-            ctx.beginPath();
+            const points = new Set(); // because they repeat, ok?
             if (pen.smooth) {
                 const p0 = path[0];
                 const p1 = path[1];
@@ -609,30 +608,37 @@ function drawing_RENDER(path, pen, type, ctx) {
                 vek2_round(ml);
                 const closed = p0.x === pl.x && p0.y === pl.y;
                 if   (closed) {
-                    pencil_connect_mid_points_smoothly(path.length + 1);
+                    const len = path.length;
+                    path.push(path[0]);
+                    path.push(path[1]);
+                    pencil_connect_mid_points_smoothly(len + 1); // b: 1..l   abc: 0..l+1 (add 2 points)
+                    path.length = len;
                 }
                 else { // !closed // typical case
                     pencil_stroke(p0, m1);
-                    pencil_connect_mid_points_smoothly(path.length - 1);
+                    pencil_connect_mid_points_smoothly(path.length - 1); // b: 1..l-2 abc: 0..l-1
                     pencil_stroke(ml, pl);
                 }
 
                 function pencil_connect_mid_points_smoothly(len) {
-                    const l = path.length;
                     for (let i = 1; i < len; i++) {
-                        const pa = path[(i - 1) % l];
-                        const pb = path[(i    ) % l];
-                        const pc = path[(i + 1) % l];
+                        const pa = path[i - 1];
+                        const pb = path[i    ];
+                        const pc = path[i + 1];
                         const mb = vek2_mid_point(pa, pb);
                         const mc = vek2_mid_point(pb, pc);
-                        const n = 2 * Math.max(vek2_distance_square(mb, pb), vek2_distance_square(pb, mc));
+                        const d1 = vek2_distance_square(mb, pb);
+                        const d2 = vek2_distance_square(pb, mc);
+                        const n = (d1 > d2 ? d1 : d2) * 2; // oversampling because otherwize the stroke is ragged
+                        const inv_n = 1 / n;
                         for (let j = 0; j <= n; j++) {
-                            const t = j / n;
+                            const t = j * inv_n;
                             const c1 = vek2_lerp(mb, pb, t);
                             const c2 = vek2_lerp(pb, mc, t);
-                            const c3 = vek2_lerp(c1, c2, t);
+                            const c3 = vek2_lerp(c1, c2, t); // todo optimize - rm function calls and object creation
                             vek2_round(c3);
-                            ctx.rect(c3.x - o, c3.y - o, pen.size, pen.size);
+                            points.add((c3.x << 16) | c3.y);
+                            // I assume you won't make 65k px tall canvas))
                         }
                     }
                 }
@@ -643,6 +649,13 @@ function drawing_RENDER(path, pen, type, ctx) {
                     const p2 = path[i];
                     pencil_stroke(p1, p2);
                 }
+            }
+            ctx.fillStyle = pen.color;
+            ctx.beginPath();
+            for (const point of points) {
+                const x = point >> 16;
+                const y = point & 0xFFFF;
+                ctx.rect(x - o, y - o, pen.size, pen.size);
             }
             ctx.fill();
 
@@ -662,7 +675,7 @@ function drawing_RENDER(path, pen, type, ctx) {
                     const b = Math.round(k * a + c);
                     const x = steep ? b : a;
                     const y = steep ? a : b; // restore axes
-                    ctx.rect(x - o, y - o, pen.size, pen.size);
+                    points.add((x << 16) | y);
                 }
             }
         }
