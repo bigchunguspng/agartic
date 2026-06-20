@@ -362,7 +362,15 @@ async function history_load() {
     });
     history_draw();
 }
-function history_draw() {
+function history_draw(increment) {
+    if (increment) { // redo
+        const item = history[history_len - 1];
+        if   (item.type === HIS_IMAGE)
+            cd_apply_history_img(item.data);
+        else
+            cd_apply_history_pen(item.pen, item.path, item.type);
+    }
+    else { // undo / load
     const i_last_image = history_get_last_visible_of_type_index(HIS_IMAGE) ?? -1;
     if   (i_last_image < 0) {
         cd_clear();
@@ -370,6 +378,7 @@ function history_draw() {
     }
     else // start from the last image to avoid blinking
         cd_apply_history_img(history[i_last_image].data).then(() => history_draw_pen_from(i_last_image + 1));
+}
 }
 function history_get_last_visible_of_type(type) {
     for (let i = history_len - 1; i >= 0; i--)
@@ -416,11 +425,11 @@ async function history_undo() {
 async function history_redo() {
     if (history_len < history.length) {
         history_len++;
-        await history_move();
+        await history_move(true);
     }
 }
-async function history_move() {
-    history_draw();
+async function history_move(forward) {
+    history_draw(forward);
     await db_set('state', 'history_len', history_len);
     history_channel.postMessage({ type: 'cursor', value: history_len, });
 }
@@ -444,7 +453,7 @@ function SETUP_HISTORY_SYNC() {
         if      (message.type === 'append') {
             history[message.id] = await db_get('history', message.id);
             history_len = message.id + 1;
-            history_draw();
+            history_draw(true);
         }
         else if (message.type === 'cursor') {
             history_len = message.value;
