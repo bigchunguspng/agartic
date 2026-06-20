@@ -585,10 +585,59 @@ function drawing_RENDER(path, pen, type, ctx) {
     }
     else { // path.length > 1
         if (type === HIS_PENCIL) {
+            const o1 = pen.size % 2 == 1 ? 0.5 : 0;
+            const o  = pen.size / 2 + o1;
             ctx.fillStyle = pen.color;
-            for (let i = 1; i < path.length; i++) {
-                const p1 = path[i - 1];
-                const p2 = path[i];
+            ctx.beginPath();
+            if (pen.smooth) {
+                const p0 = path[0];
+                const p1 = path[1];
+                const pk = path.at(-2);
+                const pl = path.at(-1);
+                const m1 = vek2_mid_point(p0, p1);
+                const ml = vek2_mid_point(pk, pl);
+                vek2_round(m1);
+                vek2_round(ml);
+                const closed = p0.x === pl.x && p0.y === pl.y;
+                if   (closed) {
+                    pencil_connect_mid_points_smoothly(path.length + 1);
+                }
+                else { // !closed // typical case
+                    pencil_stroke(p0, m1);
+                    pencil_connect_mid_points_smoothly(path.length - 1);
+                    pencil_stroke(ml, pl);
+                }
+
+                function pencil_connect_mid_points_smoothly(len) {
+                    const l = path.length;
+                    for (let i = 1; i < len; i++) {
+                        const pa = path[(i - 1) % l];
+                        const pb = path[(i    ) % l];
+                        const pc = path[(i + 1) % l];
+                        const mb = vek2_mid_point(pa, pb);
+                        const mc = vek2_mid_point(pb, pc);
+                        const n = 2 * Math.max(vek2_distance_square(mb, pb), vek2_distance_square(pb, mc));
+                        for (let j = 0; j <= n; j++) {
+                            const t = j / n;
+                            const c1 = vek2_lerp(mb, pb, t);
+                            const c2 = vek2_lerp(pb, mc, t);
+                            const c3 = vek2_lerp(c1, c2, t);
+                            vek2_round(c3);
+                            ctx.rect(c3.x - o, c3.y - o, pen.size, pen.size);
+                        }
+                    }
+                }
+            }
+            else { // !pen.smooth
+                for (let i = 1; i < path.length; i++) {
+                    const p1 = path[i - 1];
+                    const p2 = path[i];
+                    pencil_stroke(p1, p2);
+                }
+            }
+            ctx.fill();
+
+            function pencil_stroke(p1, p2) {
                 const dx = p2.x - p1.x;
                 const dy = p2.y - p1.y;
                 const steep = Math.abs(dy / dx) > 1; // vertical > horizontal
@@ -600,13 +649,11 @@ function drawing_RENDER(path, pen, type, ctx) {
                 const k  = steep ? dx / dy : dy / dx; // slope
                 const c  = b1 - k * a1 // b-intercept
                 const step = a1 < a2 ? 1 : -1;
-                const o1 = pen.size % 2 == 1 ? 0.5 : 0;
-                const o  = pen.size / 2 + o1;
                 for (let a = a1; a != a2; a += step) {
                     const b = Math.round(k * a + c);
                     const x = steep ? b : a;
                     const y = steep ? a : b; // restore axes
-                    ctx.fillRect(x - o, y - o, pen.size, pen.size);
+                    ctx.rect(x - o, y - o, pen.size, pen.size);
                 }
             }
         }
@@ -624,17 +671,17 @@ function drawing_RENDER(path, pen, type, ctx) {
                 const closed = p0.x === pl.x && p0.y === pl.y;
                 if   (closed) {
                     ctx.moveTo(m1.x, m1.y);
-                    connect_path_mid_points_smoothly();
+                    brush_connect_mid_points_smoothly();
                     ctx.quadraticCurveTo(p0.x, p0.y, m1.x, m1.y);
                 }
                 else { // !closed // typical case
                     ctx.moveTo(p0.x, p0.y);
                     ctx.lineTo(m1.x, m1.y);
-                    connect_path_mid_points_smoothly();
+                    brush_connect_mid_points_smoothly();
                     ctx.lineTo(pl.x, pl.y);
                 }
 
-                function connect_path_mid_points_smoothly() {
+                function brush_connect_mid_points_smoothly() {
                     for (let i = 2; i < path.length; i++) {
                         const pa = path[i - 1];
                         const pb = path[i];
@@ -651,9 +698,9 @@ function drawing_RENDER(path, pen, type, ctx) {
                 }
             }
             ctx.stroke();
-            // ctx.fillStyle = 'red'; // DEBUG - show actual path points
-            // for (let i = 0; i < path.length; i++) ctx.fillRect(path[i].x, path[i].y, 1, 1);
         }
+        // ctx.fillStyle = 'red'; // DEBUG - show actual path points
+        // for (let i = 0; i < path.length; i++) ctx.fillRect(path[i].x, path[i].y, 1, 1);
     }
 }
 
@@ -749,15 +796,12 @@ function drawing_roll_drawing_mode() {
         const pencil = drawing_mode === HIS_PENCIL;
         brush_cursor.style.borderRadius = pencil ? '0' : '50%';
         shape.classList.toggle('round', !pencil);
-        butt_smooth.classList.toggle('off', pencil); // smoothing only for brush now
     }
 }
 function drawing_toggle_smoothing() {
-    if (drawing_mode === HIS_BRUSH) {
-        drawing_smooth = !drawing_smooth;
-        img_raw   .classList.toggle('hide',  drawing_smooth);
-        img_smooth.classList.toggle('hide', !drawing_smooth);
-    }
+    drawing_smooth = !drawing_smooth;
+    img_raw   .classList.toggle('hide',  drawing_smooth);
+    img_smooth.classList.toggle('hide', !drawing_smooth);
 }
 function SETUP_DRAWING() {
     butt_bs_less.onclick = thickness_less;
@@ -1771,6 +1815,12 @@ function math_rotate_point(p, pivot, rad) {
     const y = pivot.y - dx * sin + dy * cos;
     return { x, y };
 }
+function math_lerp(a, b, t) {
+    return a * (1 - t) + b * t;
+}
+function math_avg(a, b) {
+    return (a + b) * 0.5;
+}
 
 function Vek2(x, y) {
     this.x = x ?? 0;
@@ -1787,7 +1837,19 @@ function Rekt(x, y, w, h) {
     this.h = h ?? 0;
 }
 function vek2_mid_point(p1, p2) {
-    return new Vek2((p1.x + p2.x) * 0.5, (p1.y + p2.y) * 0.5);
+    return new Vek2(math_avg(p1.x, p2.x), math_avg(p1.y, p2.y));
+}
+function vek2_lerp(p1, p2, t) {
+    return new Vek2(math_lerp(p1.x, p2.x, t), math_lerp(p1.y, p2.y, t));
+}
+function vek2_distance_square(p1, p2) {
+    const dx = Math.abs(p2.x - p1.x);
+    const dy = Math.abs(p2.y - p1.y);
+    return dx * dx + dy * dy;
+}
+function vek2_round(p) {
+    p.x = Math.round(p.x);
+    p.y = Math.round(p.y);
 }
 //#endregion
 
