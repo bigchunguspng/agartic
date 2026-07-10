@@ -46,6 +46,9 @@ kbd {
     background-size: 256px 128px;
     background-position: 10px 10px;
     image-rendering: pixelated;
+    &.selecting {
+        cursor: crosshair;
+    }
     &.draggable, &.img-draggable {
         cursor: grab;
     }
@@ -189,8 +192,11 @@ kbd {
         pointer-events: none;
     }
     &.fx-copied {
-        /* todo animation */
         outline: 3px solid white;
+        outline-offset: 3px;
+    }
+    &.fx-copied-part {
+        outline: 3px dashed white;
         outline-offset: 3px;
     }
     & .selection {

@@ -94,6 +94,7 @@ function tool_activate(tool) {
     if      (tool_active === tool_drag) cw_drag_disable();
     else if (tool_active === tool_draw) drawing_disable();
     else if (tool_active === tool_pick) cp_exit();
+    else if (tool_active === tool_rect) rect_disable();
 
     tools.forEach(x => x.classList.remove('active'));
     tool.classList.add('active');
@@ -104,6 +105,7 @@ function tool_activate(tool) {
     if      (tool_active === tool_drag) cw_drag_enable();
     else if (tool_active === tool_draw) drawing_enable();
     else if (tool_active === tool_pick) cp_start();
+    else if (tool_active === tool_rect) rect_enable();
 }
 function SETUP_TOOLS() {
     tool_activate(tool_draw);
@@ -368,16 +370,16 @@ function history_draw(increment) {
         if   (item.type === HIS_IMAGE)
             cd_apply_history_img(item.data);
         else
-            cd_apply_history_pen(item.pen, item.path, item.type);
+            cd_apply_history_non_image(item);          
     }
     else { // undo / load
         const i_last_image = history_get_last_visible_of_type_index(HIS_IMAGE) ?? -1;
         if   (i_last_image < 0) {
             cd_clear();
-            history_draw_pen_from(0);
+            history_draw_non_image_from(0);
         }
         else // start from the last image to avoid blinking
-            cd_apply_history_img(history[i_last_image].data).then(() => history_draw_pen_from(i_last_image + 1));
+            cd_apply_history_img(history[i_last_image].data).then(() => history_draw_non_image_from(i_last_image + 1));
     }
 }
 function history_get_last_visible_of_type(type) {
@@ -388,10 +390,9 @@ function history_get_last_visible_of_type_index(type) {
     for (let i = history_len - 1; i >= 0; i--)
         if (history[i].type === type) return i;
 }
-function history_draw_pen_from(offset) {
+function history_draw_non_image_from(offset) {
     for (let i = offset; i < history_len; i++) {
-        const item = history[i];
-        cd_apply_history_pen(item.pen, item.path, item.type);
+        cd_apply_history_non_image(history[i]);
     }
 }
 async function history_write(item) {
@@ -482,7 +483,7 @@ function SETUP_HISTORY_CTL() {
 
 //#region DRAWING
 
-const HIS_BRUSH = 0, HIS_IMAGE = 1, HIS_PENCIL = 2; // HIS = HISTORY
+const HIS_BRUSH = 0, HIS_IMAGE = 1, HIS_PENCIL = 2, HIS_RECT = 3; // HIS = HISTORY
 const drawing_modes = [HIS_BRUSH, HIS_PENCIL];
 const LOCK_X = 1, LOCK_Y = 2;
 const cd_ctx = canvas_draw.getContext('2d');
@@ -754,6 +755,21 @@ function cd_apply_history_img(data) {
         cd_ctx.drawImage(img, 0, 0);
     });
 }
+function cd_apply_history_non_image(item) {
+    if (item.type === HIS_RECT)
+        cd_apply_history_rect(item.rect, item.color);
+    else
+        cd_apply_history_pen(item.pen, item.path, item.type);
+}
+function cd_apply_history_rect(rect, color) {
+    cd_ctx.fillStyle = color;
+    cd_ctx.fillRect(rect.x, rect.y, rect.w, rect.h);
+}
+function cd_fill_rect(rect, color) {
+    cd_apply_history_rect(rect, color);
+    history_write({ type: HIS_RECT, rect, color });
+}
+
 function set_thickness(value) {
     thickness = math_clamp(1, 999, value);
     in_thickness.value = thickness;
@@ -910,7 +926,7 @@ function cd_copy_to_clipboard() {
 function SETUP_IMAGE_COPY() {
     butt_copy.onclick = cd_copy_to_clipboard;
     document.addEventListener('copy', () => {
-        if (!anySel()) fx_click(butt_copy) || cd_copy_to_clipboard();
+        if (!rect && !anySel()) fx_click(butt_copy) || cd_copy_to_clipboard();
     });
 }
 //#endregion
@@ -1540,6 +1556,130 @@ function SETUP_IMAGE_PLACING() {
 }
 //#endregion
 
+//#region RECT SELECTION
+let recting, rect, rect_points;
+
+function rect_enable() {
+    vp.classList.add('selecting');
+    recting = true;
+}
+function rect_disable() {
+    vp.classList.remove('selecting');
+    recting = false;
+    rect_cancel_selection();
+}
+function rect_selection_start() {
+    if (recting) {
+        imgv_wrapper.classList.remove('hide');
+        const cc = getCanvasCursorXY();
+        rect = null;
+        rect_points = { p1: cc, p2: cc };
+        rect_render_selection();
+    }
+}
+function rect_selection_select() {
+    if (recting && rect_points) {
+        rect_points.p2 = getCanvasCursorXY();
+        rect_render_selection();
+    }
+}
+function rect_selection_end() {
+    if (recting && rect_points) {
+        rect_render_selection(true);
+        rect_points = null;
+    }
+}
+function rect_cancel_selection() {
+    if (rect || rect_points) {
+        rect = null;
+        rect_points = null;
+        imgv_wrapper.classList.add('hide');
+        imgv_sel.style = '';
+    }
+}
+
+function rect_render_selection(save) {
+    const { p1, p2 } = rect_points; // not null only on selecting
+    const x = Math.min(p1.x, p2.x);
+    const y = Math.min(p1.y, p2.y);
+    const w = Math.max(p1.x, p2.x) - x;
+    const h = Math.max(p1.y, p2.y) - y;
+    if (save) rect = new Rekt(x, y, w, h);
+    imgv_sel.style.left   = `${x}px`;
+    imgv_sel.style.top    = `${y}px`;
+    imgv_sel.style.width  = `${w}px`;
+    imgv_sel.style.height = `${h}px`;
+}
+
+// functions for interaction on selecting?
+// ones below should work in both modes: 1. selecting, 2. tweaking selection box
+
+// alt ? drag : draw new selection
+// scaling same as in imgv
+
+function rect_selection_interaction_start(e) {
+    if (!recting) return;
+    // check if on handle
+    imgv_AnalyzeHandle
+    const handle_grabbed = false;
+    if (rect && (handle_grabbed || e.altKey)) {
+        // move / resize
+    }
+    else rect_selection_start();
+}
+function rect_selection_interaction_interact(e) {
+    if (!recting) return;
+    if (rect_points) rect_selection_select();
+    else {
+        
+    }
+}
+function rect_selection_interaction_end(e) {
+    if (!recting) return;
+    if (rect_points) rect_selection_end();
+    else {
+        
+    }
+}
+// ^ same as imgv???
+
+function rect_selection_copy() {
+    const canvas_temp = document.createElement('canvas');
+    canvas_temp.width  = rect.w;
+    canvas_temp.height = rect.h;
+    const ctx = canvas_temp.getContext('2d');
+    ctx.drawImage(canvas_draw, rect.x, rect.y, rect.w, rect.h, 0, 0, rect.w, rect.h);
+    const callback = (blob) => {
+        let item = new ClipboardItem({ 'image/png': blob });
+        navigator.clipboard.write([item]).then(() => temp_fx(cw, 'fx-copied-part', 500));
+    };
+    canvas_temp.toBlob(callback, 'image/png');
+}
+
+function rect_selection_cut() {
+    console.log('rect_selection_cut');
+    rect_selection_copy();
+    cd_fill_rect(rect, 'white');
+    rect_cancel_selection();
+}
+function SETUP_RECT() {
+    document.addEventListener('pointerdown', rect_selection_interaction_start);
+    document.addEventListener('pointermove', rect_selection_interaction_interact);
+    document.addEventListener('pointerup',   rect_selection_interaction_end);
+    document.addEventListener('keydown', e => {
+        if ((rect || rect_points) && !anySel()) {
+            if (key_is(e, 'Escape')) e.preventDefault() || rect_cancel_selection();
+        }
+    });
+    document.addEventListener('copy', e => {
+        if (rect && !anySel()) e.preventDefault() || rect_selection_copy();
+    });
+    document.addEventListener('cut', e => {
+        if (rect && !anySel()) e.preventDefault() || rect_selection_cut();
+    });
+}
+//#endregion
+
 //#region COLOR PICKER
 
 let cp = false;
@@ -1894,6 +2034,7 @@ SETUP_HOOKS_PRE();
     SETUP_IMAGE_COPY();
     SETUP_IMAGE_PASTE();
     SETUP_IMAGE_PLACING();
+    SETUP_RECT();
     SETUP_COLOR_PICKER();
 }
 SETUP_HOOKS_POST();
