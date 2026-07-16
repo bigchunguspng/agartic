@@ -63,6 +63,9 @@ const butt_imgv_re  = document.getElementById('butt_imgv_restore');
 const butt_imgv_c   = document.getElementById('butt_imgv_m_crop');
 const butt_imgv_x   = document.getElementById('butt_imgv_m_drag');
 
+const butt_rect_ct  = document.getElementById('butt_rect_cut');
+const butt_rect_cp  = document.getElementById('butt_rect_copy');
+
 const brush_cursor  = document.getElementById('brush_cursor');
 const in_thickness  = document.getElementById('input_thickness');
 const input_cp_col  = document.getElementById('input_cp_col');
@@ -1562,6 +1565,7 @@ let recting, rect, rect_points;
 function rect_enable() {
     vp.classList.add('selecting');
     recting = true;
+    rect_rm_rect();
 }
 function rect_disable() {
     vp.classList.remove('selecting');
@@ -1572,7 +1576,7 @@ function rect_selection_start() {
     if (recting) {
         imgv_wrapper.classList.remove('hide');
         const cc = getCanvasCursorXY();
-        rect = null;
+        rect_rm_rect();
         rect_points = { p1: cc, p2: cc };
         rect_render_selection();
     }
@@ -1591,11 +1595,16 @@ function rect_selection_end() {
 }
 function rect_cancel_selection() {
     if (rect || rect_points) {
-        rect = null;
+        rect_rm_rect();
         rect_points = null;
         imgv_wrapper.classList.add('hide');
         imgv_sel.style = '';
     }
+}
+function rect_rm_rect() {
+    rect = null;
+    butt_rect_cp.classList.add('off');
+    butt_rect_ct.classList.add('off');
 }
 
 function rect_render_selection(save) {
@@ -1604,7 +1613,11 @@ function rect_render_selection(save) {
     const y = Math.min(p1.y, p2.y);
     const w = Math.max(p1.x, p2.x) - x;
     const h = Math.max(p1.y, p2.y) - y;
-    if (save) rect = new Rekt(x, y, w, h);
+    if (save) {
+        rect = new Rekt(x, y, w, h);
+        butt_rect_cp.classList.remove('off');
+        butt_rect_ct.classList.remove('off');
+    }
     imgv_sel.style.left   = `${x}px`;
     imgv_sel.style.top    = `${y}px`;
     imgv_sel.style.width  = `${w}px`;
@@ -1657,7 +1670,6 @@ function rect_selection_copy() {
 }
 
 function rect_selection_cut() {
-    console.log('rect_selection_cut');
     rect_selection_copy();
     cd_fill_rect(rect, 'white');
     rect_cancel_selection();
@@ -1672,10 +1684,10 @@ function SETUP_RECT() {
         }
     });
     document.addEventListener('copy', e => {
-        if (rect && !anySel()) e.preventDefault() || rect_selection_copy();
+        if (rect && !anySel()) bind(e, butt_rect_cp, rect_selection_copy);
     });
     document.addEventListener('cut', e => {
-        if (rect && !anySel()) e.preventDefault() || rect_selection_cut();
+        if (rect && !anySel()) bind(e, butt_rect_ct, rect_selection_cut);
     });
 }
 //#endregion
