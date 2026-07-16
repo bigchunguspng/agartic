@@ -49,10 +49,10 @@ kbd {
     &.selecting {
         cursor: crosshair;
     }
-    &.draggable, &.img-draggable {
+    &.draggable, &.img-draggable, &.sel-draggable {
         cursor: grab;
     }
-    &.dragging, &.img-dragging {
+    &.dragging, &.img-dragging, &.sel-dragging {
         cursor: grabbing;
     }
 }
@@ -222,6 +222,7 @@ kbd {
                 transform: rotate(45deg);
             }
         }
+        &.selecting .handle { display: none; }
     }
 }
 #brush_cursor {

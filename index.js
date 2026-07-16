@@ -65,6 +65,7 @@ const butt_imgv_x   = document.getElementById('butt_imgv_m_drag');
 
 const butt_rect_ct  = document.getElementById('butt_rect_cut');
 const butt_rect_cp  = document.getElementById('butt_rect_copy');
+const butt_rect_no  = document.getElementById('butt_rect_no');
 
 const brush_cursor  = document.getElementById('brush_cursor');
 const in_thickness  = document.getElementById('input_thickness');
@@ -1391,8 +1392,9 @@ function imgv_OppositeCornerXY(x, y, w, h, lh, th, vh, hh){
     let oc_y = hh ? y + h / 2 :   th ? y + h :   y;
     return new Vek2(oc_x, oc_y); // opposite to grabbed handle
 }
-function imgv_AnalyzeHandle() {
-    const classList = imgv.grabbed_handle.classList;
+function imgv_AnalyzeHandle(handle) {
+    handle ??= imgv.grabbed_handle;
+    const classList = handle.classList;
     return {
         lh: classList.contains('l'),
         th: classList.contains('t'),
@@ -1560,55 +1562,64 @@ function SETUP_IMAGE_PLACING() {
 //#endregion
 
 //#region RECT SELECTION
-let recting, rect, rect_points;
+let rect_mode, rect, selecting_rect;
 
 function rect_enable() {
     vp.classList.add('selecting');
-    recting = true;
-    rect_rm_rect();
+    rect_mode = true;
+    rect_remove_rect();
 }
 function rect_disable() {
     vp.classList.remove('selecting');
-    recting = false;
+    rect_mode = false;
     rect_cancel_selection();
 }
 function rect_selection_start() {
-    if (recting) {
+    if (rect_mode) {
+        imgv_sel.style = '';
+        imgv_sel.classList.add('selecting');
         imgv_wrapper.classList.remove('hide');
         const cc = getCanvasCursorXY();
-        rect_rm_rect();
-        rect_points = { p1: cc, p2: cc };
+        rect_remove_rect();
+        selecting_rect = { p1: cc, p2: cc };
         rect_render_selection();
     }
 }
 function rect_selection_select() {
-    if (recting && rect_points) {
-        rect_points.p2 = getCanvasCursorXY();
+    if (rect_mode && selecting_rect) {
+        selecting_rect.p2 = getCanvasCursorXY();
         rect_render_selection();
     }
 }
 function rect_selection_end() {
-    if (recting && rect_points) {
-        rect_render_selection(true);
-        rect_points = null;
+    if (rect_mode && selecting_rect) {
+        const {p1, p2} = selecting_rect;
+        const xd = Math.abs(p1.x - p2.x);
+        const yd = Math.abs(p1.y - p2.y);
+        if (xd < 2 && yd < 2) rect_cancel_selection();
+        else                  rect_render_selection(true);
+        selecting_rect = null;
+        imgv_sel.classList.remove('selecting');
     }
 }
 function rect_cancel_selection() {
-    if (rect || rect_points) {
-        rect_rm_rect();
-        rect_points = null;
+    if (rect || selecting_rect) {
+        rect_remove_rect();
+        selecting_rect = null;
         imgv_wrapper.classList.add('hide');
-        imgv_sel.style = '';
     }
 }
-function rect_rm_rect() {
+function rect_remove_rect() {
     rect = null;
     butt_rect_cp.classList.add('off');
     butt_rect_ct.classList.add('off');
+    butt_rect_no.classList.add('off');
+    vp.classList.remove('sel-draggable');
+    vp.classList.remove('sel-dragging');
 }
 
 function rect_render_selection(save) {
-    const { p1, p2 } = rect_points; // not null only on selecting
+    const { p1, p2 } = selecting_rect;
     const x = Math.min(p1.x, p2.x);
     const y = Math.min(p1.y, p2.y);
     const w = Math.max(p1.x, p2.x) - x;
@@ -1617,6 +1628,7 @@ function rect_render_selection(save) {
         rect = new Rekt(x, y, w, h);
         butt_rect_cp.classList.remove('off');
         butt_rect_ct.classList.remove('off');
+        butt_rect_no.classList.remove('off');
     }
     imgv_sel.style.left   = `${x}px`;
     imgv_sel.style.top    = `${y}px`;
@@ -1624,37 +1636,53 @@ function rect_render_selection(save) {
     imgv_sel.style.height = `${h}px`;
 }
 
-// functions for interaction on selecting?
-// ones below should work in both modes: 1. selecting, 2. tweaking selection box
-
-// alt ? drag : draw new selection
-// scaling same as in imgv
+function rect_edit_selection_start(handle, ctrl) {
+    rect.grabbed_handle = handle;
+    rect.editing = true;
+    if (handle) { // resize
+        const { lh, th, vh, hh } = imgv_AnalyzeHandle(handle);
+        console.log('rect_edit_selection_start - resize');
+    } else { // drag
+        vp.classList.add('sel-dragging');
+        console.log('rect_edit_selection_start - drag');
+    }
+}
+function rect_edit_selection_edit() {
+    // todo same as in imgv, except rotation
+    // only sel frame is moving
+    // ctrl = drag  +alt = drag canvas
+    // handle = resize  +ctrl = drag  +shift = kepp ratio  +alt = center
+    if (rect.grabbed_handle) { // resize
+        console.log('rect_edit_selection - resize');
+    }
+    else { // drag
+        console.log('rect_edit_selection - drag');
+    }
+}
+function rect_edit_selection_end() {
+    vp.classList.remove('sel-dragging');
+    rect.grabbed_handle = null;
+    rect.editing = false;
+    console.log('rect_edit_selection_end');
+}
 
 function rect_selection_interaction_start(e) {
-    if (!recting) return;
-    // check if on handle
-    imgv_AnalyzeHandle
-    const handle_grabbed = false;
-    if (rect && (handle_grabbed || e.altKey)) {
-        // move / resize
-    }
-    else rect_selection_start();
+    if (!rect_mode) return;
+    const h = e.target.closest('.handle');
+    const c = e.ctrlKey;
+    if (rect && (h || c)) rect_edit_selection_start(h, c);
+    else                  rect_selection_start();
 }
 function rect_selection_interaction_interact(e) {
-    if (!recting) return;
-    if (rect_points) rect_selection_select();
-    else {
-        
-    }
+    if (!rect_mode) return;
+    if       (rect?.editing) rect_edit_selection_edit();
+    else if (selecting_rect) rect_selection_select();
 }
 function rect_selection_interaction_end(e) {
-    if (!recting) return;
-    if (rect_points) rect_selection_end();
-    else {
-        
-    }
+    if (!rect_mode) return;
+    if       (rect?.editing) rect_edit_selection_end();
+    else if (selecting_rect) rect_selection_end();
 }
-// ^ same as imgv???
 
 function rect_selection_copy() {
     const canvas_temp = document.createElement('canvas');
@@ -1679,8 +1707,8 @@ function SETUP_RECT() {
     document.addEventListener('pointermove', rect_selection_interaction_interact);
     document.addEventListener('pointerup',   rect_selection_interaction_end);
     document.addEventListener('keydown', e => {
-        if ((rect || rect_points) && !anySel()) {
-            if (key_is(e, 'Escape')) e.preventDefault() || rect_cancel_selection();
+        if ((rect || selecting_rect) && !anySel()) {
+            if (key_is(e, 'Escape')) bind(e, butt_rect_no, rect_cancel_selection);
         }
     });
     document.addEventListener('copy', e => {
@@ -1688,6 +1716,14 @@ function SETUP_RECT() {
     });
     document.addEventListener('cut', e => {
         if (rect && !anySel()) bind(e, butt_rect_ct, rect_selection_cut);
+    });
+    document.addEventListener('keydown', e => {
+        if (rect && !anySel() && e.code.startsWith('Ctrl'))
+            e.preventDefault() || vp.classList.add('sel-draggable');
+    })
+    document.addEventListener('keyup', e => {
+        if (rect && !anySel() && e.code.startsWith('Ctrl'))
+            e.preventDefault() || vp.classList.remove('sel-draggable');
     });
 }
 //#endregion
