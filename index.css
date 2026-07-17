@@ -96,6 +96,9 @@ kbd {
     & a {
         color: #5b4e3e;
     }
+    & h3::before {
+        content: '➢ ';
+    }
     &.a {
         transform: rotate(-15deg);
     }
@@ -149,9 +152,10 @@ kbd {
     &.imgv {
         top: 300px;
         transform: rotate(3deg);
-        & h3::before {
-            content: '➢ ';
-        }
+    }
+    &.rect {
+        top: 300px;
+        transform: rotate(-3deg);
     }
     &.bs {
         left: 735px;

@@ -74,6 +74,7 @@ const input_cp_txt  = document.getElementById('input_cp_txt');
 const in_imgv_rot   = document.getElementById('input_rotate');
 
 const tips_imgv     = document.getElementById('tips_imgv');
+const tips_rect     = document.getElementById('tips_rect');
 const tips_draw     = document.getElementById('tips_draw');
 const tips_bs       = document.getElementById('tips_bs');
 
@@ -1568,11 +1569,13 @@ let rect_mode, rect;
 
 function rect_enable() {
     vp.classList.add('selecting');
+    tips_rect.classList.remove('hide');
     rect_mode = true;
     rect_remove_rect();
 }
 function rect_disable() {
     vp.classList.remove('selecting');
+    tips_rect.classList.add('hide');
     rect_mode = false;
     rect_remove_rect();
 }
