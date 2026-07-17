@@ -1563,7 +1563,7 @@ function SETUP_IMAGE_PLACING() {
 
 //#region RECT SELECTION
 
-let rect_mode, /* rect, selecting_rect, */ rect_x;
+let rect_mode, rect;
 
 function rect_enable() {
     vp.classList.add('selecting');
@@ -1573,7 +1573,7 @@ function rect_enable() {
 function rect_disable() {
     vp.classList.remove('selecting');
     rect_mode = false;
-    rect_cancel_selection();
+    rect_remove_rect();
 }
 function rect_selection_start() {
     if (rect_mode) {
@@ -1582,7 +1582,7 @@ function rect_selection_start() {
         imgv_sel.classList.add('selecting');
         imgv_wrapper.classList.remove('hide');
         const cc = getCanvasCursorXY();
-        rect_x = {
+        rect = {
             selecting: { p1: cc, p2: cc },
             curr: new Rekt(0, 0, 0, 0),
             selected: false,
@@ -1590,41 +1590,41 @@ function rect_selection_start() {
             grabbed_handle: null,
             is_dragging: false,
             is_resizing: false,
-            is_editing: () => rect_x.is_dragging || rect_x.is_resizing,
+            is_editing: () => rect.is_dragging || rect.is_resizing,
             /*  shift */ mod_keep_ratio:     false,
             /*   ctrl */ mod_drag_by_handle: false,
             /*    alt */ mod_drag_canvas:    false,
-            /*    alt */ mod_resize_centered: () => rect_x.mod_drag_canvas,
+            /*    alt */ mod_resize_centered: () => rect.mod_drag_canvas,
         };
         rect_render_selection();
     }
 }
 function rect_selection_select() {
-    if (rect_mode && rect_x.selecting) {
-        rect_x.selecting.p2 = getCanvasCursorXY();
+    if (rect_mode && rect.selecting) {
+        rect.selecting.p2 = getCanvasCursorXY();
         rect_render_selection();
     }
 }
 function rect_selection_end() {
-    if (rect_mode && rect_x.selecting) {
-        const { p1, p2 } = rect_x.selecting;
+    if (rect_mode && rect.selecting) {
+        const { p1, p2 } = rect.selecting;
         const xd = Math.abs(p1.x - p2.x);
         const yd = Math.abs(p1.y - p2.y);
         if (xd < 2 && yd < 2) rect_cancel_selection();
         else                  rect_render_selection();
-        rect_x.selecting = null;
-        rect_x.selected = true;
+        rect.selecting = null;
+        rect.selected = true;
         rect_selected_buttons_toggle_off(false);
         imgv_sel.classList.remove('selecting');
     }
 }
 function rect_cancel_selection() {
-    if (rect_x.selected || rect_x.selecting) {
+    if (rect.selected || rect.selecting) {
         rect_remove_rect();
     }
 }
 function rect_remove_rect() {
-    rect_x = null;
+    rect = null;
     rect_selected_buttons_toggle_off(true);
     vp.classList.remove('sel-draggable');
     vp.classList.remove('sel-dragging');
@@ -1637,12 +1637,12 @@ function rect_selected_buttons_toggle_off(b) {
 }
 
 function rect_render_selection(save) {
-    const { p1, p2 } = rect_x.selecting;
+    const { p1, p2 } = rect.selecting;
     const x = Math.min(p1.x, p2.x);
     const y = Math.min(p1.y, p2.y);
     const w = Math.max(p1.x, p2.x) - x;
     const h = Math.max(p1.y, p2.y) - y;
-    rect_x.curr = new Rekt(x, y, w, h);
+    rect.curr = new Rekt(x, y, w, h);
     imgv_sel.style.left   = `${x}px`;
     imgv_sel.style.top    = `${y}px`;
     imgv_sel.style.width  = `${w}px`;
@@ -1650,13 +1650,13 @@ function rect_render_selection(save) {
 }
 
 function rect_edit_selection_start(handle, ctrl) {
-    rect_x.grabbed_handle = handle;
+    rect.grabbed_handle = handle;
     if (handle) {
-        rect_x.is_resizing = true;
+        rect.is_resizing = true;
         const { lh, th, vh, hh } = imgv_AnalyzeHandle(handle);
         console.log('rect_edit_selection_start - resize');
     } else {
-        rect_x.is_dragging = true;
+        rect.is_dragging = true;
         vp.classList.add('sel-dragging');
         console.log('rect_edit_selection_start - drag');
     }
@@ -1666,7 +1666,7 @@ function rect_edit_selection_edit() {
     // only sel frame is moving
     // ctrl = drag  +alt = drag canvas
     // handle = resize  +ctrl = drag  +shift = kepp ratio  +alt = center
-    if (rect_x.is_resizing) {
+    if (rect.is_resizing) {
         console.log('rect_edit_selection - resize');
     }
     else { // drag
@@ -1675,9 +1675,9 @@ function rect_edit_selection_edit() {
 }
 function rect_edit_selection_end() {
     vp.classList.remove('sel-dragging');
-    rect_x.grabbed_handle = null;
-    rect_x.is_resizing = false;
-    rect_x.is_dragging = false;
+    rect.grabbed_handle = null;
+    rect.is_resizing = false;
+    rect.is_dragging = false;
     console.log('rect_edit_selection_end');
 }
 
@@ -1685,62 +1685,62 @@ function rect_selection_interaction_start(e) {
     if (!rect_mode) return;
     const h = e.target.closest('.handle');
     const c = e.ctrlKey;
-    if (rect_x?.selected && (h || c)) rect_edit_selection_start(h, c);
+    if (rect?.selected && (h || c)) rect_edit_selection_start(h, c);
     else                              rect_selection_start();
 }
 function rect_selection_interact(e) {
-    if (!rect_x) return;
-    if      (rect_x.is_editing()) rect_edit_selection_edit();
-    else if (rect_x.selecting)    rect_selection_select();
+    if (!rect) return;
+    if      (rect.is_editing()) rect_edit_selection_edit();
+    else if (rect.selecting)    rect_selection_select();
 }
 function rect_selection_interaction_end(e) {
-    if (!rect_x) return;
-    if      (rect_x.is_editing()) rect_edit_selection_end();
-    else if (rect_x.selecting)    rect_selection_end();
+    if (!rect) return;
+    if      (rect.is_editing()) rect_edit_selection_end();
+    else if (rect.selecting)    rect_selection_end();
 }
 
 function rect_apply_mods(e, keydown) {
-    if (!rect_x) return;
-    if (rect_x.selected && e.code.startsWith('Control')) {
+    if (!rect) return;
+    if (rect.selected && e.code.startsWith('Control')) {
         vp.classList.toggle('sel-draggable', keydown);
     }
-    if (rect_mode && (rect_x.selected || rect_x.selecting)) {
-        if (!rect_x.mod_keep_ratio && e.shiftKey) {
+    if (rect_mode && (rect.selected || rect.selecting)) {
+        if (!rect.mod_keep_ratio && e.shiftKey) {
             // ~
         }
-        else if (rect_x.mod_keep_ratio && !e.shiftKey) {
+        else if (rect.mod_keep_ratio && !e.shiftKey) {
             // ~
         }
-        if (!rect_x.mod_drag_by_handle && e.ctrlKey) {
-            if (rect_x.is_resizing) {
+        if (!rect.mod_drag_by_handle && e.ctrlKey) {
+            if (rect.is_resizing) {
                 rect_save_drag_snapshots();
             }
         }
-        else if (rect_x.mod_drag_by_handle && !e.ctrlKey) {
+        else if (rect.mod_drag_by_handle && !e.ctrlKey) {
             // ~
         }
-        if (!rect_x.mod_drag_canvas && e.altKey) {
-            if (rect_x.is_dragging) cw_drag_enable() || cw_drag_start();
+        if (!rect.mod_drag_canvas && e.altKey) {
+            if (rect.is_dragging) cw_drag_enable() || cw_drag_start();
         }
-        else if (rect_x.mod_drag_canvas && !e.altKey) {
+        else if (rect.mod_drag_canvas && !e.altKey) {
             if (cw_draggable) cw_drag_disable();
             e.preventDefault(); // firefox menu bar
         }
-        rect_x.mod_keep_ratio     = e.shiftKey;
-        rect_x.mod_drag_by_handle = e. ctrlKey;
-        rect_x.mod_drag_canvas    = e.  altKey;
+        rect.mod_keep_ratio     = e.shiftKey;
+        rect.mod_drag_by_handle = e. ctrlKey;
+        rect.mod_drag_canvas    = e.  altKey;
         rect_selection_interact();
     } // as in imgv
 }
 function rect_save_drag_snapshots() {
     const cc = getCanvasCursorXY();
-    rect_x.drag.x = cc.x - rect_x.curr.x;
-    rect_x.drag.y = cc.y - rect_x.curr.y;
+    rect.drag.x = cc.x - rect.curr.x;
+    rect.drag.y = cc.y - rect.curr.y;
 }
 
 function rect_selection_copy() {
     const canvas_temp = document.createElement('canvas');
-    const { x, y, w, h } = rect_x.curr;
+    const { x, y, w, h } = rect.curr;
     canvas_temp.width  = w;
     canvas_temp.height = h;
     const ctx = canvas_temp.getContext('2d');
@@ -1754,7 +1754,7 @@ function rect_selection_copy() {
 
 function rect_selection_cut() {
     rect_selection_copy();
-    cd_fill_rect(rect_x.curr, 'white');
+    cd_fill_rect(rect.curr, 'white');
     rect_cancel_selection();
 }
 function SETUP_RECT() {
@@ -1764,15 +1764,15 @@ function SETUP_RECT() {
     document.addEventListener('keydown', e => rect_apply_mods(e, true));
     document.addEventListener('keyup',   e => rect_apply_mods(e, false));
     document.addEventListener('keydown', e => {
-        if (rect_x && !anySel()) {
+        if (rect && !anySel()) {
             if (key_is(e, 'Escape')) bind(e, butt_rect_no, rect_cancel_selection);
         }
     });
     document.addEventListener('copy', e => {
-        if (rect_x.selected && !anySel()) bind(e, butt_rect_cp, rect_selection_copy);
+        if (rect.selected && !anySel()) bind(e, butt_rect_cp, rect_selection_copy);
     });
     document.addEventListener('cut', e => {
-        if (rect_x.selected && !anySel()) bind(e, butt_rect_ct, rect_selection_cut);
+        if (rect.selected && !anySel()) bind(e, butt_rect_ct, rect_selection_cut);
     });
 }
 //#endregion
