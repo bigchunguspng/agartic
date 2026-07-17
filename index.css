@@ -352,6 +352,9 @@ kbd {
                 color: gold;
             }
         }
+        &.TBA span {
+            text-decoration: line-through;
+        }
     }
     & img {
         width: 24px;
