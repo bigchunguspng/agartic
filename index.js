@@ -1592,8 +1592,8 @@ function rect_selection_start() {
             /* drag start snapshot - cursor on selection */ drag: new Vek2(),
             grabbed_handle: null,
             is_dragging: false,
-            is_resizing: false,
-            is_editing: () => rect.is_dragging || rect.is_resizing,
+            is_resizing: true,
+            is_editing: () => rect.selected && (rect.is_dragging || rect.is_resizing),
             /*  shift */ mod_keep_ratio:     false,
             /*   ctrl */ mod_drag_by_handle: false,
             /*    alt */ mod_drag_canvas:    false,
@@ -1603,9 +1603,43 @@ function rect_selection_start() {
     }
 }
 function rect_selection_select() {
-    if (rect_mode && rect.selecting) {
-        rect.selecting.p2 = getCanvasCursorXY();
+    if (rect_mode && rect.selecting && rect.is_resizing) {        
+        let cc = getCanvasCursorXY();
+        if (rect.mod_drag_canvas)
+            return cw_drag();
+        if (rect.mod_drag_by_handle) {
+            const nx = cc.x - rect.drag.x;
+            const ny = cc.y - rect.drag.y;
+            const { p1, p2 } = rect.selecting;
+            if (p1.x < p2.x) rect.selecting.p1.x = nx;
+            else {
+                const w = p1.x - p2.x;
+                rect.selecting.p2.x = nx;
+                rect.selecting.p1.x = nx + w;
+            }
+            if (p1.y < p2.y) rect.selecting.p1.y = ny;
+            else {
+                const h = p1.y - p2.y;
+                rect.selecting.p2.y = ny;
+                rect.selecting.p1.y = ny + h;
+            }
+        }
+        rect.selecting.p2 = cc;
         rect_RENDER_selection();
+        if (rect.mod_keep_ratio) {
+            const { lh, th, vh, hh } = imgv_AnalyzeHandle(rect.grabbed_handle);
+            const { x, y, w, h } = rect.curr;
+            const oc = imgv_OppositeCornerXY(x, y, w, h, lh, th, vh, hh);
+            const nw = vh ? w :   lh ? w + (x - cc.x) :   cc.x - x;
+            const nh = hh ? h :   th ? h + (y - cc.y) :   cc.y - y; // n = new
+            {
+                const { w, h } = imgv_KeepRatio(cc, oc, nw, nh, vh, hh, 1.0);
+                const { p1, p2 } = rect.selecting;
+                rect.selecting.p2.x = p1.x < p2.x ? p1.x + w : p1.x - w;
+                rect.selecting.p2.y = p1.y < p2.y ? p1.y + h : p1.y - h;
+            }
+            rect_RENDER_selection();
+        }
     }
 }
 function rect_selection_end() {
@@ -1615,6 +1649,8 @@ function rect_selection_end() {
         const yd = Math.abs(p1.y - p2.y);
         if (xd < 2 && yd < 2) rect_cancel_selection();
         else                  rect_RENDER_selection();
+        rect.grabbed_handle = null;
+        rect.is_resizing = false;
         rect.selecting = null;
         rect.selected = true;
         rect_selected_buttons_toggle_off(false);
@@ -1647,6 +1683,10 @@ function rect_RENDER_selection(save) {
         const w = Math.max(p1.x, p2.x) - x;
         const h = Math.max(p1.y, p2.y) - y;
         rect.curr = new Rekt(x, y, w, h);
+        rect.grabbed_handle =
+            x === p2.x && y === p2.y ? hand_tl :
+            x === p1.x && y === p1.y ? hand_br :
+            x === p1.x && y === p2.y ? hand_tr : hand_bl;
     }
     imgv_sel.style.left   = `${rect.curr.x}px`;
     imgv_sel.style.top    = `${rect.curr.y}px`;
@@ -1765,7 +1805,8 @@ function rect_apply_mods(e, keydown) {
             // ~
         }
         if (!rect.mod_drag_canvas && e.altKey) {
-            if (rect.is_dragging) cw_drag_enable() || cw_drag_start();
+            if (rect.is_dragging || rect.selecting)
+                cw_drag_enable() || cw_drag_start();
         }
         else if (rect.mod_drag_canvas && !e.altKey) {
             if (cw_draggable) cw_drag_disable();
