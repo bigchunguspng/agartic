@@ -1648,7 +1648,14 @@ function rect_selection_end() {
         const xd = Math.abs(p1.x - p2.x);
         const yd = Math.abs(p1.y - p2.y);
         if (xd < 2 && yd < 2) rect_cancel_selection();
-        else                  rect_RENDER_selection();
+        else {
+            let { p1, p2 } = rect.selecting;
+            p1.x = math_clamp(0, cw_true_w, p1.x);
+            p1.y = math_clamp(0, cw_true_h, p1.y);
+            p2.x = math_clamp(0, cw_true_w, p2.x);
+            p2.y = math_clamp(0, cw_true_h, p2.y);
+            rect_RENDER_selection(true);
+        }
         rect.grabbed_handle = null;
         rect.is_resizing = false;
         rect.selecting = null;
@@ -1675,7 +1682,7 @@ function rect_selected_buttons_toggle_off(b) {
     butt_rect_ct.classList.toggle('off', b);
     butt_rect_no.classList.toggle('off', b);
 }
-function rect_RENDER_selection(save) {
+function rect_RENDER_selection() {
     if (rect.selecting) {
         const { p1, p2 } = rect.selecting;
         const x = Math.min(p1.x, p2.x);
@@ -1756,6 +1763,12 @@ function rect_interact_resize(cc, x, y, w, h) { // bro copied homework 😮😧
 }
 function rect_edit_selection_end() {
     if (rect) {
+        let { x, y, w, h } = rect.curr;
+        rect.curr.x = math_clamp(0, cw_true_w, x);
+        rect.curr.y = math_clamp(0, cw_true_h, y);
+        rect.curr.w = math_clamp(0, cw_true_w - rect.curr.x, w - rect.curr.x + x);
+        rect.curr.h = math_clamp(0, cw_true_h - rect.curr.y, h - rect.curr.y + y);
+        rect_RENDER_selection();
         rect.is_dragging = false;
         rect.is_resizing = false;
         rect.grabbed_handle = null;
