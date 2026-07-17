@@ -78,6 +78,12 @@ const tips_rect     = document.getElementById('tips_rect');
 const tips_draw     = document.getElementById('tips_draw');
 const tips_bs       = document.getElementById('tips_bs');
 
+const tips_imgv_h1  = document.getElementById('tips_imgv_h1');
+const tips_imgv_h2  = document.getElementById('tips_imgv_h2');
+const tips_rect_h1  = document.getElementById('tips_rect_h1');
+const tips_rect_h2  = document.getElementById('tips_rect_h2');
+const tips_rect_h3  = document.getElementById('tips_rect_h3');
+
 const inputs_brush  = document.getElementById('inputs_brush');
 const inputs_color  = document.getElementById('inputs_color');
 const inputs_imgv   = document.getElementById('inputs_imgv');
@@ -1079,6 +1085,8 @@ function placing_image_start(img) {
     tips_imgv   .classList.remove('hide');
     imgv_wrapper.classList.remove('hide');
     vp.classList.add('img-draggable');
+    tips_imgv_h1.classList.remove('on');
+    tips_imgv_h2.classList.remove('on');
     imgv_sel.style.transform = '';
 }
 function placing_image_exit() {
@@ -1151,6 +1159,7 @@ function imgv_interaction_start(e) {
         if (imgv.grabbed_handle = e.target.closest('.handle')) {
             imgv.is_resizing = true;
             vp.dataset.cursor = imgv.grabbed_handle.dataset.cursor;
+            tips_imgv_h2.classList.add('on');
         }
         else if (imgv.mod_drag_canvas) {
             cw_drag_enable();
@@ -1159,6 +1168,7 @@ function imgv_interaction_start(e) {
         else { // image drag
             imgv.is_dragging = true;
             vp.classList.add('img-dragging');
+            tips_imgv_h1.classList.add('on');
             imgv_save_drag_snapshots();
         }
     }
@@ -1170,6 +1180,8 @@ function imgv_interaction_stop() {
         imgv.grabbed_handle = null;
         vp.classList.remove('img-dragging');
         vp.dataset.cursor = '';
+        tips_imgv_h1.classList.remove('on');
+        tips_imgv_h2.classList.remove('on');
         if (imgv.mod_drag_canvas)
             cw_drag_disable();
     }
@@ -1587,6 +1599,7 @@ function rect_selection_start() {
         imgv_sel.classList.add('selecting');
         imgv_wrapper.classList.remove('hide');
         butt_rect_no.classList.remove('off');
+        tips_rect_h1.classList.add('on');
         const cc = getCanvasCursorXY();
         rect = {
             selecting: { p1: cc, p2: cc },
@@ -1665,6 +1678,8 @@ function rect_selection_end() {
         rect.selected = true;
         rect_selected_buttons_toggle_off(false);
         imgv_sel.classList.remove('selecting');
+        tips_rect_h1.classList.remove('on');
+        tips_rect_h2.classList.add('on');
     }
 }
 
@@ -1679,6 +1694,9 @@ function rect_remove_rect() {
     vp.classList.remove('sel-draggable');
     vp.classList.remove('sel-dragging');
     imgv_wrapper.classList.add('hide');
+    tips_rect_h1.classList.remove('on');
+    tips_rect_h2.classList.remove('on');
+    tips_rect_h3.classList.remove('on');
 }
 function rect_selected_buttons_toggle_off(b) {
     butt_rect_cp.classList.toggle('off', b);
@@ -1708,6 +1726,8 @@ function rect_edit_selection_start(handle, ctrl) {
     if (rect) {
         if (rect.grabbed_handle = handle) {
             rect.is_resizing = true;
+            tips_rect_h2.classList.remove('on');
+            tips_rect_h3.classList.add('on');
             vp.dataset.cursor = rect.grabbed_handle.dataset.cursor;
         }
         else if (rect.mod_drag_canvas) {
@@ -1721,7 +1741,6 @@ function rect_edit_selection_start(handle, ctrl) {
         }
     }    
 }
-// todo apply mods during selecting:  ctrl - drag, shift - square, alt - center resize
 function rect_edit_selection_edit() {
     if (rect) {
         if (rect.is_dragging && rect.mod_drag_canvas)
@@ -1777,6 +1796,8 @@ function rect_edit_selection_end() {
         rect.grabbed_handle = null;
         vp.classList.remove('sel-dragging');
         vp.dataset.cursor = '';
+        tips_rect_h3.classList.remove('on');
+        tips_rect_h2.classList.add('on');
         if (rect.mod_drag_canvas)
             cw_drag_disable();
     }
