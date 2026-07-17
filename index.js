@@ -1562,7 +1562,8 @@ function SETUP_IMAGE_PLACING() {
 //#endregion
 
 //#region RECT SELECTION
-let rect_mode, rect, selecting_rect;
+
+let rect_mode, /* rect, selecting_rect, */ rect_x;
 
 function rect_enable() {
     vp.classList.add('selecting');
@@ -1576,60 +1577,72 @@ function rect_disable() {
 }
 function rect_selection_start() {
     if (rect_mode) {
+        rect_remove_rect();
         imgv_sel.style = '';
         imgv_sel.classList.add('selecting');
         imgv_wrapper.classList.remove('hide');
         const cc = getCanvasCursorXY();
-        rect_remove_rect();
-        selecting_rect = { p1: cc, p2: cc };
+        rect_x = {
+            selecting: { p1: cc, p2: cc },
+            curr: new Rekt(0, 0, 0, 0),
+            selected: false,
+            /* drag start snapshot - cursor on selection */ drag: new Vek2(),
+            grabbed_handle: null,
+            is_dragging: false,
+            is_resizing: false,
+            is_editing: () => rect_x.is_dragging || rect_x.is_resizing,
+            /*  shift */ mod_keep_ratio:     false,
+            /*   ctrl */ mod_drag_by_handle: false,
+            /*    alt */ mod_drag_canvas:    false,
+            /*    alt */ mod_resize_centered: () => rect_x.mod_drag_canvas,
+        };
         rect_render_selection();
     }
 }
 function rect_selection_select() {
-    if (rect_mode && selecting_rect) {
-        selecting_rect.p2 = getCanvasCursorXY();
+    if (rect_mode && rect_x.selecting) {
+        rect_x.selecting.p2 = getCanvasCursorXY();
         rect_render_selection();
     }
 }
 function rect_selection_end() {
-    if (rect_mode && selecting_rect) {
-        const {p1, p2} = selecting_rect;
+    if (rect_mode && rect_x.selecting) {
+        const { p1, p2 } = rect_x.selecting;
         const xd = Math.abs(p1.x - p2.x);
         const yd = Math.abs(p1.y - p2.y);
         if (xd < 2 && yd < 2) rect_cancel_selection();
-        else                  rect_render_selection(true);
-        selecting_rect = null;
+        else                  rect_render_selection();
+        rect_x.selecting = null;
+        rect_x.selected = true;
+        rect_selected_buttons_toggle_off(false);
         imgv_sel.classList.remove('selecting');
     }
 }
 function rect_cancel_selection() {
-    if (rect || selecting_rect) {
+    if (rect_x.selected || rect_x.selecting) {
         rect_remove_rect();
-        selecting_rect = null;
-        imgv_wrapper.classList.add('hide');
     }
 }
 function rect_remove_rect() {
-    rect = null;
-    butt_rect_cp.classList.add('off');
-    butt_rect_ct.classList.add('off');
-    butt_rect_no.classList.add('off');
+    rect_x = null;
+    rect_selected_buttons_toggle_off(true);
     vp.classList.remove('sel-draggable');
     vp.classList.remove('sel-dragging');
+    imgv_wrapper.classList.add('hide');
+}
+function rect_selected_buttons_toggle_off(b) {
+    butt_rect_cp.classList.toggle('off', b);
+    butt_rect_ct.classList.toggle('off', b);
+    butt_rect_no.classList.toggle('off', b);
 }
 
 function rect_render_selection(save) {
-    const { p1, p2 } = selecting_rect;
+    const { p1, p2 } = rect_x.selecting;
     const x = Math.min(p1.x, p2.x);
     const y = Math.min(p1.y, p2.y);
     const w = Math.max(p1.x, p2.x) - x;
     const h = Math.max(p1.y, p2.y) - y;
-    if (save) {
-        rect = new Rekt(x, y, w, h);
-        butt_rect_cp.classList.remove('off');
-        butt_rect_ct.classList.remove('off');
-        butt_rect_no.classList.remove('off');
-    }
+    rect_x.curr = new Rekt(x, y, w, h);
     imgv_sel.style.left   = `${x}px`;
     imgv_sel.style.top    = `${y}px`;
     imgv_sel.style.width  = `${w}px`;
@@ -1637,12 +1650,13 @@ function rect_render_selection(save) {
 }
 
 function rect_edit_selection_start(handle, ctrl) {
-    rect.grabbed_handle = handle;
-    rect.editing = true;
-    if (handle) { // resize
+    rect_x.grabbed_handle = handle;
+    if (handle) {
+        rect_x.is_resizing = true;
         const { lh, th, vh, hh } = imgv_AnalyzeHandle(handle);
         console.log('rect_edit_selection_start - resize');
-    } else { // drag
+    } else {
+        rect_x.is_dragging = true;
         vp.classList.add('sel-dragging');
         console.log('rect_edit_selection_start - drag');
     }
@@ -1652,7 +1666,7 @@ function rect_edit_selection_edit() {
     // only sel frame is moving
     // ctrl = drag  +alt = drag canvas
     // handle = resize  +ctrl = drag  +shift = kepp ratio  +alt = center
-    if (rect.grabbed_handle) { // resize
+    if (rect_x.is_resizing) {
         console.log('rect_edit_selection - resize');
     }
     else { // drag
@@ -1661,8 +1675,9 @@ function rect_edit_selection_edit() {
 }
 function rect_edit_selection_end() {
     vp.classList.remove('sel-dragging');
-    rect.grabbed_handle = null;
-    rect.editing = false;
+    rect_x.grabbed_handle = null;
+    rect_x.is_resizing = false;
+    rect_x.is_dragging = false;
     console.log('rect_edit_selection_end');
 }
 
@@ -1670,26 +1685,66 @@ function rect_selection_interaction_start(e) {
     if (!rect_mode) return;
     const h = e.target.closest('.handle');
     const c = e.ctrlKey;
-    if (rect && (h || c)) rect_edit_selection_start(h, c);
-    else                  rect_selection_start();
+    if (rect_x?.selected && (h || c)) rect_edit_selection_start(h, c);
+    else                              rect_selection_start();
 }
-function rect_selection_interaction_interact(e) {
-    if (!rect_mode) return;
-    if       (rect?.editing) rect_edit_selection_edit();
-    else if (selecting_rect) rect_selection_select();
+function rect_selection_interact(e) {
+    if (!rect_x) return;
+    if      (rect_x.is_editing()) rect_edit_selection_edit();
+    else if (rect_x.selecting)    rect_selection_select();
 }
 function rect_selection_interaction_end(e) {
-    if (!rect_mode) return;
-    if       (rect?.editing) rect_edit_selection_end();
-    else if (selecting_rect) rect_selection_end();
+    if (!rect_x) return;
+    if      (rect_x.is_editing()) rect_edit_selection_end();
+    else if (rect_x.selecting)    rect_selection_end();
+}
+
+function rect_apply_mods(e, keydown) {
+    if (!rect_x) return;
+    if (rect_x.selected && e.code.startsWith('Control')) {
+        vp.classList.toggle('sel-draggable', keydown);
+    }
+    if (rect_mode && (rect_x.selected || rect_x.selecting)) {
+        if (!rect_x.mod_keep_ratio && e.shiftKey) {
+            // ~
+        }
+        else if (rect_x.mod_keep_ratio && !e.shiftKey) {
+            // ~
+        }
+        if (!rect_x.mod_drag_by_handle && e.ctrlKey) {
+            if (rect_x.is_resizing) {
+                rect_save_drag_snapshots();
+            }
+        }
+        else if (rect_x.mod_drag_by_handle && !e.ctrlKey) {
+            // ~
+        }
+        if (!rect_x.mod_drag_canvas && e.altKey) {
+            if (rect_x.is_dragging) cw_drag_enable() || cw_drag_start();
+        }
+        else if (rect_x.mod_drag_canvas && !e.altKey) {
+            if (cw_draggable) cw_drag_disable();
+            e.preventDefault(); // firefox menu bar
+        }
+        rect_x.mod_keep_ratio     = e.shiftKey;
+        rect_x.mod_drag_by_handle = e. ctrlKey;
+        rect_x.mod_drag_canvas    = e.  altKey;
+        rect_selection_interact();
+    } // as in imgv
+}
+function rect_save_drag_snapshots() {
+    const cc = getCanvasCursorXY();
+    rect_x.drag.x = cc.x - rect_x.curr.x;
+    rect_x.drag.y = cc.y - rect_x.curr.y;
 }
 
 function rect_selection_copy() {
     const canvas_temp = document.createElement('canvas');
-    canvas_temp.width  = rect.w;
-    canvas_temp.height = rect.h;
+    const { x, y, w, h } = rect_x.curr;
+    canvas_temp.width  = w;
+    canvas_temp.height = h;
     const ctx = canvas_temp.getContext('2d');
-    ctx.drawImage(canvas_draw, rect.x, rect.y, rect.w, rect.h, 0, 0, rect.w, rect.h);
+    ctx.drawImage(canvas_draw, x, y, w, h, 0, 0, w, h);
     const callback = (blob) => {
         let item = new ClipboardItem({ 'image/png': blob });
         navigator.clipboard.write([item]).then(() => temp_fx(cw, 'fx-copied-part', 500));
@@ -1699,31 +1754,25 @@ function rect_selection_copy() {
 
 function rect_selection_cut() {
     rect_selection_copy();
-    cd_fill_rect(rect, 'white');
+    cd_fill_rect(rect_x.curr, 'white');
     rect_cancel_selection();
 }
 function SETUP_RECT() {
     document.addEventListener('pointerdown', rect_selection_interaction_start);
-    document.addEventListener('pointermove', rect_selection_interaction_interact);
+    document.addEventListener('pointermove', rect_selection_interact);
     document.addEventListener('pointerup',   rect_selection_interaction_end);
+    document.addEventListener('keydown', e => rect_apply_mods(e, true));
+    document.addEventListener('keyup',   e => rect_apply_mods(e, false));
     document.addEventListener('keydown', e => {
-        if ((rect || selecting_rect) && !anySel()) {
+        if (rect_x && !anySel()) {
             if (key_is(e, 'Escape')) bind(e, butt_rect_no, rect_cancel_selection);
         }
     });
     document.addEventListener('copy', e => {
-        if (rect && !anySel()) bind(e, butt_rect_cp, rect_selection_copy);
+        if (rect_x.selected && !anySel()) bind(e, butt_rect_cp, rect_selection_copy);
     });
     document.addEventListener('cut', e => {
-        if (rect && !anySel()) bind(e, butt_rect_ct, rect_selection_cut);
-    });
-    document.addEventListener('keydown', e => {
-        if (rect && !anySel() && e.code.startsWith('Ctrl'))
-            e.preventDefault() || vp.classList.add('sel-draggable');
-    })
-    document.addEventListener('keyup', e => {
-        if (rect && !anySel() && e.code.startsWith('Ctrl'))
-            e.preventDefault() || vp.classList.remove('sel-draggable');
+        if (rect_x.selected && !anySel()) bind(e, butt_rect_ct, rect_selection_cut);
     });
 }
 //#endregion
