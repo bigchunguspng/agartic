@@ -160,6 +160,10 @@ kbd {
         top: 300px;
         transform: rotate(-3deg);
     }
+    &.draw_m {
+        top: 350px;
+        transform: rotate(2deg);
+    }
     &.bs {
         left: 735px;
         top: -15px;

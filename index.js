@@ -76,6 +76,7 @@ const in_imgv_rot   = document.getElementById('input_rotate');
 const tips_imgv     = document.getElementById('tips_imgv');
 const tips_rect     = document.getElementById('tips_rect');
 const tips_draw     = document.getElementById('tips_draw');
+const tips_draw_m   = document.getElementById('tips_draw_mods');
 const tips_bs       = document.getElementById('tips_bs');
 
 const tips_imgv_h1  = document.getElementById('tips_imgv_h1');
@@ -83,6 +84,8 @@ const tips_imgv_h2  = document.getElementById('tips_imgv_h2');
 const tips_rect_h1  = document.getElementById('tips_rect_h1');
 const tips_rect_h2  = document.getElementById('tips_rect_h2');
 const tips_rect_h3  = document.getElementById('tips_rect_h3');
+const tips_draw_h1  = document.getElementById('tips_draw_h1');
+const tips_draw_h2  = document.getElementById('tips_draw_h2');
 
 const inputs_brush  = document.getElementById('inputs_brush');
 const inputs_color  = document.getElementById('inputs_color');
@@ -512,12 +515,16 @@ function drawing_enable() {
     brush_cursor.classList.add('drawing');
     canvas_draw.classList.add('drawing');
     tips_draw.classList.remove('hide');
+    tips_draw_m.classList.remove('hide');
+    tips_draw_h1.classList.add('on');
+    tips_draw_h2.classList.remove('on');
     drawing_enabled = true;
 }
 function drawing_disable() {
     brush_cursor.classList.remove('drawing');
     canvas_draw.classList.remove('drawing');
     tips_draw.classList.add('hide');
+    tips_draw_m.classList.add('hide');
     drawing_enabled = false;
     drawing_stop();
 }
@@ -530,6 +537,8 @@ function drawing_start() {
         drawing.path.push(getCanvasCursorXY());
         drawing_RENDER_temp();
         butt_dw_mode.classList.add('off');
+        tips_draw_h1.classList.remove('on');
+        tips_draw_h2.classList.add('on');
     }
 }
 function drawing_draw(e) {
@@ -581,6 +590,8 @@ function drawing_stop(e) {
         history_write({ type: drawing_mode, pen: drawing.pen, path: drawing.path });
         drawing = null;
         butt_dw_mode.classList.remove('off');
+        tips_draw_h1.classList.add('on');
+        tips_draw_h2.classList.remove('on');
     }
 }
 
