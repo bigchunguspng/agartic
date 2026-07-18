@@ -1435,12 +1435,19 @@ function imgv_position_image(e, numpad_pos) {
     const rect = no_mods
         ? imgv.crop_real_c() // work with visible selection frame
         : imgv.curr;         // work with original rect (same when not cropped)
-    const t =  numpad_pos >= 7;
-    const b =  numpad_pos <= 3;
-    const l = (numpad_pos) % 3 === 1;
-    const r = (numpad_pos) % 3 === 0;
-    rect.x = l ? 0 :   r ? Math.round(cw_true_w - rect.w) :   Math.round((cw_true_w - rect.w) / 2);
-    rect.y = t ? 0 :   b ? Math.round(cw_true_h - rect.h) :   Math.round((cw_true_h - rect.h) / 2);
+    if (numpad_pos === 0) {
+        const cc = getCanvasCursorXY();
+        rect.x = cc.x - rect.w;
+        rect.y = cc.y - rect.h;
+    }
+    else {
+        const t =  numpad_pos >= 7;
+        const b =  numpad_pos <= 3;
+        const l = (numpad_pos) % 3 === 1;
+        const r = (numpad_pos) % 3 === 0;
+        rect.x = l ? 0 :   r ? Math.round(cw_true_w - rect.w) :   Math.round((cw_true_w - rect.w) / 2);
+        rect.y = t ? 0 :   b ? Math.round(cw_true_h - rect.h) :   Math.round((cw_true_h - rect.h) / 2);
+    }
     if (no_mods) imgv.curr = imgv_curr_from_crop_real_c(rect);
     placing_image_RENDER();
 }
@@ -1558,6 +1565,7 @@ function SETUP_IMAGE_PLACING() {
             else if (key_is(e, 'e^S')) bind(e, butt_imgv_rr, () => imgv_rotate(e.shiftKey ? +15 : +90));
             else if (key_is(e, 'q^a')) fx_click(inputs_imgv, 0) || in_imgv_rot.focus() || e.preventDefault();
             else if (key_is(e, 'F2' )) imgv_pixelated_toggle() || e.preventDefault();
+            else if (key_is(e, '0^CA')) imgv_position_image(e, 0) || e.preventDefault();
             else if (key_is(e, '1^CA')) imgv_position_image(e, 1) || e.preventDefault();
             else if (key_is(e, '2^CA')) imgv_position_image(e, 2) || e.preventDefault();
             else if (key_is(e, '3^CA')) imgv_position_image(e, 3) || e.preventDefault();
