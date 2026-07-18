@@ -153,16 +153,16 @@ kbd {
         }
     }
     &.imgv {
-        top: 300px;
-        transform: rotate(3deg);
+        top: 50%;
+        transform: translateY(-50%) rotate(3deg);
     }
     &.rect {
-        top: 300px;
-        transform: rotate(-3deg);
+        top: 50%;
+        transform: translateY(-50%) rotate(-3deg);
     }
     &.draw_m {
-        top: 350px;
-        transform: rotate(2deg);
+        top: 50%;
+        transform: translateY(-50%) rotate(2deg);
     }
     &.bs {
         left: 735px;
