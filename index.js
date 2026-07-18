@@ -1682,11 +1682,11 @@ function rect_selection_end() {
             p2.x = math_clamp(0, cw_true_w, p2.x);
             p2.y = math_clamp(0, cw_true_h, p2.y);
             rect_RENDER_selection(true);
+            rect.grabbed_handle = null;
+            rect.is_resizing = false;
+            rect.selecting = null;
+            rect.selected = true;
         }
-        rect.grabbed_handle = null;
-        rect.is_resizing = false;
-        rect.selecting = null;
-        rect.selected = true;
         rect_selected_buttons_toggle_off(false);
         imgv_sel.classList.remove('selecting');
         tips_rect_h1.classList.remove('on');
