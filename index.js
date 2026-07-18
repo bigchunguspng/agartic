@@ -1818,8 +1818,9 @@ function rect_selection_interaction_start(e) {
     if (!rect_mode) return;
     const h = e.target.closest('.handle');
     const c = e.ctrlKey;
+    const a = e.altKey;
     if (rect?.selected && (h || c)) rect_edit_selection_start(h, c);
-    else                            rect_selection_start();
+    else if (!c && !a)              rect_selection_start();
 }
 function rect_selection_interact(e) {
     if (!rect) return;
