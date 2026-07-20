@@ -26,7 +26,7 @@ Currently in alpha stage. No mobile support.
 - Dragging, zooming and flipping canvas.
 - Copy canvas content.
 - Save canvas content as `PNG`.
-- *Etc.*
+- *Etc…*
 
 ## Roadmap
 
@@ -40,9 +40,18 @@ Currently in alpha stage. No mobile support.
 
 ## Contribution
 
-1. Contributions to add features and fix bugs are welcome.
-2. If you decide to contribute, please tell me in advance, so we don't do the same work twice. Use [GitHub Issues](https://github.com/bigchunguspng/agartic/issues) if you don't have my contacts.
-3. When contributing code, follow project code style (deduce it from code) and keep UX consistent.
+Contributions to add features, fix bugs, and report bugs are welcome.
+
+To report a **bug** use [GitHub Issues](https://github.com/bigchunguspng/agartic/issues). Specify:
+- steps to reproduce
+- expected result
+- actual result
+- environment (device, OS, browser)
+- console errors (if any)
+
+Screenshots or recording would also help.
+
+When contributing **code**, follow the project code style (deduce it from code) and keep UI/UX consistent.
 
 ## Assets
 
