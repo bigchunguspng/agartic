@@ -2003,8 +2003,8 @@ function cp_apply_color_and_exit(value) {
     if (cp) {
         cp_apply_color(value);
         cp_exit();
-        fx_click(tool_last);
-        tool_activate(tool_last);
+        fx_click(tool_draw);
+        tool_activate(tool_draw);
     }
 }
 function cp_apply_color(value) {
