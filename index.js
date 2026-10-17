@@ -45,6 +45,7 @@ const butt_undo     = document.getElementById('butt_undo');
 const butt_redo     = document.getElementById('butt_redo');
 const butt_copy     = document.getElementById('butt_copy');
 const butt_paste    = document.getElementById('butt_paste');
+const butt_import   = document.getElementById('butt_import');
 const butt_save     = document.getElementById('butt_save');
 const butt_nuke     = document.getElementById('butt_nuke');
 
@@ -98,6 +99,7 @@ const inputs_brush  = document.getElementById('inputs_brush');
 const inputs_color  = document.getElementById('inputs_color');
 const inputs_imgv   = document.getElementById('inputs_imgv');
 
+const file_input    = document.getElementById('file-input');
 const drop_overlay  = document.getElementById('drop-overlay');
 
 //#endregion
@@ -1009,13 +1011,22 @@ function image_input_update() {
 }
 function SETUP_IMAGE_PASTE() {
     butt_paste  .onclick = image_paste__button;
+    butt_import .onclick = () => file_input.click();
+    file_input  .onchange = () => {
+        const file = file_input.files?.[0];
+        file_input.value = '';
+        if (file?.type.startsWith('image/'))
+            image_read_input(file);
+    };
     butt_imgv_ok.onclick = cd_draw_pasted_image;
     butt_imgv_no.onclick = placing_image_exit;
     document.addEventListener('paste', function (e) {
         if (!anyInp()) fx_click(butt_paste) || image_paste__kbd(e);
     });
     document.addEventListener('keydown', e => {
-        if (imgv && !anySel()) {
+        if (anySel()) return;
+        if          (key_is(e, 'f^c'   )) bind(e, butt_import, () => file_input.click());
+        if (imgv) {
             if      (key_is(e, 'Enter' )) cd_draw_pasted_image();
             else if (key_is(e, 'Tab'   )) cd_draw_pasted_image();
             else if (key_is(e, 'Space' )) cd_draw_pasted_image();
