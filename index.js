@@ -1484,8 +1484,10 @@ function imgv_stretch_image(scale_x, scale_y) {
         const min_h = ratio < 1 ? MIN_IMG_SIZE * ratio : MIN_IMG_SIZE;
         const new_w = Math.max(min_w, imgv.curr.w *  scale_x);
         const new_h = Math.max(min_h, imgv.curr.h * (scale_y ?? scale_x));
-        imgv.curr.x += (imgv.curr.w - new_w) / 2;
-        imgv.curr.y += (imgv.curr.h - new_h) / 2;
+        const crop_cx = imgv.crop.x + imgv.crop.w / 2;
+        const crop_cy = imgv.crop.y + imgv.crop.h / 2;
+        imgv.curr.x += (imgv.curr.w - new_w) * crop_cx;
+        imgv.curr.y += (imgv.curr.h - new_h) * crop_cy;
         imgv.curr.w = new_w;
         imgv.curr.h = new_h;
     }
