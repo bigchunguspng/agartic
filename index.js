@@ -1,5 +1,7 @@
 'use strict';
 
+const AU = 'ArrowUp', AD = 'ArrowDown', AL = 'ArrowLeft', AR = 'ArrowRight';
+
 //#region ELEMENTS
 
 const vp            = document.getElementById('viewport');
@@ -1347,6 +1349,11 @@ function imgv_interact_drag_image(cc) {
     imgv.curr.x = cc.x - imgv.drag_ci.x;
     imgv.curr.y = cc.y - imgv.drag_ci.y;
 }
+function imgv_drag_image(right, down) {
+    imgv.curr.x += right;
+    imgv.curr.y += down;
+    placing_image_RENDER();
+}
 function imgv_interact_drag_cropping(cc) {
     // todo handle rotated / flipped image ★
     const { x, y, w, h } = imgv.crop;
@@ -1575,6 +1582,10 @@ function SETUP_IMAGE_PLACING() {
             else if (key_is(e, '7^CA')) imgv_position_image(e, 7) || e.preventDefault();
             else if (key_is(e, '8^CA')) imgv_position_image(e, 8) || e.preventDefault();
             else if (key_is(e, '9^CA')) imgv_position_image(e, 9) || e.preventDefault();
+            else if (key_is(e, AR + '^ACS')) imgv_drag_image(+imgv_arrow_drag_speed(e), 0) || e.preventDefault();
+            else if (key_is(e, AL + '^ACS')) imgv_drag_image(-imgv_arrow_drag_speed(e), 0) || e.preventDefault();
+            else if (key_is(e, AD + '^ACS')) imgv_drag_image(0, +imgv_arrow_drag_speed(e)) || e.preventDefault();
+            else if (key_is(e, AU + '^ACS')) imgv_drag_image(0, -imgv_arrow_drag_speed(e)) || e.preventDefault();
         }
     });
     in_imgv_rot.addEventListener('keydown', e => {
@@ -1591,6 +1602,9 @@ function SETUP_IMAGE_PLACING() {
         e.preventDefault();
         e.stopPropagation(); // don't exit imgv
     });
+}
+function imgv_arrow_drag_speed(e) {
+    return e.altKey ? 125 : e.ctrlKey ? 25 : e.shiftKey ? 5 : 1;
 }
 //#endregion
 
