@@ -431,6 +431,21 @@ kbd {
     }
 }
 
+@media (max-width: 1280px) {
+    .panel button {
+        padding-inline: 3px;
+        &:nth-child(1 of :not(.hide)) {
+            padding-left: 6px;
+        }
+        &:nth-last-child(1 of :not(.hide)) {
+            padding-right: 6px;
+        }
+    }
+    .panel kbd {
+        display: none;
+    }
+}
+
 /* INPUTS */
 input[type="text"], input[type="number"] {
     background: rgba(255, 255, 255, 0.15);
