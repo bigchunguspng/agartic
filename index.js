@@ -1354,11 +1354,6 @@ function imgv_interact_drag_image(cc) {
     imgv.curr.x = cc.x - imgv.drag_ci.x;
     imgv.curr.y = cc.y - imgv.drag_ci.y;
 }
-function imgv_drag_image(right, down) {
-    imgv.curr.x += right;
-    imgv.curr.y += down;
-    placing_image_RENDER();
-}
 function imgv_interact_drag_cropping(cc) {
     // todo handle rotated / flipped image ★
     const { x, y, w, h } = imgv.crop;
@@ -1463,13 +1458,37 @@ function imgv_position_image(e, numpad_pos) {
     if (no_mods) imgv.curr = imgv_curr_from_crop_real_c(rect);
     placing_image_RENDER();
 }
+function imgv_drag_image(right, down) {
+    if (imgv.in_crop_mode) {
+        imgv.crop.x = math_clamp(0, 1 - imgv.crop.w, imgv.crop.x + right / imgv.curr.w);
+        imgv.crop.y = math_clamp(0, 1 - imgv.crop.h, imgv.crop.y + down / imgv.curr.h);
+    }
+    else {
+        imgv.curr.x += right;
+        imgv.curr.y += down;
+    }
+    placing_image_RENDER();
+}
 function imgv_stretch_image(scale_x, scale_y) {
-    const new_w = imgv.curr.w *  scale_x;
-    const new_h = imgv.curr.h * (scale_y ?? scale_x);
-    imgv.curr.x += (imgv.curr.w - new_w) / 2;
-    imgv.curr.y += (imgv.curr.h - new_h) / 2;
-    imgv.curr.w = new_w;
-    imgv.curr.h = new_h;
+    if (imgv.in_crop_mode) {
+        const new_w = math_clamp(MIN_IMG_SIZE / imgv.curr.w, 1, imgv.crop.w *  scale_x);
+        const new_h = math_clamp(MIN_IMG_SIZE / imgv.curr.h, 1, imgv.crop.h * (scale_y ?? scale_x));
+        imgv.crop.x = math_clamp(0, 1 - new_w, imgv.crop.x + (imgv.crop.w - new_w) / 2);
+        imgv.crop.y = math_clamp(0, 1 - new_h, imgv.crop.y + (imgv.crop.h - new_h) / 2);
+        imgv.crop.w = new_w;
+        imgv.crop.h = new_h;
+    }
+    else {
+        const ratio = imgv.curr.w / imgv.curr.h;
+        const min_w = ratio > 1 ? MIN_IMG_SIZE * ratio : MIN_IMG_SIZE;
+        const min_h = ratio < 1 ? MIN_IMG_SIZE * ratio : MIN_IMG_SIZE;
+        const new_w = Math.max(min_w, imgv.curr.w *  scale_x);
+        const new_h = Math.max(min_h, imgv.curr.h * (scale_y ?? scale_x));
+        imgv.curr.x += (imgv.curr.w - new_w) / 2;
+        imgv.curr.y += (imgv.curr.h - new_h) / 2;
+        imgv.curr.w = new_w;
+        imgv.curr.h = new_h;
+    }
     placing_image_RENDER();
 }
 function imgv_resize_true_scale() {
