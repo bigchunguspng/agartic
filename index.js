@@ -1463,9 +1463,9 @@ function imgv_position_image(e, numpad_pos) {
     if (no_mods) imgv.curr = imgv_curr_from_crop_real_c(rect);
     placing_image_RENDER();
 }
-function imgv_zoom_image(scale) {
-    const new_w = imgv.curr.w * scale;
-    const new_h = imgv.curr.h * scale;
+function imgv_stretch_image(scale_x, scale_y) {
+    const new_w = imgv.curr.w *  scale_x;
+    const new_h = imgv.curr.h * (scale_y ?? scale_x);
     imgv.curr.x += (imgv.curr.w - new_w) / 2;
     imgv.curr.y += (imgv.curr.h - new_h) / 2;
     imgv.curr.w = new_w;
@@ -1600,8 +1600,12 @@ function SETUP_IMAGE_PLACING() {
             else if (key_is(e, AL + '^ACS')) imgv_drag_image(-arrow_move_speed(e), 0) || e.preventDefault();
             else if (key_is(e, AD + '^ACS')) imgv_drag_image(0, +arrow_move_speed(e)) || e.preventDefault();
             else if (key_is(e, AU + '^ACS')) imgv_drag_image(0, -arrow_move_speed(e)) || e.preventDefault();
-            else if (key_is(e, BL + '^ACS')) imgv_zoom_image(1 / arrow_zoom_speed(e)) || e.preventDefault();
-            else if (key_is(e, BR + '^ACS')) imgv_zoom_image(    arrow_zoom_speed(e)) || e.preventDefault();
+            else if (key_is(e, BL + '^ACS')) imgv_stretch_image(1 / arrow_zoom_speed(e))    || e.preventDefault();
+            else if (key_is(e, BR + '^ACS')) imgv_stretch_image(    arrow_zoom_speed(e))    || e.preventDefault();
+            else if (key_is(e,     'j^ACS')) imgv_stretch_image(1, 1 / arrow_zoom_speed(e)) || e.preventDefault();
+            else if (key_is(e,     'k^ACS')) imgv_stretch_image(1,     arrow_zoom_speed(e)) || e.preventDefault();
+            else if (key_is(e,     'i^ACS')) imgv_stretch_image(1 / arrow_zoom_speed(e), 1) || e.preventDefault();
+            else if (key_is(e,     'o^ACS')) imgv_stretch_image(    arrow_zoom_speed(e), 1) || e.preventDefault();
         }
     });
     in_imgv_rot.addEventListener('keydown', e => {
