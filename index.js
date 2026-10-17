@@ -604,7 +604,7 @@ function drawing_RENDER(path, pen, type, ctx) {
         const { x, y } = path[0];
         if (type === HIS_PENCIL) {
             ctx.fillStyle = pen.color;
-            const o1 = pen.size % 2 == 1 ? 0.5 : 0;
+            const o1 = pen.size % 2 === 1 ? 0.5 : 0;
             const o  = pen.size / 2 + o1;
             ctx.fillRect(x - o, y - o, pen.size, pen.size);
         }
@@ -617,7 +617,7 @@ function drawing_RENDER(path, pen, type, ctx) {
     }
     else { // path.length > 1
         if (type === HIS_PENCIL) {
-            const o1 = pen.size % 2 == 1 ? 0.5 : 0;
+            const o1 = pen.size % 2 === 1 ? 0.5 : 0;
             const o  = pen.size / 2 + o1;
             const points = new Set(); // because they repeat, ok?
             if (pen.smooth) {
@@ -694,7 +694,7 @@ function drawing_RENDER(path, pen, type, ctx) {
                 const k  = steep ? dx / dy : dy / dx; // slope
                 const c  = b1 - k * a1 // b-intercept
                 const step = a1 < a2 ? 1 : -1;
-                for (let a = a1; a != a2; a += step) {
+                for (let a = a1; a !== a2; a += step) {
                     const b = Math.round(k * a + c);
                     const x = steep ? b : a;
                     const y = steep ? a : b; // restore axes
@@ -803,7 +803,7 @@ function thickness_more(e) { set_thickness(e.shiftKey ? Math.ceil (thickness * 1
 function brush_cursor_RENDER() {
     const cc = getCanvasCursorXY(true);
     const style  = brush_cursor.style;
-    const offset = drawing_mode === HIS_PENCIL && thickness % 2 == 1 ? 0.5 : 0;
+    const offset = drawing_mode === HIS_PENCIL && thickness % 2 === 1 ? 0.5 : 0;
     style.width  = `${Math.round(thickness * cw_scale)}px`;
     style.height = `${Math.round(thickness * cw_scale)}px`;
     style.left = `${Math.round(cw_x + cc.x * cw_scale - offset * cw_scale)}px`;
