@@ -1,6 +1,11 @@
 'use strict';
 
-const AU = 'ArrowUp', AD = 'ArrowDown', AL = 'ArrowLeft', AR = 'ArrowRight';
+//#region HELPERS
+const
+    AU =   'ArrowUp',   AD =   'ArrowDown',
+    AL =   'ArrowLeft', AR =   'ArrowRight',
+    BL = 'BracketLeft', BR = 'BracketRight';
+//#endregion
 
 //#region ELEMENTS
 
@@ -1458,6 +1463,15 @@ function imgv_position_image(e, numpad_pos) {
     if (no_mods) imgv.curr = imgv_curr_from_crop_real_c(rect);
     placing_image_RENDER();
 }
+function imgv_zoom_image(scale) {
+    const new_w = imgv.curr.w * scale;
+    const new_h = imgv.curr.h * scale;
+    imgv.curr.x += (imgv.curr.w - new_w) / 2;
+    imgv.curr.y += (imgv.curr.h - new_h) / 2;
+    imgv.curr.w = new_w;
+    imgv.curr.h = new_h;
+    placing_image_RENDER();
+}
 function imgv_resize_true_scale() {
     imgv.curr.x = imgv.curr.x + Math.floor((imgv.curr.w - imgv.og.w) / 2);
     imgv.curr.y = imgv.curr.y + Math.floor((imgv.curr.h - imgv.og.h) / 2);
@@ -1582,10 +1596,12 @@ function SETUP_IMAGE_PLACING() {
             else if (key_is(e, '7^CA')) imgv_position_image(e, 7) || e.preventDefault();
             else if (key_is(e, '8^CA')) imgv_position_image(e, 8) || e.preventDefault();
             else if (key_is(e, '9^CA')) imgv_position_image(e, 9) || e.preventDefault();
-            else if (key_is(e, AR + '^ACS')) imgv_drag_image(+imgv_arrow_drag_speed(e), 0) || e.preventDefault();
-            else if (key_is(e, AL + '^ACS')) imgv_drag_image(-imgv_arrow_drag_speed(e), 0) || e.preventDefault();
-            else if (key_is(e, AD + '^ACS')) imgv_drag_image(0, +imgv_arrow_drag_speed(e)) || e.preventDefault();
-            else if (key_is(e, AU + '^ACS')) imgv_drag_image(0, -imgv_arrow_drag_speed(e)) || e.preventDefault();
+            else if (key_is(e, AR + '^ACS')) imgv_drag_image(+arrow_move_speed(e), 0) || e.preventDefault();
+            else if (key_is(e, AL + '^ACS')) imgv_drag_image(-arrow_move_speed(e), 0) || e.preventDefault();
+            else if (key_is(e, AD + '^ACS')) imgv_drag_image(0, +arrow_move_speed(e)) || e.preventDefault();
+            else if (key_is(e, AU + '^ACS')) imgv_drag_image(0, -arrow_move_speed(e)) || e.preventDefault();
+            else if (key_is(e, BL + '^ACS')) imgv_zoom_image(1 / arrow_zoom_speed(e)) || e.preventDefault();
+            else if (key_is(e, BR + '^ACS')) imgv_zoom_image(    arrow_zoom_speed(e)) || e.preventDefault();
         }
     });
     in_imgv_rot.addEventListener('keydown', e => {
@@ -1603,8 +1619,11 @@ function SETUP_IMAGE_PLACING() {
         e.stopPropagation(); // don't exit imgv
     });
 }
-function imgv_arrow_drag_speed(e) {
+function arrow_move_speed(e) {
     return e.altKey ? 125 : e.ctrlKey ? 25 : e.shiftKey ? 5 : 1;
+}
+function arrow_zoom_speed(e) {
+    return e.altKey ? 2 : e.ctrlKey ? 1.25 : e.shiftKey ? 1.05 : 1.01;
 }
 //#endregion
 
