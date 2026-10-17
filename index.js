@@ -876,6 +876,7 @@ function SETUP_DRAWING() {
     butt_bs_less.onclick = thickness_less;
     butt_bs_more.onclick = thickness_more;
     butt_dw_mode.onclick = drawing_roll_drawing_mode;
+    butt_smooth .onclick = drawing_toggle_smoothing;
     canvas_draw.addEventListener('pointerdown', drawing_start);
     document.addEventListener('pointermove',    drawing_draw);
     document.addEventListener('pointerup',      drawing_stop);
