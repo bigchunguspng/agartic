@@ -41,11 +41,9 @@ kbd {
 }
 
 #viewport {
-    width: 100vw;
-    height: 100vh;
-    height: 100dvh;
+    inset: 0;
     overflow: hidden;
-    position: relative;
+    position: fixed;
     background-image: url("img/bg.png");
     background-color: #beae9e;
     background-repeat: repeat;
