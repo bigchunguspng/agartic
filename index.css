@@ -6,7 +6,12 @@ html, body {
     margin: 0;
     height: 100%;
     overflow: hidden;
-    background: #efefef;
+    background-image: url("img/bg.png");
+    background-color: #beae9e;
+    background-repeat: repeat;
+    background-size: 256px 128px;
+    background-position: 10px 10px;
+    image-rendering: pixelated;
     font-family: var(--font-main), monospace;
 }
 *, *::before, *::after {
@@ -251,8 +256,9 @@ kbd {
 
 /* PANEL */
 & .panel {
-    position: absolute;
+    position: fixed;
     left: 50%;
+    top: 0;
     transform: translateX(-50%);
     margin-block: 5px;
     height: 36px;
@@ -265,6 +271,7 @@ kbd {
     box-shadow: 0 3px 0 #666;
     cursor: default;
     &#panel-main {
+        top: auto;
         bottom: 0;
         margin-bottom: 8px;
         margin-bottom: calc(8px + env(safe-area-inset-bottom));
