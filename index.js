@@ -310,6 +310,67 @@ function SETUP_CW_ZOOM() {
     butt_zoom_in .onclick = e => cw_zoom(e, false, true);
     butt_zoom_out.onclick = e => cw_zoom(e, true,  true);
 }
+function SETUP_TOUCH() {
+    const touch_points = new Map();
+    let pinch_start_distance = 0;
+    let pinch_start_scale = 1;
+    let pinch_start_x = 0;
+    let pinch_start_y = 0;
+
+    function touch_distance() {
+        const points = [...touch_points.values()];
+        return Math.hypot(points[1].x - points[0].x, points[1].y - points[0].y);
+    }
+    function touch_center() {
+        const points = [...touch_points.values()];
+        return {
+            x: (points[0].x + points[1].x) / 2,
+            y: (points[0].y + points[1].y) / 2,
+        };
+    }
+    function pinch_start() {
+        const center = touch_center();
+        pinch_start_distance = touch_distance();
+        pinch_start_scale = cw_scale;
+        pinch_start_x = center.x;
+        pinch_start_y = center.y;
+        touch_gesture_active = true;
+        drawing_cancel();
+        cw_drag_stop();
+    }
+    function pinch_zoom() {
+        if (touch_points.size < 2) return;
+        const center = touch_center();
+        const true_x = (pinch_start_x - cw_x) / pinch_start_scale;
+        const true_y = (pinch_start_y - cw_y) / pinch_start_scale;
+        cw_scale = math_clamp(MIN_CW_SCALE, MAX_CW_SCALE,
+            pinch_start_scale * touch_distance() / pinch_start_distance);
+        cw_x = center.x - true_x * cw_scale;
+        cw_y = center.y - true_y * cw_scale;
+        cw_transform();
+    }
+    vp.addEventListener('pointerdown', e => {
+        if (e.pointerType !== 'touch') return;
+        touch_points.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (touch_points.size === 2) pinch_start();
+    }, { capture: true });
+    vp.addEventListener('pointermove', e => {
+        if (e.pointerType !== 'touch' || !touch_points.has(e.pointerId)) return;
+        touch_points.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        if (touch_gesture_active) {
+            e.preventDefault();
+            pinch_zoom();
+        }
+    }, { capture: true, passive: false });
+    window.addEventListener('pointerup',     touch_end, { capture: true });
+    window.addEventListener('pointercancel', touch_end, { capture: true });
+
+    function touch_end(e) {
+        if (e.pointerType !== 'touch') return;
+        touch_points.delete(e.pointerId);
+        if (touch_points.size < 2) touch_gesture_active = false;
+    }
+}
 //#endregion
 
 //#region CANVAS DRAG
@@ -538,7 +599,7 @@ function drawing_disable() {
     drawing_stop();
 }
 function drawing_start() {
-    if (drawing_enabled && !drawing) {
+    if (drawing_enabled && !drawing && !touch_gesture_active) {
         drawing = {
             pen: { color, size: thickness, smooth: drawing_smooth },
             path: [],
@@ -550,8 +611,16 @@ function drawing_start() {
         tips_draw_h2.classList.add('on');
     }
 }
+function drawing_cancel() {
+    if (!drawing) return;
+    co_ctx.clearRect(0, 0, cw_true_w, cw_true_h);
+    drawing = null;
+    butt_dw_mode.classList.remove('off');
+    tips_draw_h1.classList.add('on');
+    tips_draw_h2.classList.remove('on');
+}
 function drawing_draw(e) {
-    if (drawing_enabled && drawing) {
+    if (drawing_enabled && drawing && !touch_gesture_active) {
         const p = getCanvasCursorXY();
         if (e.shiftKey || e.ctrlKey) { // draw along axis
             // shift - lock axis on start
@@ -572,6 +641,7 @@ function drawing_draw(e) {
 }
 function drawing_stop(e) {    
     if (drawing) {
+        e ??= {};
         if (drawing.path.length === 1) {
             if (e.shiftKey) { // draw line from prev path last point
                 const item  = history_get_last_visible_of_type(drawing_mode);
@@ -880,6 +950,7 @@ function SETUP_DRAWING() {
     canvas_draw.addEventListener('pointerdown', drawing_start);
     document.addEventListener('pointermove',    drawing_draw);
     document.addEventListener('pointerup',      drawing_stop);
+    document.addEventListener('pointercancel',  drawing_stop);
     document.addEventListener('keydown', e => {
         if (!drawing_enabled || anyInp()) return;
         if      (key_is(e, 'w^S')) bind(e, butt_bs_more, () => thickness_more(e));
@@ -1186,7 +1257,7 @@ function imgv_draw_image_internal(ctx_2D) {
 }
 
 function imgv_interaction_start(e) {
-    if (imgv) {
+    if (imgv && !touch_gesture_active) {
         if (imgv.grabbed_handle = e.target.closest('.handle')) {
             imgv.is_resizing = true;
             vp.dataset.cursor = imgv.grabbed_handle.dataset.cursor;
@@ -1257,7 +1328,7 @@ function imgv_save_drag_snapshots() {
 }
 
 function imgv_interact() {
-    if (imgv) {
+    if (imgv && !touch_gesture_active) {
         if (imgv.is_dragging && imgv.mod_drag_canvas)
             return cw_drag();
         const render = imgv.in_crop_mode
@@ -1819,7 +1890,7 @@ function rect_RENDER_selection() {
 }
 
 function rect_edit_selection_start(handle, ctrl) {
-    if (rect) {
+    if (rect && !touch_gesture_active) {
         if (rect.grabbed_handle = handle) {
             rect.is_resizing = true;
             tips_rect_h2.classList.remove('on');
@@ -1838,7 +1909,7 @@ function rect_edit_selection_start(handle, ctrl) {
     }    
 }
 function rect_edit_selection_edit() {
-    if (rect) {
+    if (rect && !touch_gesture_active) {
         if (rect.is_dragging && rect.mod_drag_canvas)
             return cw_drag();
         let cc = getCanvasCursorXY();
@@ -2182,6 +2253,7 @@ function debug_point_at(p, color) {
 //#region HACKS
 
 const mouse = { x: 0, y: 0 };
+let touch_gesture_active = false;
 
 function SETUP_HOOKS_PRE() {
     window.w = window.innerWidth;
@@ -2345,6 +2417,7 @@ SETUP_HOOKS_PRE();
     SETUP_CW();
     SETUP_CW_DRAG();
     SETUP_CW_ZOOM();
+    SETUP_TOUCH();
     SETUP_DRAWING();
     SETUP_BRUSH_CURSOR();
     SETUP_IMAGE_SAVE();

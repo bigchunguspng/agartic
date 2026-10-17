@@ -44,6 +44,7 @@ kbd {
     inset: 0;
     overflow: hidden;
     position: fixed;
+    touch-action: none;
     background-image: url("img/bg.png");
     background-color: #beae9e;
     background-repeat: repeat;
@@ -58,6 +59,26 @@ kbd {
     }
     &.dragging, &.img-dragging, &.sel-dragging {
         cursor: grabbing;
+    }
+}
+
+@media (pointer: coarse) {
+    #canvas-wrapper .selection .handle {
+        --size: 24px;
+        --offset: -24px;
+    }
+}
+
+@media (max-width: 650px) {
+    .panel {
+        max-width: calc(100vw - 8px);
+        overflow-x: auto;
+        overflow-y: hidden;
+        scrollbar-width: none;
+        touch-action: pan-x;
+    }
+    .panel::-webkit-scrollbar {
+        display: none;
     }
 }
 
