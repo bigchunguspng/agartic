@@ -1048,6 +1048,7 @@ const co_ctx = canvas_over.getContext('2d');
 
 let imgv = null;
 let imgv_pixelated = false;
+let imgv_rot_value_prev = 0;
 
 function placing_image_start(img) {
     imgv = {
@@ -1537,7 +1538,10 @@ function imgv_restore() {
     placing_image_RENDER();
 }
 function imgv_rotate(deg) {
-    imgv.rotate = in_imgv_rot.value = (360 + imgv.rotate + deg % 360) % 360; // [0,360)
+    imgv_set_rotation(imgv.rotate + deg);
+}
+function imgv_set_rotation(deg) {
+    imgv.rotate = in_imgv_rot.value = (360 + deg % 360) % 360; // [0,360)
     imgv_sel.style.transform = `rotate(${imgv.rotate}deg)`;
     placing_image_RENDER();
     imgv_handles_restyle();
@@ -1629,13 +1633,16 @@ function SETUP_IMAGE_PLACING() {
             else if (key_is(e,     'o^ACS')) imgv_stretch_image(    arrow_zoom_speed(e), 1) || e.preventDefault();
         }
     });
+    in_imgv_rot.addEventListener('focus', () => imgv_rot_value_prev = imgv.rotate);
+    in_imgv_rot.addEventListener('input', () => imgv_set_rotation(Number(in_imgv_rot.value)));
     in_imgv_rot.addEventListener('keydown', e => {
         if (key_is(e, 'Tab') || key_is(e, 'Enter')) {
             fx_click(inputs_imgv, 2);
-            imgv_rotate(in_imgv_rot.value - imgv.rotate);
+            imgv_set_rotation(Number(in_imgv_rot.value));
         }
         else if (key_is(e, 'Escape')) {
             fx_click(inputs_imgv, 1);
+            imgv_set_rotation(imgv_rot_value_prev);
         }
         else return;
         // leave input field
