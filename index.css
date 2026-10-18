@@ -67,6 +67,16 @@ kbd {
         --size: 24px;
         --offset: -24px;
     }
+    .handle::before {
+        content: '';
+        position: absolute;
+        width: 40px;
+        height: 40px;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: all;
+    }
 }
 
 @media (max-width: 650px) {
