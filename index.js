@@ -5,6 +5,9 @@ const
     AU =   'ArrowUp',   AD =   'ArrowDown',
     AL =   'ArrowLeft', AR =   'ArrowRight',
     BL = 'BracketLeft', BR = 'BracketRight';
+const
+    lS_key_last_tool  = 'agartic:last_tool',
+    lS_key_hide_butts = 'agartic:hide_butts';
 //#endregion
 
 //#region ELEMENTS
@@ -88,6 +91,7 @@ const input_cp_txt  = document.getElementById('input_cp_txt');
 const in_imgv_rot   = document.getElementById('input_rotate');
 
 const tips_imgv     = document.getElementById('tips_imgv');
+const tips_imgv_2   = document.getElementById('tips_imgv_2');
 const tips_rect     = document.getElementById('tips_rect');
 const tips_draw     = document.getElementById('tips_draw');
 const tips_draw_m   = document.getElementById('tips_draw_mods');
@@ -118,13 +122,61 @@ let   rare_butts_hidden = false;
 function toggle_infrequent_buttons() {
     rare_butts_hidden = !rare_butts_hidden;
     rare_butts.forEach(el => el.classList.toggle('hide'));
-    localStorage.setItem('hide_butts', rare_butts_hidden ? 'Y' : 'N');
+    localStorage.setItem(lS_key_hide_butts, rare_butts_hidden ? 'Y' : 'N');
 }
 function SETUP_PANEL() {
     butt_hide.onclick = toggle_infrequent_buttons;
     document.addEventListener('keydown', e => {
         if (key_is(e, 'Backquote')) bind(e, butt_hide, toggle_infrequent_buttons);
     });
+    {
+        butt_zoom_1   .title = 'zoom to true size';
+        butt_zoom_2   .title = 'zoom to fit canvas';
+        butt_zoom_in  .title = 'zoom in';
+        butt_zoom_out .title = 'zoom out';
+        butt_cv_px    .title = 'change canvas interpolation mode (smooth/sharp)';
+        butt_cv_size  .title = 'change canvas size';
+        butt_cv_vflip .title = 'flip canvas vertically';
+        butt_cv_hflip .title = 'flip canvas horizontally';
+        tool_pick     .title = 'pick color';
+        tool_drag     .title = 'drag canvas';
+        tool_draw     .title = 'draw';
+        tool_rect     .title = 'rect selection';
+        butt_hide     .title = 'toggle extra buttons';
+        butt_undo     .title = 'undo';
+        butt_redo     .title = 'redo';
+        butt_copy     .title = 'copy canvas';
+        butt_paste    .title = 'paste image';
+        butt_import   .title = 'import image';
+        butt_save     .title = 'save canvas';
+        butt_nuke     .title = 'clear canvas and history';
+        butt_bs_less  .title = 'make it smaller';
+        butt_bs_more  .title = 'make it bigger';
+        butt_inv_col  .title = 'invert color';
+        butt_dw_mode  .title = 'toggle brush/pencil';
+        butt_smooth   .title = 'toggle smoothing';
+        in_thickness  .title = 'thickness';
+        input_cp_col  .title = 'color';
+        input_cp_txt  .title = 'color (hex/name)';
+        butt_imgv_s1  .title = 'restore original size';
+        butt_imgv_s2  .title = 'stretch image to canvas';
+        butt_imgv_s3  .title = 'stretch CROPPED image to canvas';
+        butt_imgv_vf  .title = 'flip image vertically';
+        butt_imgv_hf  .title = 'flip image horizontally';
+        butt_imgv_rl  .title = 'rotate 90° counterclockwise';
+        butt_imgv_rr  .title = 'rotate 90° clockwise';
+        butt_imgv_px  .title = 'change image interpolation mode (smooth/sharp)';
+        butt_imgv_re  .title = 'restore';
+        butt_rect_ct  .title = 'cut selection';
+        butt_rect_cp  .title = 'copy selection';
+    }
+}
+function load_prefs() {
+    const hide = localStorage.getItem(lS_key_hide_butts);
+    if   (hide === "Y") toggle_infrequent_buttons();
+    const tool_id = localStorage.getItem(lS_key_last_tool);
+    const tool = tool_id ? document.getElementById(tool_id) : tool_draw;
+    if   (tool) tool_activate(tool);
 }
 //#endregion
 
@@ -154,9 +206,11 @@ function tool_activate(tool) {
     else if (tool_active === tool_draw) drawing_enable();
     else if (tool_active === tool_pick) cp_start();
     else if (tool_active === tool_rect) rect_enable();
+
+    if (tool !== tool_imgv)
+        localStorage.setItem(lS_key_last_tool, tool_active.id);
 }
 function SETUP_TOOLS() {
-    tool_activate(tool_draw);
     panel_main.addEventListener('click', e => {
         const tool = tools.find(x => x.contains(e.target));
         if (tool) tool_activate(tool);
@@ -1236,6 +1290,7 @@ function placing_image_start(img) {
     imgv_enter_drag_mode();
     in_imgv_rot.value = 0;
     tips_imgv   .classList.remove('hide');
+    tips_imgv_2 .classList.remove('hide');
     imgv_wrapper.classList.remove('hide');
     vp.classList.add('img-draggable');
     tips_imgv_h1.classList.remove('on');
@@ -1247,6 +1302,7 @@ function placing_image_exit() {
     fx_click(tool_last);
     tool_activate(tool_last);
     tips_imgv   .classList.add('hide');
+    tips_imgv_2 .classList.add('hide');
     imgv_wrapper.classList.add('hide');
     vp.classList.remove('img-draggable');
     vp.classList.remove('img-dragging');
@@ -2482,8 +2538,7 @@ SETUP_HOOKS_PRE();
 }
 SETUP_HOOKS_POST();
 {
-    const hide = localStorage.getItem('hide_butts');
-    if   (hide === "Y") toggle_infrequent_buttons();
+    load_prefs();
     cw_init_size();
     cp_color_inputs_update_both(color);
     set_thickness(2);

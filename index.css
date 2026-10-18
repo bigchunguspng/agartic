@@ -177,7 +177,7 @@ kbd {
         bottom: 300px;
         transform: rotate(5deg);
     }
-    &.draw {
+    &#tips_draw {
         left: 600px;
         top: 15px;
         transform: rotate(-2deg);
@@ -187,7 +187,12 @@ kbd {
             transform: rotate(2deg);
         }
     }
-    &.imgv {
+    &#tips_imgv_2 {
+        left: 810px;
+        top: 15px;
+        transform: rotate(-2deg);
+    }
+    &#tips_imgv {
         top: 50%;
         transform: translateY(-50%) rotate(3deg);
     }
