@@ -82,6 +82,8 @@ const butt_imgv_x   = document.getElementById('butt_imgv_m_drag');
 
 const butt_rect_ct  = document.getElementById('butt_rect_cut');
 const butt_rect_cp  = document.getElementById('butt_rect_copy');
+const butt_rect_ex  = document.getElementById('butt_rect_ex');
+const butt_rect_dp  = document.getElementById('butt_rect_dp');
 const butt_rect_no  = document.getElementById('butt_rect_no');
 
 const brush_cursor  = document.getElementById('brush_cursor');
@@ -169,6 +171,8 @@ function SETUP_PANEL() {
         butt_imgv_re  .title = 'restore';
         butt_rect_ct  .title = 'cut selection';
         butt_rect_cp  .title = 'copy selection';
+        butt_rect_ex  .title = 'extract (cut in-place)';
+        butt_rect_dp  .title = 'duplicate (copy in-place)';
     }
 }
 function load_prefs() {
@@ -662,7 +666,7 @@ function SETUP_HISTORY_CTL() {
     butt_redo.onclick = history_redo;
     butt_nuke.onclick = history_clear;
     document.addEventListener('keydown', function (e) {
-        if (anyInp()) return;
+        if (anyInp() || rect?.selected) return;
         if      (key_is(e, 'y^c' )) bind(e, butt_redo, history_redo);
         else if (key_is(e, 'z^cs')) bind(e, butt_redo, history_redo);
         else if (key_is(e, 'z^c' )) bind(e, butt_undo, history_undo);
@@ -1171,10 +1175,11 @@ function image_read_input(file) {
     };
     reader.readAsDataURL(file);
 }
-function image_init(url) {
+function image_init(url, after_start) {
     const img = new Image();
     img.onload = () => {
         placing_image_start(img);
+        after_start?.();
         URL.revokeObjectURL(url);
     };
     img.src = url;
@@ -1977,6 +1982,8 @@ function rect_remove_rect() {
 function rect_selected_buttons_toggle_off(b) {
     butt_rect_cp.classList.toggle('off', b);
     butt_rect_ct.classList.toggle('off', b);
+    butt_rect_ex.classList.toggle('off', b);
+    butt_rect_dp.classList.toggle('off', b);
     butt_rect_no.classList.toggle('off', b);
 }
 function rect_RENDER_selection() {
@@ -2138,18 +2145,42 @@ function rect_save_drag_snapshot() {
     rect.drag.y = cc.y - rect.curr.y;
 }
 
-function rect_selection_copy() {
+function rect_selection_canvas() {
     const canvas_temp = document.createElement('canvas');
     const { x, y, w, h } = rect.curr;
     canvas_temp.width  = w;
     canvas_temp.height = h;
     const ctx = canvas_temp.getContext('2d');
     ctx.drawImage(canvas_draw, x, y, w, h, 0, 0, w, h);
+    return canvas_temp;
+}
+
+function rect_selection_copy() {
+    const canvas_temp = rect_selection_canvas();
     const callback = (blob) => {
         let item = new ClipboardItem({ 'image/png': blob });
         navigator.clipboard.write([item]).then(() => temp_fx(cw, 'fx-copied-part', 500));
     };
     canvas_temp.toBlob(callback, 'image/png');
+}
+
+function rect_selection_paste_in_place(extract) {
+    if (!rect?.selected) return;
+    const r = rect.curr;
+    const selection = new Rekt(r.x, r.y, r.w, r.h);
+    const canvas_temp = rect_selection_canvas();
+    canvas_temp.toBlob((blob) => {
+        const item = new ClipboardItem({ 'image/png': blob });
+        navigator.clipboard.write([item]).then(() => temp_fx(cw, 'fx-copied-part', 500));
+        if (extract) cd_fill_rect(selection, 'white');
+        rect_cancel_selection();
+        image_init(URL.createObjectURL(blob), () => {
+            imgv.curr.x = selection.x;
+            imgv.curr.y = selection.y;
+            placing_image_RENDER();
+            imgv_handles_restyle();
+        });
+    }, 'image/png');
 }
 
 function rect_selection_cut() {
@@ -2161,6 +2192,8 @@ function SETUP_RECT() {
     butt_rect_no.onclick = rect_cancel_selection;
     butt_rect_cp.onclick = rect_selection_copy;
     butt_rect_ct.onclick = rect_selection_cut;
+    butt_rect_ex.onclick = () => rect_selection_paste_in_place(true);
+    butt_rect_dp.onclick = () => rect_selection_paste_in_place(false);
     document.addEventListener('pointerdown', rect_selection_interaction_start);
     document.addEventListener('pointermove', rect_selection_interact);
     document.addEventListener('pointerup',   rect_selection_interaction_end);
@@ -2168,7 +2201,9 @@ function SETUP_RECT() {
     document.addEventListener('keyup',   e => rect_apply_mods(e, false));
     document.addEventListener('keydown', e => {
         if (rect && !anySel()) {
-            if (key_is(e, 'Escape')) bind(e, butt_rect_no, rect_cancel_selection);
+            if      (key_is(e, 'Escape')) bind(e, butt_rect_no, rect_cancel_selection);
+            else if (key_is(e, 'e^c'   )) bind(e, butt_rect_ex, () => rect_selection_paste_in_place(true));
+            else if (key_is(e, 'd^c'   )) bind(e, butt_rect_dp, () => rect_selection_paste_in_place(false));
         }
     });
     document.addEventListener('copy', e => {
