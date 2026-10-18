@@ -45,6 +45,7 @@ const tool_rect     = document.getElementById('tool_rect');
 const tool_laso     = document.getElementById('tool_laso');
 const tool_imgv     = document.getElementById('tool_imgv');
 
+const butt_hide     = document.getElementById('butt_hide');
 const butt_undo     = document.getElementById('butt_undo');
 const butt_redo     = document.getElementById('butt_redo');
 const butt_copy     = document.getElementById('butt_copy');
@@ -109,6 +110,24 @@ const drop_overlay  = document.getElementById('drop-overlay');
 
 //#endregion
 
+//#region PANEL
+
+const rare_butts = [butt_cv_px, butt_cv_size, butt_cv_vflip, butt_cv_hflip, butt_copy, butt_paste];
+let   rare_butts_hidden = false;
+
+function toggle_infrequent_buttons() {
+    rare_butts_hidden = !rare_butts_hidden;
+    rare_butts.forEach(el => el.classList.toggle('hide'));
+    localStorage.setItem('hide_butts', rare_butts_hidden ? 'Y' : 'N');
+}
+function SETUP_PANEL() {
+    butt_hide.onclick = toggle_infrequent_buttons;
+    document.addEventListener('keydown', e => {
+        if (key_is(e, 'Backquote')) bind(e, butt_hide, toggle_infrequent_buttons);
+    });
+}
+//#endregion
+
 //#region TOOLS
 
 const tools = [tool_pick, tool_drag, tool_draw, tool_rect, tool_laso, tool_imgv];
@@ -130,6 +149,8 @@ function tool_activate(tool) {
     tool_last = tool_active;
     tool_active = tool;
     panel_aux_items.forEach(x => x.classList.toggle('hide', !x.classList.contains(tool.id)));
+    const hide = localStorage.getItem('hide_butts');
+    if   (hide === "Y") toggle_infrequent_buttons();
 
     if      (tool_active === tool_drag) cw_drag_enable();
     else if (tool_active === tool_draw) drawing_enable();
@@ -2446,6 +2467,7 @@ SETUP_HOOKS_PRE();
 {
     SETUP_HISTORY_SYNC();
     SETUP_HISTORY_CTL();
+    SETUP_PANEL();
     SETUP_TOOLS();
     SETUP_CW();
     SETUP_CW_DRAG();
