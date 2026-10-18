@@ -117,7 +117,8 @@ const panel_aux_items = Array.from(panel_aux.children);
 let tool_active, tool_last;
 
 function tool_activate(tool) {
-    if (tool === tool_active) return;
+    if (tool      === tool_active) return;
+    if (tool_imgv === tool_active && imgv) return;
 
     if      (tool_active === tool_drag) cw_drag_disable();
     else if (tool_active === tool_draw) drawing_disable();
