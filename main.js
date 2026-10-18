@@ -257,13 +257,15 @@ function cw_change_true_size() {
     const nw = parseInt(dims[0]);
     const nh = parseInt(dims[1] ?? dims[0]);
     if (nw && nh) {
+        const old_w = cw_true_w;
+        const old_h = cw_true_h;
         cw_true_w = nw;
         cw_true_h = nh;
         localStorage.setItem('cw_w', cw_true_w);
         localStorage.setItem('cw_h', cw_true_h);
         cw_set_size();
         cw_resize_true_scale();
-        history_draw();
+        history_write_canvas_size(old_w, old_h, cw_true_w, cw_true_h);
     }
     else {
         alert(`S-Sorry artist-kun, I... d-don't understand you...
@@ -563,36 +565,75 @@ async function history_load() {
     });
     history_draw();
 }
-function history_draw(increment) {
+function history_draw(increment, size_override) {
     if (increment) { // redo
-        const item = history[history_len - 1];
-        if   (item.type === HIS_IMAGE)
-            cd_apply_history_img(item.data);
-        else
-            cd_apply_history_non_image(item);          
+        return history_apply_item(history[history_len - 1]);
     }
     else { // undo / load
-        const i_last_image = history_get_last_visible_of_type_index(HIS_IMAGE) ?? -1;
-        if   (i_last_image < 0) {
+        const i_last_base = history_get_last_snapshot_index();
+        const size = size_override ?? history_canvas_size_at(history_len);
+        history_apply_canvas_size(size.w, size.h);
+        if (i_last_base < 0) {
             cd_clear();
-            history_draw_non_image_from(0);
+            return history_replay_range(0, history_len);
         }
-        else // start from the last image to avoid blinking
-            cd_apply_history_img(history[i_last_image].data).then(() => history_draw_non_image_from(i_last_image + 1));
+        else {
+            return history_apply_item(history[i_last_base])
+                .then(() => history_replay_range(i_last_base + 1, history_len));
+        }
     }
+}
+function history_canvas_size_at(index) {
+    for (let i = index - 1; i >= 0; i--) {
+        const item = history[i];
+        if   (item?.type === HIS_CANVAS_SIZE) return item;
+    }
+    const  first_resize = history.find(item => item?.type === HIS_CANVAS_SIZE);
+    return first_resize
+        ? { w: first_resize.old_w, h: first_resize.old_h }
+        : { w: cw_true_w, h: cw_true_h };
+}
+function history_apply_canvas_size(w, h) {
+    const changed = cw_true_w !== w || cw_true_h !== h;
+    cw_true_w = w;
+    cw_true_h = h;
+    localStorage.setItem('cw_w', cw_true_w);
+    localStorage.setItem('cw_h', cw_true_h);
+    if (changed) cw_set_size();
+    cw_center();
 }
 function history_get_last_visible_of_type(type) {
     for (let i = history_len - 1; i >= 0; i--)
         if (history[i].type === type) return history[i];
 }
-function history_get_last_visible_of_type_index(type) {
-    for (let i = history_len - 1; i >= 0; i--)
-        if (history[i].type === type) return i;
+function history_is_snapshot(item) {
+    return item.type === HIS_IMAGE || item.type === HIS_CANVAS_SIZE;
 }
-function history_draw_non_image_from(offset) {
-    for (let i = offset; i < history_len; i++) {
-        cd_apply_history_non_image(history[i]);
-    }
+function history_get_last_snapshot_index() {
+    for (let i = history_len - 1; i >= 0; i--)
+        if (history_is_snapshot(history[i]))
+            return i;
+}
+function history_apply_item(item) {
+    if (item.type === HIS_CANVAS_SIZE)
+        history_apply_canvas_size(item.w, item.h);
+    if (history_is_snapshot(item))
+        return cd_apply_history_img(item.data);
+    cd_apply_history_non_image(item);
+}
+async function history_replay_range(offset, end) {
+    for (let i = offset; i < end; i++)
+        await history_apply_item(history[i]);
+}
+function history_write_canvas_size(old_w, old_h, w, h) {
+    history_draw(false, { w, h }).then(() => {
+        canvas_draw.toBlob(data => {
+            history_write({
+                type: HIS_CANVAS_SIZE,
+                old_w, old_h, w, h, data,
+            });
+        }, 'image/webp', 0.95);
+    });
 }
 async function history_write(item) {
     if (history.length > history_len) await history_discard_pending();
@@ -682,7 +723,7 @@ function SETUP_HISTORY_CTL() {
 
 //#region DRAWING
 
-const HIS_BRUSH = 0, HIS_IMAGE = 1, HIS_PENCIL = 2, HIS_RECT = 3; // HIS = HISTORY
+const HIS_BRUSH = 0, HIS_IMAGE = 1, HIS_PENCIL = 2, HIS_RECT = 3, HIS_CANVAS_SIZE = 4; // HIS = HISTORY
 const drawing_modes = [HIS_BRUSH, HIS_PENCIL];
 const LOCK_X = 1, LOCK_Y = 2;
 const cd_ctx = canvas_draw.getContext('2d');
@@ -1722,13 +1763,15 @@ function imgv_resize_canvas() {
     const image = imgv.crop_real_c();
     const canvas = new Rekt(0, 0, Math.ceil(image.w), Math.ceil(image.h));
     imgv.curr = imgv_curr_from_crop_real_c(canvas);
+    const old_w = cw_true_w;
+    const old_h = cw_true_h;
     cw_true_w = canvas.w;
     cw_true_h = canvas.h;
     localStorage.setItem('cw_w', cw_true_w);
     localStorage.setItem('cw_h', cw_true_h);
     cw_set_size();
     cw_center();
-    history_draw();
+    history_write_canvas_size(old_w, old_h, cw_true_w, cw_true_h);
     placing_image_RENDER();
 }
 function imgv_vflip() {
