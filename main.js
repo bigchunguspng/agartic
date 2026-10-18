@@ -6,6 +6,8 @@ const
     AL =   'ArrowLeft', AR =   'ArrowRight',
     BL = 'BracketLeft', BR = 'BracketRight';
 const
+    lS_key_cw_w       = 'agartic:cw_w',
+    lS_key_cw_h       = 'agartic:cw_h',
     lS_key_last_tool  = 'agartic:last_tool',
     lS_key_hide_butts = 'agartic:hide_butts';
 //#endregion
@@ -244,8 +246,8 @@ let cw_true_h;
 let cw_vflip, cw_hflip;
 
 function cw_init_size() {
-    const stored_w = localStorage.getItem('agartic:cw_w');
-    const stored_h = localStorage.getItem('agartic:cw_h');
+    const stored_w = localStorage.getItem(lS_key_cw_w);
+    const stored_h = localStorage.getItem(lS_key_cw_h);
     cw_true_w = stored_w ? parseInt(stored_w) : 1280;
     cw_true_h = stored_h ? parseInt(stored_h) : 720;
     cw_set_size();
@@ -275,8 +277,8 @@ function cw_set_size(w, h) {
     if (w && h) {
         cw_true_w = w;
         cw_true_h = h;
-        localStorage.setItem('agartic:cw_w', cw_true_w);
-        localStorage.setItem('agartic:cw_h', cw_true_h);
+        localStorage.setItem(lS_key_cw_w, cw_true_w);
+        localStorage.setItem(lS_key_cw_h, cw_true_h);
     }
     cw.style.width  = `${cw_true_w}px`;
     cw.style.height = `${cw_true_h}px`;
