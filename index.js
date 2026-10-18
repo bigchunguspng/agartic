@@ -149,8 +149,6 @@ function tool_activate(tool) {
     tool_last = tool_active;
     tool_active = tool;
     panel_aux_items.forEach(x => x.classList.toggle('hide', !x.classList.contains(tool.id)));
-    const hide = localStorage.getItem('hide_butts');
-    if   (hide === "Y") toggle_infrequent_buttons();
 
     if      (tool_active === tool_drag) cw_drag_enable();
     else if (tool_active === tool_draw) drawing_enable();
@@ -2484,6 +2482,8 @@ SETUP_HOOKS_PRE();
 }
 SETUP_HOOKS_POST();
 {
+    const hide = localStorage.getItem('hide_butts');
+    if   (hide === "Y") toggle_infrequent_buttons();
     cw_init_size();
     cp_color_inputs_update_both(color);
     set_thickness(2);
