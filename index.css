@@ -80,6 +80,9 @@ kbd {
     .panel::-webkit-scrollbar {
         display: none;
     }
+    .panel .TBA {
+        display: none;
+    }
 }
 
 #viewport, .handle {
