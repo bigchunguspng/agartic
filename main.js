@@ -575,7 +575,7 @@ function history_draw(increment, size_override) {
         const i_last_base = history_get_last_snapshot_index();
         const size = size_override ?? history_canvas_size_at(history_len);
         history_apply_canvas_size(size.w, size.h);
-        if (i_last_base < 0) {
+        if (i_last_base === undefined) {
             cd_clear();
             return history_replay_range(0, history_len);
         }
