@@ -77,6 +77,7 @@ kbd {
         transform: translate(-50%, -50%);
         pointer-events: all;
     }
+    .tips > *:not(.g) { display: none; }
 }
 
 @media (max-width: 650px) {
