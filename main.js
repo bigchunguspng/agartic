@@ -244,8 +244,8 @@ let cw_true_h;
 let cw_vflip, cw_hflip;
 
 function cw_init_size() {
-    const stored_w = localStorage.getItem('cw_w');
-    const stored_h = localStorage.getItem('cw_h');
+    const stored_w = localStorage.getItem('agartic:cw_w');
+    const stored_h = localStorage.getItem('agartic:cw_h');
     cw_true_w = stored_w ? parseInt(stored_w) : 1280;
     cw_true_h = stored_h ? parseInt(stored_h) : 720;
     cw_set_size();
@@ -259,11 +259,7 @@ function cw_change_true_size() {
     if (nw && nh) {
         const old_w = cw_true_w;
         const old_h = cw_true_h;
-        cw_true_w = nw;
-        cw_true_h = nh;
-        localStorage.setItem('cw_w', cw_true_w);
-        localStorage.setItem('cw_h', cw_true_h);
-        cw_set_size();
+        cw_set_size(nw, nh);
         cw_resize_true_scale();
         history_write_canvas_size(old_w, old_h, cw_true_w, cw_true_h);
     }
@@ -275,7 +271,13 @@ Or a single number to make canvas square.`);
         cw_change_true_size();
     }
 }
-function cw_set_size() {
+function cw_set_size(w, h) {
+    if (w && h) {
+        cw_true_w = w;
+        cw_true_h = h;
+        localStorage.setItem('agartic:cw_w', cw_true_w);
+        localStorage.setItem('agartic:cw_h', cw_true_h);
+    }
     cw.style.width  = `${cw_true_w}px`;
     cw.style.height = `${cw_true_h}px`;
     canvas_draw.width  = cw_true_w;
@@ -594,13 +596,8 @@ function history_canvas_size_at(index) {
         : { w: cw_true_w, h: cw_true_h };
 }
 function history_apply_canvas_size(w, h) {
-    const changed = cw_true_w !== w || cw_true_h !== h;
-    cw_true_w = w;
-    cw_true_h = h;
-    localStorage.setItem('cw_w', cw_true_w);
-    localStorage.setItem('cw_h', cw_true_h);
-    if (changed) cw_set_size();
-    cw_center();
+    const change = cw_true_w !== w || cw_true_h !== h;
+    if   (change) cw_set_size(w, h) || cw_center();
 }
 function history_get_last_visible_of_type(type) {
     for (let i = history_len - 1; i >= 0; i--)
@@ -1765,11 +1762,7 @@ function imgv_resize_canvas() {
     imgv.curr = imgv_curr_from_crop_real_c(canvas);
     const old_w = cw_true_w;
     const old_h = cw_true_h;
-    cw_true_w = canvas.w;
-    cw_true_h = canvas.h;
-    localStorage.setItem('cw_w', cw_true_w);
-    localStorage.setItem('cw_h', cw_true_h);
-    cw_set_size();
+    cw_set_size(canvas.w, canvas.h);
     cw_center();
     history_write_canvas_size(old_w, old_h, cw_true_w, cw_true_h);
     placing_image_RENDER();
