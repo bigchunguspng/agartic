@@ -131,7 +131,7 @@ function SETUP_PANEL() {
     });
     {
         butt_zoom_1   .title = 'zoom to true size';
-        butt_zoom_2   .title = 'zoom to fit canvas';
+        butt_zoom_2   .title = 'maximize canvas';
         butt_zoom_in  .title = 'zoom in';
         butt_zoom_out .title = 'zoom out';
         butt_cv_px    .title = 'change canvas interpolation mode (smooth/sharp)';
@@ -332,10 +332,11 @@ function cw_resize_true_scale() {
 }
 function cw_resize_fit_screen() {
     const vw = vp.clientWidth;
-    const vh = vp.clientHeight;
+    const vh = vp.clientHeight - 2 * (36+12);
     cw_scale = Math.min(vw / cw_true_w, vh / cw_true_h);
-    cw_x = (vw - cw_true_w * cw_scale) / 2;
-    cw_y = (vh - cw_true_h * cw_scale) / 2;
+    const  gap_y = (vp.clientHeight - vh) / 2;
+    cw_y = gap_y + (vh - cw_true_h * cw_scale) / 2;
+    cw_x =         (vw - cw_true_w * cw_scale) / 2;
     cw_transform();
 }
 function cw_zoom(e, out, centered) {
