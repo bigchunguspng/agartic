@@ -248,7 +248,7 @@ const CW_ZOOM_FACTOR_DEFAULT = 1.1;
 const CW_ZOOM_FACTOR_SHIFT   = 1.35;
 
 function cw_transform() {
-    cw.style.transform = `translate(${Math.floor(cw_x)}px, ${Math.floor(cw_y)}px) scale(${cw_scale})`;
+    cw.style.transform = `translate(${cw_x}px, ${cw_y}px) scale(${cw_scale})`;
     brush_cursor_RENDER();
 }
 function cw_resize_true_scale() {
@@ -326,6 +326,9 @@ function SETUP_TOUCH() {
     let pinch_start_scale = 1;
     let pinch_start_x = 0;
     let pinch_start_y = 0;
+    let pinch_start_cw_x = 0;
+    let pinch_start_cw_y = 0;
+    let pinch_render_pending = false;
 
     function touch_distance() {
         const points = [...touch_points.values()];
@@ -338,35 +341,51 @@ function SETUP_TOUCH() {
             y: (points[0].y + points[1].y) / 2,
         };
     }
+    function touch_position(e) {
+        const rect = vp.getBoundingClientRect();
+        return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+    }
     function pinch_start() {
         const center = touch_center();
         pinch_start_distance = touch_distance();
         pinch_start_scale = cw_scale;
         pinch_start_x = center.x;
         pinch_start_y = center.y;
+        pinch_start_cw_x = cw_x;
+        pinch_start_cw_y = cw_y;
         touch_gesture_active = true;
         drawing_cancel();
         cw_drag_stop();
     }
+    function pinch_render() {
+        pinch_render_pending = false;
+        cw_transform();
+    }
     function pinch_zoom() {
         if (touch_points.size < 2) return;
         const center = touch_center();
-        const true_x = (pinch_start_x - cw_x) / pinch_start_scale;
-        const true_y = (pinch_start_y - cw_y) / pinch_start_scale;
+        const distance = touch_distance();
+        if (!pinch_start_distance || !distance) return;
+        const true_x = (pinch_start_x - pinch_start_cw_x) / pinch_start_scale;
+        const true_y = (pinch_start_y - pinch_start_cw_y) / pinch_start_scale;
         cw_scale = math_clamp(MIN_CW_SCALE, MAX_CW_SCALE,
-            pinch_start_scale * touch_distance() / pinch_start_distance);
+            pinch_start_scale * distance / pinch_start_distance);
         cw_x = center.x - true_x * cw_scale;
         cw_y = center.y - true_y * cw_scale;
-        cw_transform();
+        if (!pinch_render_pending) {
+            pinch_render_pending = true;
+            requestAnimationFrame(pinch_render);
+        }
     }
     vp.addEventListener('pointerdown', e => {
         if (e.pointerType !== 'touch') return;
-        touch_points.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        touch_points.set(e.pointerId, touch_position(e));
         if (touch_points.size === 2) pinch_start();
+        if (touch_points.size >=  2) e.preventDefault();
     }, { capture: true });
     vp.addEventListener('pointermove', e => {
         if (e.pointerType !== 'touch' || !touch_points.has(e.pointerId)) return;
-        touch_points.set(e.pointerId, { x: e.clientX, y: e.clientY });
+        touch_points.set(e.pointerId, touch_position(e));
         if (touch_gesture_active) {
             e.preventDefault();
             pinch_zoom();
@@ -378,7 +397,10 @@ function SETUP_TOUCH() {
     function touch_end(e) {
         if (e.pointerType !== 'touch') return;
         touch_points.delete(e.pointerId);
-        if (touch_points.size < 2) touch_gesture_active = false;
+        if (touch_points.size < 2) {
+            touch_gesture_active = false;
+            pinch_render_pending = false;
+        }
     }
 }
 //#endregion
@@ -414,7 +436,7 @@ function cw_drag_start() {
     }
 }
 function cw_drag() {
-    if (cw_draggable && cw_dragging) {
+    if (cw_draggable && cw_dragging && !touch_gesture_active) {
         cw_x = cw_dragging_from.cw_x + (mouse.x - cw_dragging_from.mouse_x);
         cw_y = cw_dragging_from.cw_y + (mouse.y - cw_dragging_from.mouse_y);
         cw_transform();
