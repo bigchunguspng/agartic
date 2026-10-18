@@ -2158,6 +2158,9 @@ function rect_selection_cut() {
     rect_cancel_selection();
 }
 function SETUP_RECT() {
+    butt_rect_no.onclick = rect_cancel_selection;
+    butt_rect_cp.onclick = rect_selection_copy;
+    butt_rect_ct.onclick = rect_selection_cut;
     document.addEventListener('pointerdown', rect_selection_interaction_start);
     document.addEventListener('pointermove', rect_selection_interact);
     document.addEventListener('pointerup',   rect_selection_interaction_end);
