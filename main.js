@@ -941,6 +941,7 @@ function drawing_RENDER(path, pen, type, ctx) {
             ctx.lineJoin = ctx.lineCap = 'round';
             ctx.strokeStyle = pen.color;
             ctx.lineWidth   = pen.size;
+            ctx.setLineDash([0]); // firefox - ensure round lineJoins by forcing software rendering
             ctx.beginPath();
             if (pen.smooth) {
                 const p1 = path[1];
