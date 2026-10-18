@@ -80,9 +80,6 @@ kbd {
     .panel::-webkit-scrollbar {
         display: none;
     }
-    .panel .TBA {
-        display: none;
-    }
 }
 
 #viewport, .handle {
@@ -387,8 +384,8 @@ kbd {
                 color: gold;
             }
         }
-        &.TBA span {
-            text-decoration: line-through;
+        &.TBA {
+            display: none;
         }
     }
     & img {
@@ -401,6 +398,9 @@ kbd {
     }
     & kbd {
         width: 16px;
+        &.m {
+            width: 24px;
+        }
         &.w {
             width: 32px;
         }
@@ -450,6 +450,12 @@ kbd {
             --border-l: #957980;
             --shadow: #4A2D35;
         }
+    }
+}
+#butt_cv_vfl,
+#butt_cv_hfl {
+    & img {
+        filter: contrast(1.3) brightness(0.85) hue-rotate(190deg);
     }
 }
 

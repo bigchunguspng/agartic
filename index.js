@@ -33,6 +33,10 @@ const butt_zoom_1   = document.getElementById('butt_zoom_1');
 const butt_zoom_2   = document.getElementById('butt_zoom_2');
 const butt_zoom_in  = document.getElementById('butt_zoom_in');
 const butt_zoom_out = document.getElementById('butt_zoom_out');
+const butt_cv_px    = document.getElementById('butt_cv_px');
+const butt_cv_size  = document.getElementById('butt_cv_size');
+const butt_cv_vflip = document.getElementById('butt_cv_vfl');
+const butt_cv_hflip = document.getElementById('butt_cv_hfl');
 
 const tool_pick     = document.getElementById('tool_pick');
 const tool_drag     = document.getElementById('tool_drag');
@@ -67,6 +71,7 @@ const butt_imgv_vf  = document.getElementById('butt_imgv_vflip');
 const butt_imgv_hf  = document.getElementById('butt_imgv_hflip');
 const butt_imgv_rl  = document.getElementById('butt_imgv_rot_l');
 const butt_imgv_rr  = document.getElementById('butt_imgv_rot_r');
+const butt_imgv_px  = document.getElementById('butt_imgv_px');
 const butt_imgv_re  = document.getElementById('butt_imgv_restore');
 const butt_imgv_c   = document.getElementById('butt_imgv_m_crop');
 const butt_imgv_x   = document.getElementById('butt_imgv_m_drag');
@@ -217,10 +222,15 @@ function getCanvasCursorXY(ignore_flip) {
     return { x, y };
 }
 function SETUP_CW() {
+    butt_cv_px   .onclick = cw_pixelated_toggle;
+    butt_cv_size .onclick = cw_change_true_size;
+    butt_cv_vflip.onclick = () => cw_flip(true);
+    butt_cv_hflip.onclick = () => cw_flip(false);
     document.addEventListener('keydown', e => {
-        if      (key_is(e, 'F1^a' )) cw_change_true_size() || e.preventDefault();
-        else if (key_is(e,  'w^a' )) cw_flip(true)  || e.preventDefault();
-        else if (key_is(e,  'd^a' )) cw_flip(false) || e.preventDefault();
+        if      (key_is(e, 'F1'   )) bind(e, butt_cv_px,    cw_pixelated_toggle);
+        else if (key_is(e, 'F1^a' )) bind(e, butt_cv_size,  cw_change_true_size);
+        else if (key_is(e,  'w^a' )) bind(e, butt_cv_vflip, () => cw_flip(true));
+        else if (key_is(e,  'd^a' )) bind(e, butt_cv_hflip, () => cw_flip(false));
     });
 }
 //#endregion
@@ -297,7 +307,6 @@ function SETUP_CW_ZOOM() {
         else if (key_is(e, '=^S')) bind(e, butt_zoom_in,  () => cw_zoom(e, false, true));
         else if (key_is(e, '-^S')) bind(e, butt_zoom_out, () => cw_zoom(e, true,  true));
         else if (key_is(e, '_^S')) bind(e, butt_zoom_out, () => cw_zoom(e, true,  true));
-        else if (key_is(e, 'F1' )) cw_pixelated_toggle() || e.preventDefault();
     });
     window.addEventListener('resize', () => {
         // keep canvas position relative to center
@@ -1675,6 +1684,7 @@ function SETUP_IMAGE_PLACING() {
     butt_imgv_re.onclick = imgv_restore;
     butt_imgv_c .onclick = imgv_enter_crop_mode;
     butt_imgv_x .onclick = imgv_enter_drag_mode;
+    butt_imgv_px.onclick = imgv_pixelated_toggle;
     document.addEventListener('pointerdown', imgv_interaction_start);
     document.addEventListener('pointermove', imgv_interact);
     document.addEventListener('pointerup',   imgv_interaction_stop);
@@ -1692,8 +1702,8 @@ function SETUP_IMAGE_PLACING() {
             else if (key_is(e, 'x'  )) bind(e, butt_imgv_x, imgv_enter_drag_mode);
             else if (key_is(e, 'q^S')) bind(e, butt_imgv_rl, () => imgv_rotate(e.shiftKey ? -15 : -90));
             else if (key_is(e, 'e^S')) bind(e, butt_imgv_rr, () => imgv_rotate(e.shiftKey ? +15 : +90));
+            else if (key_is(e, 'F2' )) bind(e, butt_imgv_px, imgv_pixelated_toggle);
             else if (key_is(e, 'q^a')) fx_click(inputs_imgv, 0) || in_imgv_rot.focus() || e.preventDefault();
-            else if (key_is(e, 'F2' )) imgv_pixelated_toggle() || e.preventDefault();
             else if (key_is(e, '0^CA')) imgv_position_image(e, 0) || e.preventDefault();
             else if (key_is(e, '1^CA')) imgv_position_image(e, 1) || e.preventDefault();
             else if (key_is(e, '2^CA')) imgv_position_image(e, 2) || e.preventDefault();
