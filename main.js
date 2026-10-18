@@ -71,6 +71,7 @@ const butt_imgv_no  = document.getElementById('butt_imgv_no');
 const butt_imgv_s1  = document.getElementById('butt_imgv_zoom_1');
 const butt_imgv_s2  = document.getElementById('butt_imgv_zoom_2');
 const butt_imgv_s3  = document.getElementById('butt_imgv_zoom_3');
+const butt_imgv_rs  = document.getElementById('butt_imgv_resize');
 const butt_imgv_vf  = document.getElementById('butt_imgv_vflip');
 const butt_imgv_hf  = document.getElementById('butt_imgv_hflip');
 const butt_imgv_rl  = document.getElementById('butt_imgv_rot_l');
@@ -163,6 +164,7 @@ function SETUP_PANEL() {
         butt_imgv_s1  .title = 'restore original size';
         butt_imgv_s2  .title = 'stretch image to canvas';
         butt_imgv_s3  .title = 'stretch CROPPED image to canvas';
+        butt_imgv_rs  .title = 'resize canvas to image';
         butt_imgv_vf  .title = 'flip image vertically';
         butt_imgv_hf  .title = 'flip image horizontally';
         butt_imgv_rl  .title = 'rotate 90° counterclockwise';
@@ -330,8 +332,11 @@ function cw_transform() {
 }
 function cw_resize_true_scale() {
     cw_scale = 1;
-    cw_x = (vp.clientWidth  - cw_true_w) / 2;
-    cw_y = (vp.clientHeight - cw_true_h) / 2;
+    cw_center();
+}
+function cw_center() {
+    cw_x = (vp.clientWidth  - cw_true_w * cw_scale) / 2;
+    cw_y = (vp.clientHeight - cw_true_h * cw_scale) / 2;
     cw_transform();
 }
 function cw_resize_fit_screen() {
@@ -1713,6 +1718,19 @@ function imgv_resize_stretch_crop() {
     imgv.curr = imgv_curr_from_crop_real_c(c);
     placing_image_RENDER();
 }
+function imgv_resize_canvas() {
+    const image = imgv.crop_real_c();
+    const canvas = new Rekt(0, 0, Math.ceil(image.w), Math.ceil(image.h));
+    imgv.curr = imgv_curr_from_crop_real_c(canvas);
+    cw_true_w = canvas.w;
+    cw_true_h = canvas.h;
+    localStorage.setItem('cw_w', cw_true_w);
+    localStorage.setItem('cw_h', cw_true_h);
+    cw_set_size();
+    cw_center();
+    history_draw();
+    placing_image_RENDER();
+}
 function imgv_vflip() {
     imgv.vflip = !imgv.vflip;
     placing_image_RENDER();
@@ -1781,6 +1799,7 @@ function SETUP_IMAGE_PLACING() {
     butt_imgv_s1.onclick = imgv_resize_true_scale;
     butt_imgv_s2.onclick = imgv_resize_stretch;
     butt_imgv_s3.onclick = imgv_resize_stretch_crop;
+    butt_imgv_rs.onclick = imgv_resize_canvas;
     butt_imgv_vf.onclick = imgv_vflip;
     butt_imgv_hf.onclick = imgv_hflip;
     butt_imgv_rl.onclick = e => imgv_rotate(e.shiftKey ? -15 : -90);
@@ -1799,6 +1818,7 @@ function SETUP_IMAGE_PLACING() {
             if      (key_is(e, '1^a')) bind(e, butt_imgv_s1, imgv_resize_true_scale);
             else if (key_is(e, '2^a')) bind(e, butt_imgv_s2, imgv_resize_stretch);
             else if (key_is(e, '3^a')) bind(e, butt_imgv_s3, imgv_resize_stretch_crop);
+            else if (key_is(e, '4^a')) bind(e, butt_imgv_rs, imgv_resize_canvas);
             else if (key_is(e, 'w'  )) bind(e, butt_imgv_vf, imgv_vflip);
             else if (key_is(e, 'd'  )) bind(e, butt_imgv_hf, imgv_hflip);
             else if (key_is(e, 'r'  )) bind(e, butt_imgv_re, imgv_restore);
