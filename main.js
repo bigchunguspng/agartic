@@ -182,9 +182,6 @@ function SETUP_PANEL() {
 function load_prefs() {
     const hide = localStorage.getItem(lS_key_hide_butts);
     if   (hide === "Y") toggle_infrequent_buttons();
-    const tool_id = localStorage.getItem(lS_key_last_tool);
-    const tool = tool_id ? document.getElementById(tool_id) : tool_draw;
-    if   (tool) tool_activate(tool);
 }
 //#endregion
 
@@ -195,6 +192,11 @@ const panel_aux_items = Array.from(panel_aux.children);
 
 let tool_active, tool_last;
 
+function load_tool() {
+    const tool_id = localStorage.getItem(lS_key_last_tool);
+    const tool = tool_id ? document.getElementById(tool_id) : tool_draw;
+    if   (tool) tool_activate(tool);
+}
 function tool_activate(tool) {
     if (tool      === tool_active) return;
     if (tool_imgv === tool_active && imgv) return;
@@ -2639,6 +2641,7 @@ SETUP_HOOKS_POST();
     load_prefs();
     cw_init_size();
     cp_color_inputs_update_both(color);
+    load_tool();
     set_thickness(2);
     history_load();
 }
