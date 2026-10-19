@@ -629,6 +629,7 @@ async function history_replay_range(offset, end) {
         await history_apply_item(history[i]);
 }
 function history_write_canvas_size(old_w, old_h, w, h) {
+    if (old_w === w && old_h === h) return;
     history_draw(false, { w, h }).then(() => {
         canvas_draw.toBlob(data => {
             history_write({
