@@ -448,6 +448,7 @@ function SETUP_TOUCH() {
         pinch_start_cw_y = cw_y;
         touch_gesture_active = true;
         drawing_cancel();
+        rect_cancel_selection();
         cw_drag_stop();
     }
     function pinch_render() {
@@ -2174,7 +2175,7 @@ function rect_edit_selection_end() {
 }
 
 function rect_selection_interaction_start(e) {
-    if (!rect_mode) return;
+    if (!rect_mode || touch_gesture_active) return;
     const h = e.target.closest('.handle');
     const c = e.ctrlKey;
     const a = e.altKey;
@@ -2182,12 +2183,12 @@ function rect_selection_interaction_start(e) {
     else if (!c && !a)              rect_selection_start();
 }
 function rect_selection_interact(e) {
-    if (!rect) return;
+    if (!rect || touch_gesture_active) return;
     if      (rect.is_editing()) rect_edit_selection_edit();
     else if (rect.selecting)    rect_selection_select();
 }
 function rect_selection_interaction_end(e) {
-    if (!rect) return;
+    if (!rect || touch_gesture_active) return;
     if      (rect.is_editing()) rect_edit_selection_end();
     else if (rect.selecting)    rect_selection_end();
 }
