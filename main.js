@@ -1190,12 +1190,16 @@ function SETUP_IMAGE_SAVE() {
 //#endregion
 
 //#region IMAGE COPY
+function cd_copy_canvas_to_clipboard(canvas, fx_class) {
+    const blob = new Promise((resolve) => {
+        canvas.toBlob(blob => resolve(blob), 'image/png');
+    });
+    const item = new ClipboardItem({ 'image/png': blob });
+    return navigator.clipboard.write([item])
+        .then(() => temp_fx(cw, fx_class, 500));
+}
 function cd_copy_to_clipboard() {
-    const callback = (blob) => {
-        let item = new ClipboardItem({ 'image/png': blob });
-        navigator.clipboard.write([item]).then(() => temp_fx(cw, 'fx-copied', 500));
-    };
-    canvas_draw.toBlob(callback, 'image/png');
+    cd_copy_canvas_to_clipboard(canvas_draw, 'fx-copied');
 }
 function SETUP_IMAGE_COPY() {
     butt_copy.onclick = cd_copy_to_clipboard;
@@ -2240,11 +2244,7 @@ function rect_selection_canvas() {
 
 function rect_selection_copy() {
     const canvas_temp = rect_selection_canvas();
-    const callback = (blob) => {
-        let item = new ClipboardItem({ 'image/png': blob });
-        navigator.clipboard.write([item]).then(() => temp_fx(cw, 'fx-copied-part', 500));
-    };
-    canvas_temp.toBlob(callback, 'image/png');
+    cd_copy_canvas_to_clipboard(canvas_temp, 'fx-copied-part');
 }
 
 function rect_selection_paste_in_place(extract) {
@@ -2252,9 +2252,8 @@ function rect_selection_paste_in_place(extract) {
     const r = rect.curr;
     const selection = new Rekt(r.x, r.y, r.w, r.h);
     const canvas_temp = rect_selection_canvas();
+    cd_copy_canvas_to_clipboard(canvas_temp, 'fx-copied-part');
     canvas_temp.toBlob((blob) => {
-        const item = new ClipboardItem({ 'image/png': blob });
-        navigator.clipboard.write([item]).then(() => temp_fx(cw, 'fx-copied-part', 500));
         if (extract) cd_fill_rect(selection, 'white');
         rect_cancel_selection();
         image_init(URL.createObjectURL(blob), () => {
@@ -2290,10 +2289,10 @@ function SETUP_RECT() {
         }
     });
     document.addEventListener('copy', e => {
-        if (rect.selected && !anySel()) bind(e, butt_rect_cp, rect_selection_copy);
+        if (rect && rect.selected && !anySel()) bind(e, butt_rect_cp, rect_selection_copy);
     });
     document.addEventListener('cut', e => {
-        if (rect.selected && !anySel()) bind(e, butt_rect_ct, rect_selection_cut);
+        if (rect && rect.selected && !anySel()) bind(e, butt_rect_ct, rect_selection_cut);
     });
 }
 //#endregion
