@@ -1129,6 +1129,16 @@ function SETUP_DRAWING() {
         tips_bs.classList.add('hide');
         tips_draw.classList.remove('move');
     });
+    in_thickness.addEventListener('input', () => set_thickness(in_thickness.value));
+    in_thickness.addEventListener('change', () => {
+        set_thickness(in_thickness.value);
+        in_thickness.blur();
+    });
+    inputs_brush.addEventListener('submit', e => {
+        e.preventDefault();
+        set_thickness(in_thickness.value);
+        in_thickness.blur();
+    });
     in_thickness.addEventListener('keydown', e => {
         if (key_is(e, 'Tab') || key_is(e, 'Enter')) {
             fx_click(inputs_brush, 2);
@@ -1896,6 +1906,15 @@ function SETUP_IMAGE_PLACING() {
     });
     in_imgv_rot.addEventListener('focus', () => imgv_rot_value_prev = imgv.rotate);
     in_imgv_rot.addEventListener('input', () => imgv_set_rotation(Number(in_imgv_rot.value)));
+    in_imgv_rot.addEventListener('change', () => {
+        imgv_set_rotation(Number(in_imgv_rot.value));
+        in_imgv_rot.blur();
+    });
+    inputs_imgv.addEventListener('submit', e => {
+        e.preventDefault();
+        imgv_set_rotation(Number(in_imgv_rot.value));
+        in_imgv_rot.blur();
+    });
     in_imgv_rot.addEventListener('keydown', e => {
         if (key_is(e, 'Tab') || key_is(e, 'Enter')) {
             fx_click(inputs_imgv, 2);
@@ -2354,6 +2373,15 @@ function SETUP_COLOR_PICKER() {
     input_cp_col.addEventListener('input',  () => cp_apply_color                (input_cp_col.value));
     input_cp_col.addEventListener('change', () => cp_apply_color_and_exit       (input_cp_col.value));
     input_cp_txt.addEventListener('input',  () => input_color_update(valid_color(input_cp_txt.value)));
+    input_cp_txt.addEventListener('change', () => {
+        cp_apply_color_and_exit(valid_color(input_cp_txt.value));
+        input_cp_txt.blur();
+    });
+    inputs_color.addEventListener('submit', e => {
+        e.preventDefault();
+        cp_apply_color_and_exit(valid_color(input_cp_txt.value));
+        input_cp_txt.blur();
+    });
     input_cp_txt.addEventListener('keydown', e => {
         if (key_is(e, 'Tab') || key_is(e, 'Enter')) {
             const new_color = valid_color(input_cp_txt.value);

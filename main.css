@@ -283,7 +283,7 @@ kbd {
         margin-bottom: calc(8px + env(safe-area-inset-bottom));
     }
     & .hide { display: none; }
-    & > div {
+    & > div, & > form {
         padding-inline: 6px;
     }
     & > * {

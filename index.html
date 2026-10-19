@@ -157,18 +157,18 @@
             <path d="M4 18 C8 8, 16 8, 20 18" fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" />
         </svg>
     </button>
-    <div id="inputs_brush"     class="tool_draw">
+    <form id="inputs_brush" class="tool_draw">
         <img src="img/icons/media-record.png">
-        <kbd class="w">S-z</kbd> <input type="number" id="input_thickness">
+        <kbd class="w">S-z</kbd> <input type="number" id="input_thickness" inputmode="numeric" enterkeyhint="done">
         <kbd class="n w">Esc</kbd><kbd class="y w">Tab</kbd>
-    </div>
-    <div id="inputs_color"     class="tool_draw tool_pick">
+    </form>
+    <form id="inputs_color" class="tool_draw tool_pick">
         <img src="img/icons/applications-graphics.png">
         <kbd class="w">S-x</kbd> <input type="color"  id="input_cp_col">
         <div class="divider"></div>
-        <kbd class="w">S-c</kbd> <input type="text"   id="input_cp_txt">
+        <kbd class="w">S-c</kbd> <input type="text"   id="input_cp_txt" enterkeyhint="done">
         <kbd class="n w">Esc</kbd><kbd class="y w">Tab</kbd>
-    </div>
+    </form>
     <button id="butt_inv_color"    class="tool_draw tool_pick"><kbd>v</kbd><img src="img/icons/stock_filters-invert.png"></button>
     <button id="butt_cp_no"    class="tool_pick"> <kbd class="w">Esc</kbd> <img src="img/icons/dialog-error.png"></button>
     <button id="butt_cp_ok"    class="tool_pick"> <kbd class="w">Tab</kbd> <img src="img/icons/emblem-default.png"></button>
@@ -186,11 +186,11 @@
     <button id="butt_imgv_rot_r"   class="tool_imgv modal drag_mode"> <kbd>e</kbd> <img src="img/icons/object-rotate-right.png"></button>
     <button id="butt_imgv_px"      class="tool_imgv modal drag_mode"> <kbd class="m">F2</kbd> <img src="img/icons/edit-find.png"></button>
     <button id="butt_imgv_restore" class="tool_imgv">                 <kbd>r</kbd> <img src="img/icons/view-refresh.png" class="flip"></button>
-    <div id="inputs_imgv"          class="tool_imgv modal drag_mode">
+    <form id="inputs_imgv"         class="tool_imgv modal drag_mode">
         <img src="img/icons/view-refresh.png">
-        <kbd class="w">A-q</kbd> <div class="deg"><input type="number" id="input_rotate"></div>
+        <kbd class="w">A-q</kbd> <div class="deg"><input type="number" id="input_rotate" inputmode="decimal" enterkeyhint="done"></div>
         <kbd class="n w">Esc</kbd><kbd class="y w">Tab</kbd>
-    </div>
+    </form>
     <button id="butt_imgv_no"      class="tool_imgv"> <kbd class="w">Esc</kbd> <img src="img/icons/dialog-error.png"></button>
     <button id="butt_imgv_ok"      class="tool_imgv"> <kbd class="w">Tab</kbd> <img src="img/icons/emblem-default.png"></button>
 
