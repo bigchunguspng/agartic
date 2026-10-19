@@ -362,6 +362,9 @@ kbd {
             & kbd {
                 color: #bbb;
             }
+            & img {
+                filter: grayscale(0.3) contrast(0.7);
+            }
         }
         &.active {
             &[id^="tool"] span {
