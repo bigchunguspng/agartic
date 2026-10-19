@@ -337,6 +337,7 @@ const CW_ZOOM_FACTOR_SHIFT   = 1.35;
 function cw_transform() {
     cw.style.transform = `translate(${cw_x}px, ${cw_y}px) scale(${cw_scale})`;
     brush_cursor_RENDER();
+    imgv_wrapper.style = `--cw_scale: ${cw_scale}`;
 }
 function cw_resize_true_scale() {
     cw_scale = 1;

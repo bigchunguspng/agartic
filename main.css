@@ -62,24 +62,6 @@ kbd {
     }
 }
 
-@media (pointer: coarse) {
-    #canvas-wrapper .selection .handle {
-        --size: 24px;
-        --offset: -24px;
-    }
-    .handle::before {
-        content: '';
-        position: absolute;
-        width: 40px;
-        height: 40px;
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        pointer-events: all;
-    }
-    .tips > *:not(.g) { display: none; }
-}
-
 #viewport, .handle {
     &[data-cursor="ew"] { cursor: ew-resize; }
     &[data-cursor="ns"] { cursor: ns-resize; }
@@ -217,6 +199,7 @@ kbd {
     & canvas,
     & #canvas-wrapper-flip,
     & #imgv-wrapper {
+        --cw_scale: 1;
         position: absolute;
         inset: 0;
         width: 100%;
@@ -244,6 +227,7 @@ kbd {
         & .handle {
             --size: 10px;
             --offset: -10px;
+            --offset-s: -15px;
             width:  var(--size);
             height: var(--size);
             position: absolute;
@@ -257,7 +241,7 @@ kbd {
             &.v { right: calc(50% - var(--size) / 2); }
             &.h { top:   calc(50% - var(--size) / 2); }
             &.tt, &.rr, &.bb, &.ll {
-                --offset: -15px;
+                --offset: var(--offset-s);
                 transform: rotate(45deg);
             }
         }
@@ -602,4 +586,24 @@ input[type="color"] {
     color: white;
     font-size: 2rem;
     pointer-events: none;
+}
+
+@media (pointer: coarse) {
+    #canvas-wrapper .selection .handle {
+        --size: 16px;
+        --offset: -16px;
+        --offset-s: -24px;
+    }
+    .handle::before {
+        content: '';
+        position: absolute;
+        width:  calc(36px / var(--cw_scale));
+        height: calc(36px / var(--cw_scale));
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        pointer-events: all;
+        background: #8888;
+    }
+    .tips > *:not(.g) { display: none; }
 }
