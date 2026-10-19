@@ -63,6 +63,7 @@ const butt_bs_less  = document.getElementById('butt_bs_less');
 const butt_bs_more  = document.getElementById('butt_bs_more');
 const butt_inv_col  = document.getElementById('butt_inv_color');
 const butt_cp_no    = document.getElementById('butt_cp_no');
+const butt_cp_ok    = document.getElementById('butt_cp_ok');
 const butt_dw_mode  = document.getElementById('butt_dw_mode');
 const butt_smooth   = document.getElementById('butt_smooth');
 const img_raw       = document.getElementById('img_raw');
@@ -2347,6 +2348,7 @@ function invert_color() {
 }
 function SETUP_COLOR_PICKER() {
     butt_cp_no.onclick = () => cp_apply_color_and_exit(color);
+    butt_cp_ok.onclick = () => cp_apply_color_and_exit(input_cp_col.value);
     butt_inv_col.onclick = invert_color;
     input_cp_col.addEventListener('input',  () => cp_apply_color                (input_cp_col.value));
     input_cp_col.addEventListener('change', () => cp_apply_color_and_exit       (input_cp_col.value));
@@ -2379,6 +2381,7 @@ function SETUP_COLOR_PICKER() {
             else if (key_is(e, 'v'  )) bind(e, butt_inv_col, invert_color);
         }
         if (cp && key_is(e, 'Escape')) cp_apply_color_and_exit(color); // esc -> exit cp
+        if (cp && key_is(e, 'Tab'   )) cp_apply_color_and_exit(input_cp_col.value); // tab -> exit cp
     });
 }
 //#endregion
