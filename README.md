@@ -4,25 +4,25 @@
 ![CSS3](https://img.shields.io/badge/CSS3-1572B6?logo=css&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?logo=javascript&logoColor=black)
 
-# agartic
+# <img height="24px" src="/img/icon-32.png"> agartic
 
 Simple web graphics editor with good keyboard controls.
 
-Currently in alpha stage. No mobile support.
+Currently in alpha stage.
 
 ## Goals
 
-- Enough features for making memes (except post processing).
+- Enough features for making memes (except post-processing).
 - Controls that don't require taking left hand off keyboard and right hand off mouse.
 - Self-explanatory UI.
 
 ## Features
 
-- **Image import**. Both pasting and dragging from file manager work. Pasted image can be moved, scaled, rotated, cropped, and flipped before applying it.
+- **Image import** via pasting, dragging from file manager, or using import button. Inserted image can be moved, scaled, rotated, cropped, and flipped before applying it.
 - **Drawing**. Brush color, size, type (pen/pencil), and smoothing (on/off) can be changed.
 - **Picking color**. Color can be picked from canvas, selected via default color input, or specified with text.
 - **Rectangular selection**. Selected region can be cut or copied.
-- **Undo & redo**. History is persistent and unlimited. Progress is syncronized between browser tabs.
+- **Undo & redo**. History is persistent and unlimited. Progress is synchronized between browser tabs.
 - Dragging, zooming and flipping canvas.
 - Copy canvas content.
 - Save canvas content as `PNG`.
@@ -36,7 +36,7 @@ Currently in alpha stage. No mobile support.
 - Persistent UI state.
 - History import & export.
 - Save canvas contents as `JPEG`.
-- Mobile support (maybe).
+- Mobile support (in progress).
 
 ## Contribution
 
@@ -55,5 +55,5 @@ When contributing **code**, follow the project code style (deduce it from code) 
 
 ## Assets
 
-- Icons: [hrdwrrsk/adwaita-xfce-icon-theme](https://github.com/hrdwrrsk/adwaita-xfce-icon-theme).
-- Background - edited linen texture from Vintage Story.
+- <img height="12px" src="/img/icons/media-floppy.png"> Icons: [hrdwrrsk/adwaita-xfce-icon-theme](https://github.com/hrdwrrsk/adwaita-xfce-icon-theme).
+- <img height="12px" src="/img/bg.png"> Background - edited linen texture from Vintage Story.
