@@ -80,19 +80,6 @@ kbd {
     .tips > *:not(.g) { display: none; }
 }
 
-@media (max-width: 650px) {
-    .panel {
-        max-width: calc(100vw - 8px);
-        overflow-x: auto;
-        overflow-y: hidden;
-        scrollbar-width: none;
-        touch-action: pan-x;
-    }
-    .panel::-webkit-scrollbar {
-        display: none;
-    }
-}
-
 #viewport, .handle {
     &[data-cursor="ew"] { cursor: ew-resize; }
     &[data-cursor="ns"] { cursor: ns-resize; }
@@ -475,7 +462,17 @@ kbd {
     }
 }
 
-@media (max-width: 1280px) {
+@media (max-width: 1440px) {
+    .panel {
+        max-width: calc(100vw - 8px);
+        overflow-x: auto;
+        overflow-y: clip;
+        scrollbar-width: none;
+        touch-action: pan-x;
+    }
+    .panel::-webkit-scrollbar {
+        display: none;
+    }
     .panel button {
         padding-inline: 3px;
         &:nth-child(1 of :not(.hide)) {
@@ -487,6 +484,11 @@ kbd {
     }
     .panel kbd {
         display: none;
+    }
+    .panel button.active {
+        & img {
+            transform: translateY(3px) scale(0.75);
+        }
     }
 }
 
