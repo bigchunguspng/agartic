@@ -432,6 +432,35 @@ function cw_pixelated_toggle() {
     cw.classList.toggle('pixelated', cw_pixelated);
 }
 function SETUP_CW_ZOOM() {
+    setup_horizontal_touch(inputs_brush, (delta_x, e) => {
+        delta_x > 0 ? thickness_more(e) : thickness_less(e);
+    });
+    setup_horizontal_touch(inputs_imgv,  (delta_x, e) => {
+        imgv_rotate(delta_x > 0 ? 1 : -1);
+    });
+    function setup_horizontal_touch(el, change) {
+        let previous_x;
+        el.addEventListener('pointerdown', e => {
+            if (e.pointerType === 'touch') {
+                previous_x = e.clientX;
+                el.setPointerCapture(e.pointerId);
+            }
+        });
+        el.addEventListener('pointermove', e => {
+            if (e.pointerType !== 'touch' || previous_x === undefined) return;
+            const delta_x = e.clientX - previous_x;
+            if (!delta_x) return;
+            previous_x = e.clientX;
+            e.preventDefault();
+            change(delta_x, e);
+        }, { passive: false });
+        el.addEventListener('pointerup', e => {
+            previous_x = undefined;
+            if (el.hasPointerCapture(e.pointerId))
+                el.releasePointerCapture(e.pointerId);
+        });
+        el.addEventListener('pointercancel', () => { previous_x = undefined; });
+    }
     vp.addEventListener('wheel', e => {
         e.preventDefault();
         if      (input_active(in_thickness)) { // OFFTOP
@@ -450,6 +479,18 @@ function SETUP_CW_ZOOM() {
             cw_y -= e.shiftKey ? e.deltaX : e.deltaY;
             cw_transform();
         }
+    }, { passive: false });
+    inputs_brush.addEventListener('wheel', e => {
+        if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+        e.preventDefault();
+        e.deltaX > 0 ? thickness_more(e) : thickness_less(e);
+    }, { passive: false });
+    inputs_imgv.addEventListener('wheel', e => {
+        if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+        e.preventDefault();
+        const mul1 = e.shiftKey   ?  5 : 1;
+        const mul2 = e.deltaY > 0 ? -1 : 1;
+        imgv_rotate(mul1 * mul2);
     }, { passive: false });
     window.addEventListener('keydown', e => {
         if      (key_is(e, '1^c')) bind(e, butt_zoom_1, cw_resize_true_scale);

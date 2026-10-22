@@ -479,6 +479,10 @@ kbd {
             transform: translateY(3px) scale(0.75);
         }
     }
+    #inputs_brush,
+    #inputs_imgv {
+        touch-action: none;
+    }
 }
 
 /* INPUTS */
