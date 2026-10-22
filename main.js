@@ -2476,9 +2476,13 @@ function SETUP_COLOR_PICKER() {
         input_cp_txt.blur();
     });
     inputs_color.addEventListener('submit', e => {
-        e.preventDefault();
-        cp_apply_color_and_exit(valid_color(input_cp_txt.value));
+        const new_color = valid_color(input_cp_txt.value);
+        fx_click(inputs_color, 3);
+        cp
+            ? cp_apply_color_and_exit(new_color)  // cp -> exit
+            : cp_apply_color         (new_color); // drawing/…
         input_cp_txt.blur();
+        e.preventDefault();
     });
     input_cp_txt.addEventListener('keydown', e => {
         if (key_is(e, 'Tab') || key_is(e, 'Enter')) {
