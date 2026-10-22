@@ -546,7 +546,7 @@ function SETUP_TOUCH() {
         pinch_start_cw_y = cw_y;
         touch_gesture_active = true;
         drawing_cancel();
-        rect_cancel_selection();
+        // rect_cancel_selection();
         cw_drag_stop();
     }
     function pinch_render() {
