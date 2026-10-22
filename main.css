@@ -226,6 +226,7 @@ kbd {
         outline: 1px dashed black;
         & .handle {
             --size: 10px;
+            --safe-size: 20px;
             --offset: -10px;
             --offset-s: -15px;
             width:  var(--size);
@@ -244,6 +245,17 @@ kbd {
                 --offset: var(--offset-s);
                 transform: rotate(45deg);
             }
+        }
+        .handle::before {
+            content: '';
+            position: absolute;
+            width:  calc(var(--safe-size) / var(--cw_scale));
+            height: calc(var(--safe-size) / var(--cw_scale));
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            pointer-events: all;
+            /*background: #8888;*/
         }
         &.selecting .handle { display: none; }
     }
@@ -690,19 +702,9 @@ input[type="color"] {
 @media (pointer: coarse) {
     #canvas-wrapper .selection .handle {
         --size: 16px;
+        --safe-size: 36px;
         --offset: -16px;
         --offset-s: -24px;
-    }
-    .handle::before {
-        content: '';
-        position: absolute;
-        width:  calc(36px / var(--cw_scale));
-        height: calc(36px / var(--cw_scale));
-        left: 50%;
-        top: 50%;
-        transform: translate(-50%, -50%);
-        pointer-events: all;
-        background: #8888;
     }
     .tips > *:not(.g) { display: none; }
     #panel-aux {
