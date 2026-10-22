@@ -334,6 +334,8 @@ Or a single number to make canvas square.`);
     }
 }
 function cw_set_size(w, h) {
+    const change = cw_true_w !== w || cw_true_h !== h;
+    if  (!change) return;
     if (w && h) {
         cw_true_w = w;
         cw_true_h = h;
