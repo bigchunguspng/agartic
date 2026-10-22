@@ -117,6 +117,63 @@ const inputs_imgv   = document.getElementById('inputs_imgv');
 
 const file_input    = document.getElementById('file-input');
 const drop_overlay  = document.getElementById('drop-overlay');
+const error_overlay = document.getElementById('error-overlay');
+const error_details = document.getElementById('error-details');
+const error_close   = document.getElementById('error-close');
+const error_copy    = document.getElementById('error-copy');
+
+//#endregion
+
+//#region ERROR SCREEN
+
+let error_text = '';
+let error_visible = false;
+
+function error_to_text(error) {
+    if (error instanceof Error)
+        return `${error.name}: ${error.message}\n${error.stack}`;
+    if (typeof error === 'string')
+        return error;
+    try   { return JSON.stringify(error, null, 2) || String(error); }
+    catch { return String(error); }
+}
+function show_error(error, source) {
+    if (error_visible) {
+        error_text += `\n--- ${source} ---\n${error_to_text(error)}`;
+    }
+    else {
+        error_text = error_to_text(error);
+        error_visible = true;
+        error_overlay.hidden = false;
+    }
+    error_details.textContent = error_text;
+    if (error_close !== document.activeElement)
+        error_close.focus();
+}
+function close_error() {
+    error_visible = false;
+    error_overlay.hidden = true;
+}
+function copy_error() {
+    navigator.clipboard.writeText(error_text).then();
+}
+function SETUP_ERROR_SCREEN() {
+    error_close.onclick = close_error;
+    error_copy .onclick =  copy_error;
+    window.addEventListener('error', e => {
+        e.preventDefault();
+        show_error(e.error || `${e.message}\n${e.filename}:${e.lineno}:${e.colno}`, 'error');
+    });
+    window.addEventListener('unhandledrejection', e => {
+        e.preventDefault();
+        show_error(e.reason, 'unhandled rejection');
+    });
+    window.addEventListener('keydown', e => {
+        if (!error_visible) return;
+        if      (key_is(e, 'Escape')) bind(e, error_close, close_error);
+        else if (key_is(e, 'Tab'   )) bind(e, error_copy,  copy_error);
+    });
+}
 
 //#endregion
 
@@ -2651,6 +2708,7 @@ function vek2_round(p) {
 
 //#region INIT
 SETUP_HOOKS_PRE();
+SETUP_ERROR_SCREEN();
 {
     SETUP_HISTORY_SYNC();
     SETUP_HISTORY_CTL();

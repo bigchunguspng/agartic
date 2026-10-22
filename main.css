@@ -326,6 +326,8 @@ kbd {
             padding-right: 10px;
         }
     }
+}
+.panel, .actions {
     & button {
         padding: 0 6px;
         &[id^="tool"] span {
@@ -343,8 +345,8 @@ kbd {
         }
         &:hover {
             background-image:
-               linear-gradient(0deg, rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.15)),
-               url("img/bg-dark.png");
+                    linear-gradient(0deg, rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.15)),
+                    url("img/bg-dark.png");
             background-repeat: repeat;
             background-size: 64px 64px;
             & kbd {
@@ -397,8 +399,8 @@ kbd {
         text-align: center;
         color: #ddd;
         background-image:
-           linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.1)),
-           url("img/bg-gray.png");
+                linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.1)),
+                url("img/bg-gray.png");
         background-color: #63636b;
         background-repeat: repeat;
         --border-a: #444;
@@ -420,9 +422,9 @@ kbd {
         &.y.active {
             color: #f0fff9;
             background-image:
-               linear-gradient(rgba(0, 127, 68, 0.15), rgba(0, 255, 136, 0.25)),
-               linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.1)),
-               url("img/bg-gray.png");
+                    linear-gradient(rgba(0, 127, 68, 0.15), rgba(0, 255, 136, 0.25)),
+                    linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.1)),
+                    url("img/bg-gray.png");
             --border-a: #3C594C;
             --border-t: #C4E1D4;
             --border-l: #799588;
@@ -432,9 +434,9 @@ kbd {
         &.n.active {
             color: #fff2f8;
             background-image:
-               linear-gradient(rgba(127, 0, 34, 0.15), rgba(255, 0, 68, 0.25)),
-               linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.1)),
-               url("img/bg-gray.png");
+                    linear-gradient(rgba(127, 0, 34, 0.15), rgba(255, 0, 68, 0.25)),
+                    linear-gradient(180deg, rgba(0, 0, 0, 0.1), rgba(255, 255, 255, 0.1)),
+                    url("img/bg-gray.png");
             --border-a: #593C44;
             --border-t: #E1C4CC;
             --border-l: #957980;
@@ -589,6 +591,96 @@ input[type="color"] {
     color: white;
     font-size: 2rem;
     pointer-events: none;
+}
+
+#error-overlay {
+    position: fixed;
+    z-index: 10;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: rgba(45, 0, 0, 0.45);
+    cursor: default;
+    &[hidden] {
+        display: none;
+    }
+}
+#error-dialog {
+    width: min(720px, 100%);
+    max-height: min(80vh, 640px);
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    color: #333;
+    background-image: url("img/bg-light.png");
+    background-color: #e5e6ea;
+    background-repeat: repeat;
+    background-size: 64px 64px;
+    border: 1px solid #eee;
+    border-top-color: white;
+    border-radius: 3px;
+    box-shadow: 0 5px 0 #666, 0 0 0 3px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 0 5px rgba(0, 0, 0, 0.15);
+}
+#error-title {
+    flex: 1 1 auto;
+    margin: 0;
+    color: #7b1020;
+    font-family: var(--font-kbd), monospace;
+    font-size: 32px;
+    font-weight: 400;
+    text-shadow: 1px 1px 0 #f5d9d9;
+}
+#error-details {
+    cursor: text;
+    min-height: 100px;
+    max-height: 50vh;
+    margin: 0;
+    padding: 10px;
+    overflow: auto;
+    color: #fff2f2;
+    background-image:
+       linear-gradient(rgba(127, 0, 34, 0.15), rgba(255, 0, 68, 0.25)),
+       url("img/bg-gray.png");
+    background-color: #626368;
+    box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.25);
+    font: 14px/1.4 var(--font-main), monospace;
+    overflow-wrap: anywhere;
+    user-select: text;
+    -webkit-user-select: text;
+}
+#error-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 8px;
+}
+.actions button {
+    /*min-height: 36px;*/
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 0 6px;
+    background-image:
+       linear-gradient(0deg, rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.15)),
+       url("img/bg-light.png");
+    background-color: #e5e6ea;
+    background-repeat: repeat;
+    background-size: 64px 64px;
+    border: 1px solid #eee;
+    border-top-color: white;
+    border-right-color: #666;
+    border-bottom-width: 0;
+    box-shadow: 0 2px 0 #666;
+    &:hover {
+        background-image:
+           linear-gradient(0deg, rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.15)),
+           url("img/bg-dark.png");
+    }
+    &:active {
+        transform: translateY(1px);
+        box-shadow: 0 1px 0 #666;
+    }
 }
 
 @media (pointer: coarse) {
