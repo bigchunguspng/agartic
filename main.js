@@ -2142,8 +2142,8 @@ function rect_selection_end() {
             rect.is_resizing = false;
             rect.selecting = null;
             rect.selected = true;
+            rect_selected_buttons_toggle_off(false);
         }
-        rect_selected_buttons_toggle_off(false);
         imgv_sel.classList.remove('selecting');
         tips_rect_h1.classList.remove('on');
         tips_rect_h2.classList.add('on');
