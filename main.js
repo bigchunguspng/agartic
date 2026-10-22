@@ -2191,7 +2191,7 @@ function rect_RENDER_selection() {
     imgv_sel.style.height = `${rect.curr.h}px`;
 }
 
-function rect_edit_selection_start(handle, ctrl) {
+function rect_edit_selection_start(handle) {
     if (rect && !touch_gesture_active) {
         if (rect.grabbed_handle = handle) {
             rect.is_resizing = true;
@@ -2277,8 +2277,9 @@ function rect_selection_interaction_start(e) {
     const h = e.target.closest('.handle');
     const c = e.ctrlKey;
     const a = e.altKey;
-    if (rect?.selected && (h || c)) rect_edit_selection_start(h, c);
-    else if (!c && !a)              rect_selection_start();
+    const move = e.pointerType === 'touch' && e.target === imgv_sel; // mobile & inside rect
+    if (rect?.selected && (h || c || move)) rect_edit_selection_start(h);
+    else if (!c && !a)                      rect_selection_start();
 }
 function rect_selection_interact(e) {
     if (!rect || touch_gesture_active) return;
