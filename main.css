@@ -701,4 +701,10 @@ input[type="color"] {
         background: #8888;
     }
     .tips > *:not(.g) { display: none; }
+    #panel-aux {
+        top: auto;
+        bottom: 0;
+        margin-bottom: 50px;
+        margin-bottom: calc(50px + env(safe-area-inset-bottom));
+    }
 }
