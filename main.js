@@ -1914,6 +1914,7 @@ function imgv_rotate(deg) {
     imgv_set_rotation(imgv.rotate + deg);
 }
 function imgv_set_rotation(deg) {
+    if (!imgv) return;
     imgv.rotate = in_imgv_rot.value = (360 + deg % 360) % 360; // [0,360)
     imgv_sel.style.transform = `rotate(${imgv.rotate}deg)`;
     placing_image_RENDER();
