@@ -483,15 +483,17 @@ function SETUP_CW_ZOOM() {
         }
     }, { passive: false });
     inputs_brush.addEventListener('wheel', e => {
-        if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
         e.preventDefault();
-        e.deltaX > 0 ? thickness_more(e) : thickness_less(e);
+        const vertical = Math.abs(e.deltaY) > Math.abs(e.deltaX);
+        const increase = vertical ? e.deltaY > 0 : e.deltaX < 0;
+        increase ? thickness_more(e) : thickness_less(e);
     }, { passive: false });
     inputs_imgv.addEventListener('wheel', e => {
-        if (Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
         e.preventDefault();
-        const mul1 = e.shiftKey   ?  5 : 1;
-        const mul2 = e.deltaY > 0 ? -1 : 1;
+        const vertical = Math.abs(e.deltaY) > Math.abs(e.deltaX);
+        const clockwise = vertical ? e.deltaY > 0 : e.deltaX < 0;
+        const mul1 = e.shiftKey ?  5 : 1;
+        const mul2 = clockwise  ? -1 : 1;
         imgv_rotate(mul1 * mul2);
     }, { passive: false });
     window.addEventListener('keydown', e => {
