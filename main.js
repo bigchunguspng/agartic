@@ -1136,6 +1136,13 @@ function cd_fill_rect(rect, color) {
 function set_thickness(value) {
     thickness = math_clamp(1, 999, value);
     in_thickness.value = thickness;
+    if (navigator.maxTouchPoints > 0) // is mobile -> show size preview
+    {
+        brush_cursor.classList.add('temp-display');
+        mouse.x = window.innerWidth  / 2;
+        mouse.y = window.innerHeight / 2;
+        debounce(() => brush_cursor.classList.remove('temp-display'), 300);
+    }
     if (brush_cursor.style.display !== 'none')
         brush_cursor_RENDER();
 }
@@ -2671,6 +2678,13 @@ function fx_click(butt, index) {
 function temp_fx(el, css_class, time) {
     el.classList.add(css_class);
     setTimeout(() => el.classList.remove(css_class), time);
+}
+function debounce(fn, delay = 300) {
+    let timer;
+    return function (...args) {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn.apply(this, args), delay);
+    };
 }
 function input_active(el) {
     return document.activeElement === el && el.matches(':focus-visible');

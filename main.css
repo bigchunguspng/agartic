@@ -270,6 +270,9 @@ kbd {
     &.drawing.on-canvas {
         display: block;
     }
+    &.temp-display {
+        display: block;
+    }
 }
 
 /* PANEL */
