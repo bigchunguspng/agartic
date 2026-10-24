@@ -1301,6 +1301,10 @@ function SETUP_IMAGE_SAVE() {
 
 //#region IMAGE COPY
 function cd_copy_canvas_to_clipboard(canvas, fx_class) {
+    if (!navigator.clipboard || !window.ClipboardItem) {
+        temp_fx(cw, 'no-clipboard', 500);
+        return;
+    }
     const blob = new Promise((resolve) => {
         canvas.toBlob(blob => resolve(blob), 'image/png');
     });
@@ -2364,7 +2368,7 @@ function rect_selection_paste_in_place(extract) {
     const r = rect.curr;
     const selection = new Rekt(r.x, r.y, r.w, r.h);
     const canvas_temp = rect_selection_canvas();
-    cd_copy_canvas_to_clipboard(canvas_temp, 'fx-copied-part');
+    temp_fx(cw, 'fx-copied-part', 500);
     canvas_temp.toBlob((blob) => {
         if (extract) cd_fill_rect(selection, 'white');
         rect_cancel_selection();

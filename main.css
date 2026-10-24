@@ -221,6 +221,10 @@ kbd {
         outline: 3px dashed white;
         outline-offset: 3px;
     }
+    &.no-clipboard {
+        outline: 3px dashed red;
+        outline-offset: 3px;
+    }
     & .selection {
         position: absolute;
         outline: 1px dashed black;
